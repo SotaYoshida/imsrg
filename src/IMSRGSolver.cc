@@ -22,10 +22,10 @@ IMSRGSolver::IMSRGSolver()
 
 // Constructor
 IMSRGSolver::IMSRGSolver( Operator &H_in)
-   : modelspace(H_in.GetModelSpace()),rw(NULL), H_0(&H_in), FlowingOps(1,H_in), Eta(H_in), 
+   : modelspace(H_in.GetModelSpace()),rw(NULL), H_0(&H_in), FlowingOps(1,H_in), Eta(H_in),
     istep(0), s(0),ds(0.1),ds_max(0.5),
     smax(2.0), norm_domega(0.1), omega_norm_max(2.0),eta_criterion(1e-6),method("magnus_euler"),
-    flowfile(""), n_omega_written(0),max_omega_written(50),magnus_adaptive(true),hunter_gatherer(false)
+    flowfile(""), n_omega_written(0),max_omega_written(500),magnus_adaptive(true),hunter_gatherer(false)
     ,ode_monitor(*this),ode_mode("H"),ode_e_abs(1e-6),ode_e_rel(1e-6)
 {
    Eta.Erase();
@@ -44,7 +44,7 @@ void IMSRGSolver::NewOmega()
             << std::endl;
   if ((rw != NULL) and (rw->GetScratchDir() !=""))
   {
-    
+
 //    char tmp[512];
 //    sprintf(tmp,"%s/OMEGA_%06d_%03d",rw->GetScratchDir().c_str(), getpid(), n_omega_written);
 //    std::string fname(tmp);
@@ -221,6 +221,7 @@ void IMSRGSolver::Solve_magnus_euler()
    {
 
       double norm_eta = Eta.Norm();
+      if (norm_eta < 1.0) generator.SetDenominatorDeltaIndex(-1); // Needed in some cases
       if (norm_eta < eta_criterion )
       {
         break;
@@ -240,15 +241,15 @@ void IMSRGSolver::Solve_magnus_euler()
       }
       // ds should never be more than 1, as this is over-rotating
       if (magnus_adaptive)
-         ds = std::min( std::min( std::min(norm_domega/norm_eta, norm_domega / norm_eta / (norm_omega+1.0e-9)), omega_norm_max/norm_eta), ds_max); 
+         ds = std::min( std::min( std::min(norm_domega/norm_eta, norm_domega / norm_eta / (norm_omega+1.0e-9)), omega_norm_max/norm_eta), ds_max);
       ds = std::min(ds,smax-s);
 //      if (s+ds > smax) ds = smax-s;
       s += ds;
       Eta *= ds; // Here's the Euler step.
 
       // accumulated generator (aka Magnus operator) exp(Omega) = exp(dOmega) * exp(Omega_last)
-//      Omega.back() = Eta.BCH_Product( Omega.back() ); 
-      Omega.back() = Commutator::BCH_Product( Eta, Omega.back() ); 
+//      Omega.back() = Eta.BCH_Product( Omega.back() );
+      Omega.back() = Commutator::BCH_Product( Eta, Omega.back() );
 
       // transformed Hamiltonian H_s = exp(Omega) H_0 exp(-Omega)
       if ((Omega.size()+n_omega_written)<2)
@@ -266,7 +267,7 @@ void IMSRGSolver::Solve_magnus_euler()
       {
         generator.SetDenominatorCutoff(1e-6);
       }
-        
+
       generator.Update(&FlowingOps[0],&Eta);
 
       // Write details of the flow
@@ -299,7 +300,7 @@ void IMSRGSolver::Solve_magnus_modified_euler()
         norm_omega = 0;
       }
       // ds should never be more than 1, as this is over-rotating
-      ds = std::min( std::min(norm_domega/norm_eta, norm_domega / norm_eta / (norm_omega+1.0e-9)), ds_max); 
+      ds = std::min( std::min(norm_domega/norm_eta, norm_domega / norm_eta / (norm_omega+1.0e-9)), ds_max);
       if (s+ds > smax) ds = smax-s;
       s += ds;
 
@@ -309,8 +310,8 @@ void IMSRGSolver::Solve_magnus_modified_euler()
       Eta *= ds*0.5; // Here's the modified Euler step.
 
       // accumulated generator (aka Magnus operator) exp(Omega) = exp(dOmega) * exp(Omega_last)
-//      Omega.back() = Eta.BCH_Product( Omega.back() ); 
-      Omega.back() = Commutator::BCH_Product( Eta, Omega.back() ); 
+//      Omega.back() = Eta.BCH_Product( Omega.back() );
+      Omega.back() = Commutator::BCH_Product( Eta, Omega.back() );
 
       if ((Omega.size()+n_omega_written)<2)
       {
@@ -322,7 +323,7 @@ void IMSRGSolver::Solve_magnus_modified_euler()
 //        FlowingOps[0] = H_saved.BCH_Transform( Omega.back() );
         FlowingOps[0] = Commutator::BCH_Transform( H_saved, Omega.back() );
       }
-        
+
       generator.Update(&FlowingOps[0],&Eta);
 
       // Write details of the flow
@@ -749,7 +750,37 @@ void IMSRGSolver::WriteFlowStatus(std::ostream& f)
       f.setf(std::ios::fixed);
       f << std::fixed << std::setw(5) << istep
         << std::setw(10) << std::setprecision(3) << s
-        << std::setw(fwidth) << std::setprecision(fprecision) << H_s.ZeroBody 
+        << std::setw(fwidth) << std::setprecision(fprecision) << H_s.ZeroBody
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 0, 0)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 1, 1)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 2, 2)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 3, 3)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 4, 4)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 5, 5)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 6, 6)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 7, 7)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 8, 8)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 9, 9)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(10,10)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(11,11)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(12,12)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(13,13)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(14,14)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(15,15)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(16,16)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(17,17)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(18,18)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(19,19)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(20,20)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(21,21)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(22,22)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(23,23)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(24,24)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(25,25)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(26,26)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(27,27)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(28,28)
+      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(29,29)
         << std::setw(fwidth) << std::setprecision(fprecision) << H_s.Norm()
         << std::setw(fwidth) << std::setprecision(fprecision) << H_s.Trace( modelspace->GetAref(), modelspace->GetZref() )
 //        << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBodyNorm()
@@ -786,16 +817,16 @@ void IMSRGSolver::WriteFlowStatusHeader(std::ostream& f)
       f << std::fixed << std::setw(5) << "i"
         << std::setw(10) << std::setprecision(3) << "s"
         << std::setw(fwidth) << std::setprecision(fprecision) << "E0"
-//        << std::setw(fwidth) << std::setprecision(fprecision) << "||H_1||" 
-//        << std::setw(fwidth) << std::setprecision(fprecision) << "||H_2||" 
-        << std::setw(fwidth) << std::setprecision(fprecision) << "||H||" 
-        << std::setw(fwidth) << std::setprecision(fprecision) << "Tr(H)/Tr(1)" 
-        << std::setw(fwidth) << std::setprecision(fprecision) << "||Omega_1||" 
-        << std::setw(fwidth) << std::setprecision(fprecision) << "||Omega_2||" 
-        << std::setw(fwidth) << std::setprecision(fprecision) << "||Eta_1||" 
-        << std::setw(fwidth) << std::setprecision(fprecision) << "||Eta_2||" 
-        << std::setw(7)      << std::setprecision(fprecision) << "Ncomm" 
-        << std::setw(16)     << std::setprecision(fprecision) << "E(MP2)" 
+//        << std::setw(fwidth) << std::setprecision(fprecision) << "||H_1||"
+//        << std::setw(fwidth) << std::setprecision(fprecision) << "||H_2||"
+        << std::setw(fwidth) << std::setprecision(fprecision) << "||H||"
+        << std::setw(fwidth) << std::setprecision(fprecision) << "Tr(H)/Tr(1)"
+        << std::setw(fwidth) << std::setprecision(fprecision) << "||Omega_1||"
+        << std::setw(fwidth) << std::setprecision(fprecision) << "||Omega_2||"
+        << std::setw(fwidth) << std::setprecision(fprecision) << "||Eta_1||"
+        << std::setw(fwidth) << std::setprecision(fprecision) << "||Eta_2||"
+        << std::setw(7)      << std::setprecision(fprecision) << "Ncomm"
+        << std::setw(16)     << std::setprecision(fprecision) << "E(MP2)"
         << std::setw(7)      << std::setprecision(fprecision) << "N_Ops"
         << std::setw(16) << std::setprecision(fprecision) << "Walltime (s)"
         << std::setw(19) << std::setprecision(fprecision) << "Memory (MB)"
@@ -804,4 +835,35 @@ void IMSRGSolver::WriteFlowStatusHeader(std::ostream& f)
         f << std::endl;
    }
 
+}
+
+// added by T.Miyagi
+void IMSRGSolver::SetMiscFile(std::string str)
+{
+  miscfile = str;
+  std::ofstream miscf;
+  if (miscfile != "")
+  {
+    miscf.open(miscfile,std::ofstream::out);
+    miscf.close();
+  }
+}
+
+void IMSRGSolver::WriteStatusMisc(std::string fname)
+{
+  if (fname !="")
+  {
+    std::ofstream ff(fname,std::ios::app);
+    WriteStatusMisc(ff);
+  }
+}
+
+void IMSRGSolver::WriteStatusMisc(std::ostream& f)
+{
+  if ( f.good() )
+  {
+    auto& H_s = FlowingOps[0];
+    f << H_s.GetOrderedTwoBodyMonopoleMatrix(0,0) << std::endl;
+    f << Eta.GetOrderedTwoBodyMonopoleMatrix(0,0) << std::endl;
+  }
 }

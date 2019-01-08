@@ -48,6 +48,11 @@ class Parameters
   std::vector<std::string> v(std::string);
   std::string DefaultFlowFile();
   std::string DefaultIntFile();
+  // added by T. Miyagi
+  std::string DefaultSummaryFile();
+  std::string DefaultMiscFile();
+  std::string GetFileName(std::string, std::string);
+  //
   bool help_mode;
 };
 
@@ -56,7 +61,10 @@ std::map<std::string,std::string> Parameters::string_par = {
   {"3bme",			"none"},
   {"core_generator",		"atan"},	// generator used for core part of 2-step decoupling
   {"valence_generator",		"shell-model-atan"},	// generator used for valence decoupling and 1-step (also single-ref)
+  {"outputdir",			"output"},	// name of output flow file
   {"flowfile",			"default"},	// name of output flow file
+  {"miscfile",			""},	// name of flow matrix file
+  {"summaryfile",			"default"},	// name of summary flow file
   {"intfile",			"default"},	// name of output interaction fille
   {"fmt2",			"me2j"},	// can also be navratil or Navratil to read Petr's TBME format
   {"fmt3",			"me3j"},	// can also be navratil or Navratil to read Petr's TBME format
@@ -95,7 +103,7 @@ std::map<std::string,double> Parameters::double_par = {
 
 std::map<std::string,int> Parameters::int_par = {
   {"A",	-1},	// Aeff for kinetic energy. -1 means take A of reference
-  {"e3max",		12},	
+  {"e3max",		12},
   {"emax",		6},
   {"lmax3",		-1}, // lmax for the 3body interaction
   {"nsteps",		-1},	// do the decoupling in 1 step or core-then-valence. -1 means default
@@ -121,7 +129,7 @@ Parameters::Parameters(int argc, char** argv)
 {
   help_mode = false;
   ParseCommandLineArgs(argc, argv);
-} 
+}
 
 void Parameters::ParseCommandLineArgs(int argc, char** argv)
 {
@@ -174,7 +182,7 @@ void Parameters::ParseCommandLineArgs(int argc, char** argv)
     {
       std::cout << "Unkown parameter: " << var << " => " << val << std::endl;
     }
-    
+
   }
   if (string_par["flowfile"]=="default") string_par["flowfile"] = DefaultFlowFile();
   if (string_par["intfile"]=="default") string_par["intfile"] = DefaultIntFile();
@@ -198,19 +206,19 @@ std::vector<std::string> Parameters::v(std::string key)
   return vec_par[key];
 }
 
-std::string Parameters::DefaultFlowFile()
-{
-  char strbuf[200];
-  sprintf(strbuf, "output/BCH_%s_%s_%s_hw%.0f_e%d_A%d.dat",string_par["method"].c_str(),string_par["reference"].c_str(),string_par["valence_space"].c_str(),double_par["hw"],int_par["emax"],int_par["A"]);
-  return std::string(strbuf);
-}
-
-std::string Parameters::DefaultIntFile()
-{
-  char strbuf[200];
-  sprintf(strbuf, "output/%s_%s_%s_hw%.0f_e%d_A%d",string_par["method"].c_str(),string_par["reference"].c_str(),string_par["valence_space"].c_str(),double_par["hw"],int_par["emax"],int_par["A"]);
-  return std::string(strbuf);
-}
+//std::string Parameters::DefaultFlowFile()
+//{
+//  char strbuf[200];
+//  sprintf(strbuf, "output/BCH_%s_%s_%s_hw%.0f_e%d_A%d.dat",string_par["method"].c_str(),string_par["reference"].c_str(),string_par["valence_space"].c_str(),double_par["hw"],int_par["emax"],int_par["A"]);
+//  return std::string(strbuf);
+//}
+//
+//std::string Parameters::DefaultIntFile()
+//{
+//  char strbuf[200];
+//  sprintf(strbuf, "output/%s_%s_%s_hw%.0f_e%d_A%d",string_par["method"].c_str(),string_par["reference"].c_str(),string_par["valence_space"].c_str(),double_par["hw"],int_par["emax"],int_par["A"]);
+//  return std::string(strbuf);
+//}
 
 void Parameters::PrintOptions()
 {
@@ -236,4 +244,61 @@ void Parameters::PrintOptions()
 
 }
 
+//added by T.Miyagi
 
+std::string Parameters::DefaultFlowFile()
+{
+  return GetFileName("flow_",".dat");
+}
+
+std::string Parameters::DefaultSummaryFile()
+{
+  return GetFileName("summary_",".dat");
+}
+
+std::string Parameters::DefaultMiscFile()
+{
+  return GetFileName("misc_",".dat");
+}
+
+std::string Parameters::DefaultIntFile()
+{
+  return GetFileName("","");
+}
+
+std::string Parameters::GetFileName(std::string name, std::string ext)
+{
+  char strbuf[200];
+  if(double_par["BetaCM"] < 1.e-3){
+    sprintf(strbuf, "%s/%s%s_%s_%s_%s_hw%.0f_e%d_A%d_delta%.0f%s",
+        string_par["outputdir"].c_str(),
+        name.c_str(),
+        string_par["method"].c_str(),
+        string_par["reference"].c_str(),
+        string_par["valence_space"].c_str(),
+        string_par["basis"].c_str(),
+        double_par["hw"],
+        int_par["emax"],
+        int_par["A"],
+        double_par["denominator_delta"],
+        ext.c_str()
+        );
+  }
+  else{
+    sprintf(strbuf, "%s/%s%s_%s_%s_%s_hw%.0f_e%d_A%d_beta%.1f_delta%.0f%s",
+        string_par["outputdir"].c_str(),
+        name.c_str(),
+        string_par["method"].c_str(),
+        string_par["reference"].c_str(),
+        string_par["valence_space"].c_str(),
+        string_par["basis"].c_str(),
+        double_par["hw"],
+        int_par["emax"],
+        int_par["A"],
+        double_par["BetaCM"],
+        double_par["denominator_delta"],
+        ext.c_str()
+        );
+  }
+  return std::string(strbuf);
+}

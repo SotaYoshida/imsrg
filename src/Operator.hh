@@ -64,7 +64,7 @@ class Operator
 
 
   std::map<std::array<int,3>,std::vector<index_t> > OneBodyChannels;
-  index_t Q_space_orbit; // Orbit with the same quantum numbers as this dagger operator. -1 if it's not a dagger operator. 
+  index_t Q_space_orbit; // Orbit with the same quantum numbers as this dagger operator. -1 if it's not a dagger operator.
 
 //  static IMSRGProfiler profiler;
   IMSRGProfiler profiler;
@@ -190,6 +190,8 @@ class Operator
   void PrintOneBody() const {OneBody.print();};
   void PrintTwoBody(int ch) const {TwoBody.PrintMatrix(ch,ch);};
 
+  // added by T. Miyagi
+  arma::mat GetOrderedTwoBodyMonopoleMatrix(int,int);
 
 };
 

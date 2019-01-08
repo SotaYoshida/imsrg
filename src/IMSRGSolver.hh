@@ -40,7 +40,7 @@ class IMSRGSolver
 //  private:
   ModelSpace* modelspace;
   ReadWrite* rw;
-  Operator* H_0; 
+  Operator* H_0;
   std::deque<Operator> FlowingOps;
   Operator H_saved;
   Operator Eta;
@@ -121,6 +121,12 @@ class IMSRGSolver
   void SetDenominatorDeltaOrbit(std::string o){generator.SetDenominatorDeltaOrbit(o);};
 
   void CleanupScratch();
+
+  // added by T. Miyagi
+  std::string miscfile;
+  void SetMiscFile(std::string);
+  void WriteStatusMisc(std::string);
+  void WriteStatusMisc(std::ostream&);
 
 
   // This is used to get flow info from odeint

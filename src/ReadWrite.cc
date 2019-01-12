@@ -870,8 +870,8 @@ void ReadWrite::ReadBareTBME_Darmstadt_from_stream( T& infile, Operator& Hbare, 
              if (a==b)  norm_factor /= SQRT2;
              if (c==d)  norm_factor /= SQRT2;
 
-//             std::cout << a << " " << b << " " << c << " " << d << "   " << J << "   "
-//                  << std::fixed << std::setprecision(7) << std::setw(11) << tbme_00 << " " << tbme_nn << " " << tbme_10 << " " << tbme_pp << std::endl;
+             //std::cout << a << " " << b << " " << c << " " << d << "   " << J << "   "
+             //     << std::fixed << std::setprecision(7) << std::setw(11) << tbme_00 << " " << tbme_nn << " " << tbme_10 << " " << tbme_pp << std::endl;
 
              if (norm_factor>0.9 or J%2==0)
              {
@@ -1365,6 +1365,10 @@ void ReadWrite::Read_Darmstadt_3body_from_stream( T& infile, Operator& Hbare, in
        infile.read((char*)&delimiter, sizeof(delimiter));
        ThreeBME[i] = v;
     }
+  }
+  else if(format3N == "takayuki")
+  {
+    for (size_t i=0;i<nread;++i) infile >> ThreeBME[i];
   }
 
   modelspace->profiler.timer["Read_3BME"] += omp_get_wtime() - t_start;
@@ -3631,7 +3635,7 @@ void ReadWrite::ReadTwoBody_Takayuki(std::string filename, Operator& Hbare)
   getline( infile, dummy );
   getline( infile, dummy );
   int a,b,c,d,tza,tzb,tzc,tzd,J;
-  double me,pipj,rirj;
+  double me;
   while( infile >> tza >> a >> tzb >> b >> tzc >> c >> tzd >> d >> J >> me )
   {
     if ( orbits_remap.find(a) == orbits_remap.end() ) continue;

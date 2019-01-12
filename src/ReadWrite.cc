@@ -735,15 +735,20 @@ void ReadWrite::Read_Darmstadt_3body( std::string filename, Operator& Hbare, int
 //    int n_elem = infile.tellg();
     size_t n_elem = infile.tellg();
     infile.seekg(0, infile.beg);
-    n_elem -= infile.tellg();
-    n_elem -= HEADERSIZE;
+    if(format3N == "takayuki"){
+      n_elem /= sizeof(float);
+    }
+    else{
+      n_elem -= infile.tellg();
+      n_elem -= HEADERSIZE;
 
-    char header[HEADERSIZE];
+      char header[HEADERSIZE];
 
-    n_elem /= sizeof(float);
+      n_elem /= sizeof(float);
 
-//    infile.read((char*)&n_elem,sizeof(int));
-    infile.read(header,HEADERSIZE);
+      //    infile.read((char*)&n_elem,sizeof(int));
+      infile.read(header,HEADERSIZE);
+    }
 
 //    std::vector<float> v(n_elem);
 //    infile.read((char*)&v[0], n_elem*sizeof(float));

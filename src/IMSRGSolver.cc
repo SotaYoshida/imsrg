@@ -221,7 +221,6 @@ void IMSRGSolver::Solve_magnus_euler()
    {
 
       double norm_eta = Eta.Norm();
-      if (norm_eta < 1.0) generator.SetDenominatorDeltaIndex(-1); // Needed in some cases
       if (norm_eta < eta_criterion )
       {
         break;
@@ -744,45 +743,45 @@ void IMSRGSolver::WriteFlowStatus(std::ostream& f)
 {
    if ( f.good() )
    {
-      int fwidth = 16;
-      int fprecision = 9;
+      int fwidth = 18;
+      int fprecision = 6;
       auto& H_s = FlowingOps[0];
       f.setf(std::ios::fixed);
       f << std::fixed << std::setw(5) << istep
         << std::setw(10) << std::setprecision(3) << s
         << std::setw(fwidth) << std::setprecision(fprecision) << H_s.ZeroBody
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 0, 0)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 1, 1)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 2, 2)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 3, 3)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 4, 4)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 5, 5)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 6, 6)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 7, 7)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 8, 8)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody( 9, 9)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(10,10)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(11,11)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(12,12)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(13,13)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(14,14)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(15,15)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(16,16)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(17,17)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(18,18)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(19,19)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(20,20)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(21,21)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(22,22)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(23,23)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(24,24)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(25,25)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(26,26)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(27,27)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(28,28)
-      //<< setw(fwidth) << setprecision(fprecision) << H_s.OneBody(29,29)
-        << std::setw(fwidth) << std::setprecision(fprecision) << H_s.Norm()
-        << std::setw(fwidth) << std::setprecision(fprecision) << H_s.Trace( modelspace->GetAref(), modelspace->GetZref() )
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody( 0, 0)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody( 1, 1)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody( 2, 2)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody( 3, 3)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody( 4, 4)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody( 5, 5)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody( 6, 6)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody( 7, 7)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody( 8, 8)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody( 9, 9)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(10,10)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(11,11)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(12,12)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(13,13)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(14,14)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(15,15)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(16,16)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(17,17)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(18,18)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(19,19)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(20,20)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(21,21)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(22,22)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(23,23)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(24,24)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(25,25)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(26,26)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(27,27)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(28,28)
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBody(29,29)
+      //<< std::setw(fwidth) << std::setprecision(fprecision) << H_s.Norm()
+      << std::setw(fwidth) << std::setprecision(fprecision) << H_s.Trace( modelspace->GetAref(), modelspace->GetZref() )
 //        << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBodyNorm()
 //        << std::setw(fwidth) << std::setprecision(fprecision) << H_s.TwoBodyNorm()
 //        << std::setw(fwidth) << std::setprecision(fprecision) << Omega.Norm()
@@ -819,8 +818,8 @@ void IMSRGSolver::WriteFlowStatusHeader(std::ostream& f)
         << std::setw(fwidth) << std::setprecision(fprecision) << "E0"
 //        << std::setw(fwidth) << std::setprecision(fprecision) << "||H_1||"
 //        << std::setw(fwidth) << std::setprecision(fprecision) << "||H_2||"
-        << std::setw(fwidth) << std::setprecision(fprecision) << "||H||"
-        << std::setw(fwidth) << std::setprecision(fprecision) << "Tr(H)/Tr(1)"
+        //<< std::setw(fwidth) << std::setprecision(fprecision) << "||H||"
+        //<< std::setw(fwidth) << std::setprecision(fprecision) << "Tr(H)/Tr(1)"
         << std::setw(fwidth) << std::setprecision(fprecision) << "||Omega_1||"
         << std::setw(fwidth) << std::setprecision(fprecision) << "||Omega_2||"
         << std::setw(fwidth) << std::setprecision(fprecision) << "||Eta_1||"

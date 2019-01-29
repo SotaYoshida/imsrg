@@ -221,7 +221,6 @@ void IMSRGSolver::Solve_magnus_euler()
    {
 
       double norm_eta = Eta.Norm();
-      if (norm_eta < 1.0) generator.SetDenominatorDeltaIndex(-1); // Needed in some cases
       if (norm_eta < eta_criterion )
       {
         break;

@@ -52,7 +52,7 @@ ifeq ($(OS),MACOS)
 #  FLAGS     = -Xpreprocessor -fopenmp -O3 -march=native -std=c++11 -fPIC
 #  FLAGS     = -Xpreprocessor -fopenmp -O3  -std=c++11 -fPIC
   CC = g++-8
-  INCLUDE   += -I/usr/local/include
+  INCLUDE   += -I/usr/local/include -L/usr/local/lib
 #  LIBS += -lomp
   PYTHONFLAGS = -I./pybind11/include $(shell python-config --cflags | sed -e 's/-arch i386//')
 endif
@@ -172,7 +172,7 @@ boost_src/zlib.o: boost_src/zlib.cpp
 
 
 libIMSRG.so: $(OBJ)
-	$(CC) $^ -shared -o $@ $(SOFLAGS) $(LIBS)
+	$(CC) $^ -shared -o $@ $(SOFLAGS) $(INCLUDE) $(LIBS)
 
 python: pyIMSRG.so
 

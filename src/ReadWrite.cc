@@ -741,11 +741,8 @@ void ReadWrite::Read_Darmstadt_3body( std::string filename, Operator& Hbare, int
     else{
       n_elem -= infile.tellg();
       n_elem -= HEADERSIZE;
-
       char header[HEADERSIZE];
-
       n_elem /= sizeof(float);
-
       //    infile.read((char*)&n_elem,sizeof(int));
       infile.read(header,HEADERSIZE);
     }

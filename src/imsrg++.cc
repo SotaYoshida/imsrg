@@ -299,8 +299,6 @@ int main(int argc, char** argv)
 
 
 
-
-
   if ( spwf.size() > 0 )
   {
     imsrg_util::WriteSPWaveFunctions( spwf, hf, intfile);
@@ -310,6 +308,16 @@ int main(int argc, char** argv)
 
   HNO -= BetaCM * 1.5*hwBetaCM;
   std::cout << "Hbare 0b = " << HNO.ZeroBody << std::endl;
+  // test
+  //HNO = HNO.UndoNormalOrdering();
+  //modelspace.SetReference(modelspace.core);
+  //HNO.SetModelSpace(modelspace);
+  //HNO = HNO.DoNormalOrdering();
+  //rw.WriteTokyo(HNO,intfile+".snt");
+  //exit(0);
+  //
+
+
 
   if (method != "HF")
   {

@@ -236,7 +236,7 @@ Operator Standard_BCH_Transform( const Operator& OpIn, const Operator &Omega)
 {
    double t_start = omp_get_wtime();
    int max_iter = 100;
-   int warn_iter = 40;
+   int warn_iter = 50;
    double nx = OpIn.Norm();
    double ny = Omega.Norm();
    Operator OpOut = OpIn;

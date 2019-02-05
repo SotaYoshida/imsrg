@@ -4391,7 +4391,7 @@ void ReadWrite::ReadTokyo(std::string filename, Operator& op)
 }
 
 // Tokyo format (Kshell format, snt file)
-void ReadWrite::WriteTokyo(Operator& op, std::string filename)
+void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
 {
   std::ofstream intfile;
   intfile.open(filename, std::ofstream::out);
@@ -4488,12 +4488,16 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename)
        Ket &bra = tbc.GetKet(ibra);
        int a = bra.p;
        int b = bra.q;
+       Orbit& oa = modelspace->GetOrbit(a);
+       Orbit& ob = modelspace->GetOrbit(b);
        for (auto& iket: tbc.GetKetIndex_vv() )
        {
          if (iket < ibra) continue;
          Ket &ket = tbc.GetKet(iket);
          int c = ket.p;
          int d = ket.q;
+         Orbit& oc = modelspace->GetOrbit(c);
+         Orbit& od = modelspace->GetOrbit(d);
 
          int a_ind = orb2kshell[a];
          int b_ind = orb2kshell[b];
@@ -4501,6 +4505,15 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename)
          int d_ind = orb2kshell[d];
 
          double tbme = op.TwoBody.GetTBME_norm(ch,a,b,c,d);
+         if (oa.tz2!=ob.tz2 and mode=="op")
+         {
+           int aa = a - oa.tz2;
+           int bb = b - ob.tz2;
+           int cc = c - oc.tz2;
+           int dd = d - od.tz2;
+           tbme += op.TwoBody.GetTBME_norm(ch,aa,bb,cc,dd);
+           tbme /= 2;
+         }
          intfile << std::setw(wint) << a_ind << std::setw(wint) << b_ind
            << std::setw(wint) << c_ind << std::setw(wint) << d_ind
            << std::setw(wint) << tbc.J << std::setw(wdouble)

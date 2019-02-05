@@ -103,7 +103,7 @@ class ReadWrite
    // added by T.Miyagi
    void ReadTokyo(std::string, Operator&, std::string);
    void ReadTokyo(std::string, Operator&);
-   void WriteTokyo(Operator&, std::string);
+   void WriteTokyo(Operator&, std::string, std::string);
    void WriteTensorTokyo(std::string, Operator&);
    void skip_comments(std::ifstream&);
 

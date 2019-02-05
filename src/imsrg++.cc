@@ -663,7 +663,7 @@ int main(int argc, char** argv)
     std::cout << "Writing files: " << intfile << std::endl;
     rw.WriteNuShellX_int(imsrgsolver.GetH_s(),intfile+".int");
     rw.WriteNuShellX_sps(imsrgsolver.GetH_s(),intfile+".sp");
-    rw.WriteTokyo(imsrgsolver.GetH_s(),intfile+".snt");
+    rw.WriteTokyo(imsrgsolver.GetH_s(),intfile+".snt","");
 
     if (method == "magnus")
     {
@@ -672,7 +672,7 @@ int main(int argc, char** argv)
           if ( ((ops[i].GetJRank()+ops[i].GetTRank()+ops[i].GetParity())<1) and (ops[i].GetNumberLegs()%2==0) )
           {
             rw.WriteNuShellX_op(ops[i],intfile+"_"+opnames[i]+".int");
-            rw.WriteTokyo(ops[i],intfile+"_"+opnames[i]+".snt");
+            rw.WriteTokyo(ops[i],intfile+"_"+opnames[i]+".snt","op");
           }
           else if ( ops[i].GetNumberLegs()%2==1) // odd number of legs -> this is a dagger operator
           {

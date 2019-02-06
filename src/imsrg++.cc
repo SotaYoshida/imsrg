@@ -73,6 +73,7 @@ int main(int argc, char** argv)
   std::string basis = parameters.s("basis");
   std::string method = parameters.s("method");
   std::string flowfile = parameters.s("flowfile");
+  std::string miscfile = parameters.s("miscfile");
   std::string intfile = parameters.s("intfile");
   std::string core_generator = parameters.s("core_generator");
   std::string valence_generator = parameters.s("valence_generator");
@@ -163,6 +164,7 @@ int main(int argc, char** argv)
     {
       parameters.string_par["valence_space"] = "custom";
       flowfile = parameters.DefaultFlowFile();
+      miscfile = parameters.DefaultMiscFile();
       intfile = parameters.DefaultIntFile();
     }
     valence_space = custom_valence_space;
@@ -504,6 +506,7 @@ int main(int argc, char** argv)
   imsrgsolver.SetHin(HNO);
   imsrgsolver.SetSmax(smax);
   imsrgsolver.SetFlowFile(flowfile);
+  imsrgsolver.SetMiscFile(miscfile);
   imsrgsolver.SetDs(ds_0);
   imsrgsolver.SetDsmax(dsmax);
   imsrgsolver.SetDenominatorDelta(denominator_delta);

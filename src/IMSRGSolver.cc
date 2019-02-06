@@ -215,6 +215,7 @@ void IMSRGSolver::Solve_magnus_euler()
 
     // Write details of the flow
    WriteFlowStatus(flowfile);
+   WriteStatusMisc(miscfile);
    WriteFlowStatus(std::cout);
 
    for (istep=1;s<smax;++istep)
@@ -271,6 +272,7 @@ void IMSRGSolver::Solve_magnus_euler()
 
       // Write details of the flow
       WriteFlowStatus(flowfile);
+      WriteStatusMisc(miscfile);
       WriteFlowStatus(std::cout);
 //      profiler.PrintMemory();
 

@@ -4383,7 +4383,7 @@ void ReadWrite::ReadTokyo(std::string filename, Operator& op)
     int ko = orbits_remap.at(k);
     int lo = orbits_remap.at(l);
     if ( (io==jo or ko==lo) and (jj%2)>0 ) continue;
-    if (abs(tbme)<1e-6) continue;
+    if (std::abs(tbme)<1e-6) continue;
     op.TwoBody.SetTBME_J(jj,io,jo,ko,lo,tbme);
     //cout << io << " " << jo << " " << ko << " " << lo << " " <<  jj << " " << tbme << endl;
   }
@@ -4447,8 +4447,10 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename)
      for (auto b : modelspace->valence) {
        if(a < b) continue;
        double obme = op.OneBody(a,b);
-       if(abs(obme) < 1e-7) continue;
+       std::cout << "before if" << a << " " << b << " " << obme << " " << cnt_obme << std::endl;
+       if(std::abs(obme) < 1e-7) continue;
        cnt_obme += 1;
+       std::cout << "after if" << a << " " << b << " " << obme << " " << cnt_obme << std::endl;
      }
    }
 
@@ -4472,7 +4474,7 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename)
        int b_ind = orb2kshell[b];
        if(a < b) continue;
        double obme = op.OneBody(a,b);
-       if(abs(obme) < 1e-7) continue;
+       if(std::abs(obme) < 1e-7) continue;
        intfile << std::setw(wint) << a_ind << std::setw(wint) << b_ind
            << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << obme
            << std::endl;
@@ -4569,7 +4571,7 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
    for (auto a : modelspace->valence ) {
      for (auto b : modelspace->valence) {
        double obme = op.OneBody(a,b);
-       if(abs(obme) < 1e-7) continue;
+       if(std::abs(obme) < 1e-7) continue;
        cnt_obme += 1;
      }
    }
@@ -4583,7 +4585,7 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
      for (auto& ibra : tbc_bra.GetKetIndex_vv() ) {
        for (auto& iket : tbc_ket.GetKetIndex_vv() ) {
          double me = matrix(ibra,iket);
-         if(abs(me) < 1e-7) continue;
+         if(std::abs(me) < 1e-7) continue;
          cnt_tbme += 1;
        }
      }
@@ -4596,7 +4598,7 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
      for (auto b : modelspace->valence) {
        int b_ind = orb2kshell[b];
        double obme = op.OneBody(a,b);
-       if(abs(obme) < 1e-7) continue;
+       if(std::abs(obme) < 1e-7) continue;
        outfile << std::setw(wint) << a_ind << std::setw(wint) << b_ind
            << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << obme
            << std::endl;
@@ -4617,7 +4619,7 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
          int c_ind = orb2kshell[ket.p];
          int d_ind = orb2kshell[ket.q];
          double me = matrix(ibra,iket);
-         if(abs(me) < 1e-7) continue;
+         if(std::abs(me) < 1e-7) continue;
          outfile << std::setw(wint) << a_ind << " " << std::setw(wint) << b_ind << " " << std::setw(wint) <<
            c_ind << " " << std::setw(wint) << d_ind << "   " << std::setw(wint) << tbc_bra.J <<
            " " << std::setw(wint) << tbc_ket.J << "   " <<

@@ -73,6 +73,7 @@ int main(int argc, char** argv)
   std::string basis = parameters.s("basis");
   std::string method = parameters.s("method");
   std::string flowfile = parameters.s("flowfile");
+  std::string miscfile = parameters.s("miscfile");
   std::string intfile = parameters.s("intfile");
   std::string core_generator = parameters.s("core_generator");
   std::string valence_generator = parameters.s("valence_generator");
@@ -163,6 +164,7 @@ int main(int argc, char** argv)
     {
       parameters.string_par["valence_space"] = "custom";
       flowfile = parameters.DefaultFlowFile();
+      miscfile = parameters.DefaultMiscFile();
       intfile = parameters.DefaultIntFile();
     }
     valence_space = custom_valence_space;
@@ -504,6 +506,7 @@ int main(int argc, char** argv)
   imsrgsolver.SetHin(HNO);
   imsrgsolver.SetSmax(smax);
   imsrgsolver.SetFlowFile(flowfile);
+  imsrgsolver.SetMiscFile(miscfile);
   imsrgsolver.SetDs(ds_0);
   imsrgsolver.SetDsmax(dsmax);
   imsrgsolver.SetDenominatorDelta(denominator_delta);
@@ -663,7 +666,7 @@ int main(int argc, char** argv)
     std::cout << "Writing files: " << intfile << std::endl;
     rw.WriteNuShellX_int(imsrgsolver.GetH_s(),intfile+".int");
     rw.WriteNuShellX_sps(imsrgsolver.GetH_s(),intfile+".sp");
-    rw.WriteTokyo(imsrgsolver.GetH_s(),intfile+".snt");
+    rw.WriteTokyo(imsrgsolver.GetH_s(),intfile+".snt","");
 
     if (method == "magnus")
     {
@@ -672,7 +675,7 @@ int main(int argc, char** argv)
           if ( ((ops[i].GetJRank()+ops[i].GetTRank()+ops[i].GetParity())<1) and (ops[i].GetNumberLegs()%2==0) )
           {
             rw.WriteNuShellX_op(ops[i],intfile+"_"+opnames[i]+".int");
-            rw.WriteTokyo(ops[i],intfile+"_"+opnames[i]+".snt");
+            rw.WriteTokyo(ops[i],intfile+"_"+opnames[i]+".snt","op");
           }
           else if ( ops[i].GetNumberLegs()%2==1) // odd number of legs -> this is a dagger operator
           {

@@ -4447,10 +4447,8 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
      for (auto b : modelspace->valence) {
        if(a < b) continue;
        double obme = op.OneBody(a,b);
-       std::cout << "before if" << a << " " << b << " " << obme << " " << cnt_obme << std::endl;
        if(std::abs(obme) < 1e-7) continue;
        cnt_obme += 1;
-       std::cout << "after if" << a << " " << b << " " << obme << " " << cnt_obme << std::endl;
      }
    }
 

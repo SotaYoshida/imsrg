@@ -13,12 +13,10 @@ class HFMBPT : public HartreeFock
     arma::mat C_HO2NAT; // transforamtion coefficients, 1st index ho, 2nd index NAT basis
     arma::mat C_HF2NAT; // transforamtion coefficients, 1st index hf, 2nd index NAT basis
     arma::vec Occ; // Occupation number
-    vector<index_t> holes;     // in the reference Slater determinant
-    vector<index_t> particles; // above the reference Slater determinant
 
     ~HFMBPT();
     HFMBPT(Operator& hbare); // same as HartreeFock constructor
-    void GetNaturalOrbital(string mode);
+    void GetNaturalOrbital();
     void GetDensityMatrix();
     void DensityMatrixPP(Operator& H);
     void DensityMatrixHH(Operator& H);

@@ -288,7 +288,8 @@ int main(int argc, char** argv)
   }
 
   std::cout << "Creating HF" << std::endl;
-  HartreeFock hf(Hbare);
+  //HartreeFock hf(Hbare);
+  HFMBPT hf(Hbare);
   std::cout << "Solving" << std::endl;
   hf.Solve();
 
@@ -298,6 +299,11 @@ int main(int argc, char** argv)
     HNO = hf.GetNormalOrderedH();
   else if (basis == "oscillator")
     HNO = Hbare.DoNormalOrdering();
+  else if (basis == "NAT")
+  {
+    hf.GetNaturalOrbital();
+    HNO = hf.GetNormalOrderedHNAT();
+  }
 
 
 
@@ -333,7 +339,6 @@ int main(int argc, char** argv)
 //    cout << "EMP3 = " << EMP3 << endl;
     std::cout << "To 3rd order, E = " << HNO.ZeroBody+EMP2+EMP3 << std::endl;
   }
-
 
 
   // Calculate all the desired operators

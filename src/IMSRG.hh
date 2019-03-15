@@ -25,6 +25,7 @@
 #include "ThreeBodyME.hh"
 #include "Operator.hh"
 #include "HartreeFock.hh"
+#include "HFMBPT.hh"
 #include "Commutator.hh"
 #include "Generator.hh"
 #include "IMSRGSolver.hh"

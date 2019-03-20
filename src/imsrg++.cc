@@ -164,7 +164,7 @@ int main(int argc, char** argv)
     {
       parameters.string_par["valence_space"] = "custom";
       flowfile = parameters.DefaultFlowFile();
-      miscfile = parameters.DefaultMiscFile();
+      if(miscfile != "") miscfile = parameters.DefaultMiscFile();
       intfile = parameters.DefaultIntFile();
     }
     valence_space = custom_valence_space;

@@ -215,7 +215,8 @@ void IMSRGSolver::Solve_magnus_euler()
 
     // Write details of the flow
    WriteFlowStatus(flowfile);
-   WriteStatusMisc(miscfile);
+   WriteStatusFlow1(flow1file);
+   WriteStatusFlow2(flow2file);
    WriteFlowStatus(std::cout);
 
    for (istep=1;s<smax;++istep)
@@ -272,7 +273,8 @@ void IMSRGSolver::Solve_magnus_euler()
 
       // Write details of the flow
       WriteFlowStatus(flowfile);
-      WriteStatusMisc(miscfile);
+      WriteStatusFlow1(flow1file);
+      WriteStatusFlow2(flow2file);
       WriteFlowStatus(std::cout);
 //      profiler.PrintMemory();
 
@@ -839,27 +841,61 @@ void IMSRGSolver::WriteFlowStatusHeader(std::ostream& f)
 }
 
 // added by T.Miyagi
-void IMSRGSolver::SetMiscFile(std::string str)
+void IMSRGSolver::SetFlow1File(std::string str)
 {
-  miscfile = str;
+  flow1file = str;
   std::ofstream miscf;
-  if (miscfile != "")
+  if (flow1file != "")
   {
-    miscf.open(miscfile,std::ofstream::out);
+    miscf.open(flow1file,std::ofstream::out);
     miscf.close();
   }
 }
 
-void IMSRGSolver::WriteStatusMisc(std::string fname)
+void IMSRGSolver::WriteStatusFlow1(std::string fname)
 {
   if (fname !="")
   {
     std::ofstream ff(fname,std::ios::app);
-    WriteStatusMisc(ff);
+    WriteStatusFlow1(ff);
   }
 }
 
-void IMSRGSolver::WriteStatusMisc(std::ostream& f)
+void IMSRGSolver::WriteStatusFlow1(std::ostream& f)
+{
+  if ( f.good() )
+  {
+    auto& H_s = FlowingOps[0];
+    f << std::fixed << std::setw(5) << istep;
+    f << std::fixed << std::setw(10) << std::setprecision(3) << s;
+    for(int i=0; i<modelspace->GetNumberOrbits(); i++){
+      f << std::fixed << std::setw(18) << std::setprecision(6) << H_s.OneBody(i,i);
+    };
+    f << std::endl;
+  }
+}
+
+void IMSRGSolver::SetFlow2File(std::string str)
+{
+  flow2file = str;
+  std::ofstream miscf;
+  if (flow2file != "")
+  {
+    miscf.open(flow2file,std::ofstream::out);
+    miscf.close();
+  }
+}
+
+void IMSRGSolver::WriteStatusFlow2(std::string fname)
+{
+  if (fname !="")
+  {
+    std::ofstream ff(fname,std::ios::app);
+    WriteStatusFlow2(ff);
+  }
+}
+
+void IMSRGSolver::WriteStatusFlow2(std::ostream& f)
 {
   if ( f.good() )
   {

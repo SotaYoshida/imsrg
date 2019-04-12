@@ -123,10 +123,14 @@ class IMSRGSolver
   void CleanupScratch();
 
   // added by T. Miyagi
-  std::string miscfile;
-  void SetMiscFile(std::string);
-  void WriteStatusMisc(std::string);
-  void WriteStatusMisc(std::ostream&);
+  std::string flow1file;
+  std::string flow2file;
+  void SetFlow1File(std::string);
+  void WriteStatusFlow1(std::string);
+  void WriteStatusFlow1(std::ostream&);
+  void SetFlow2File(std::string);
+  void WriteStatusFlow2(std::string);
+  void WriteStatusFlow2(std::ostream&);
 
 
   // This is used to get flow info from odeint

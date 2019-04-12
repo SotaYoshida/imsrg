@@ -50,7 +50,8 @@ class Parameters
   std::string DefaultIntFile();
   // added by T. Miyagi
   std::string DefaultSummaryFile();
-  std::string DefaultMiscFile();
+  std::string DefaultFlow1File();
+  std::string DefaultFlow2File();
   std::string GetFileName(std::string, std::string);
   //
   bool help_mode;
@@ -63,7 +64,8 @@ std::map<std::string,std::string> Parameters::string_par = {
   {"valence_generator",		"shell-model-atan"},	// generator used for valence decoupling and 1-step (also single-ref)
   {"outputdir",			"output"},	// name of output flow file
   {"flowfile",			"default"},	// name of output flow file
-  {"miscfile",			""},	// name of flow matrix file
+  {"flow1file",			""},	// name of flow matrix file
+  {"flow2file",			""},	// name of flow matrix file
   {"summaryfile",			"default"},	// name of summary flow file
   {"intfile",			"default"},	// name of output interaction fille
   {"fmt2",			"me2j"},	// can also be navratil or Navratil to read Petr's TBME format
@@ -256,9 +258,14 @@ std::string Parameters::DefaultSummaryFile()
   return GetFileName("summary_",".dat");
 }
 
-std::string Parameters::DefaultMiscFile()
+std::string Parameters::DefaultFlow1File()
 {
-  return GetFileName("misc_",".dat");
+  return GetFileName("flow_f_",".dat");
+}
+
+std::string Parameters::DefaultFlow2File()
+{
+  return GetFileName("flow_gamma_",".dat");
 }
 
 std::string Parameters::DefaultIntFile()

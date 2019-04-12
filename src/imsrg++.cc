@@ -73,7 +73,8 @@ int main(int argc, char** argv)
   std::string basis = parameters.s("basis");
   std::string method = parameters.s("method");
   std::string flowfile = parameters.s("flowfile");
-  std::string miscfile = parameters.s("miscfile");
+  std::string flow1file = parameters.s("flow1file");
+  std::string flow2file = parameters.s("flow2file");
   std::string intfile = parameters.s("intfile");
   std::string core_generator = parameters.s("core_generator");
   std::string valence_generator = parameters.s("valence_generator");
@@ -164,7 +165,8 @@ int main(int argc, char** argv)
     {
       parameters.string_par["valence_space"] = "custom";
       flowfile = parameters.DefaultFlowFile();
-      if(miscfile != "") miscfile = parameters.DefaultMiscFile();
+      if(flow1file != "") flow1file = parameters.DefaultFlow1File();
+      if(flow2file != "") flow2file = parameters.DefaultFlow2File();
       intfile = parameters.DefaultIntFile();
     }
     valence_space = custom_valence_space;
@@ -511,7 +513,8 @@ int main(int argc, char** argv)
   imsrgsolver.SetHin(HNO);
   imsrgsolver.SetSmax(smax);
   imsrgsolver.SetFlowFile(flowfile);
-  imsrgsolver.SetMiscFile(miscfile);
+  imsrgsolver.SetFlow1File(flow1file);
+  imsrgsolver.SetFlow2File(flow2file);
   imsrgsolver.SetDs(ds_0);
   imsrgsolver.SetDsmax(dsmax);
   imsrgsolver.SetDenominatorDelta(denominator_delta);
@@ -631,6 +634,8 @@ int main(int argc, char** argv)
     int nOmega = imsrgsolver.GetOmegaSize() + imsrgsolver.GetNOmegaWritten();
     std::cout << "Undoing NO wrt A=" << modelspace.GetAref() << " Z=" << modelspace.GetZref() << std::endl;
     HNO = HNO.UndoNormalOrdering();
+    //rw.WriteTokyoFull(HNO,intfile+".snt");
+    //exit(0);
 
     ms2.SetReference(ms2.core); // change the reference
     HNO.SetModelSpace(ms2);
@@ -672,6 +677,7 @@ int main(int argc, char** argv)
     rw.WriteNuShellX_int(imsrgsolver.GetH_s(),intfile+".int");
     rw.WriteNuShellX_sps(imsrgsolver.GetH_s(),intfile+".sp");
     rw.WriteTokyo(imsrgsolver.GetH_s(),intfile+".snt","");
+    //rw.WriteTokyoFull(imsrgsolver.GetH_s(),intfile+".snt");
 
     if (method == "magnus")
     {

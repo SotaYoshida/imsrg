@@ -747,8 +747,8 @@ void IMSRGSolver::WriteFlowStatus(std::ostream& f)
 {
    if ( f.good() )
    {
-      int fwidth = 18;
-      int fprecision = 6;
+      int fwidth = 16;
+      int fprecision = 8;
       auto& H_s = FlowingOps[0];
       f.setf(std::ios::fixed);
       f << std::fixed << std::setw(5) << istep
@@ -868,8 +868,8 @@ void IMSRGSolver::WriteStatusFlow1(std::ostream& f)
     auto& H_s = FlowingOps[0];
     f << std::fixed << std::setw(5) << istep;
     f << std::fixed << std::setw(10) << std::setprecision(3) << s;
-    for(int i=0; i<modelspace->GetNumberOrbits(); i++){
-      f << std::fixed << std::setw(18) << std::setprecision(6) << H_s.OneBody(i,i);
+    for(size_t i=0; i<modelspace->GetNumberOrbits(); i++){
+      f << std::fixed << std::setw(16) << std::setprecision(8) << H_s.OneBody(i,i);
     };
     f << std::endl;
   }
@@ -900,7 +900,17 @@ void IMSRGSolver::WriteStatusFlow2(std::ostream& f)
   if ( f.good() )
   {
     auto& H_s = FlowingOps[0];
-    f << H_s.GetOrderedTwoBodyMonopoleMatrix(0,0) << std::endl;
-    f << Eta.GetOrderedTwoBodyMonopoleMatrix(0,0) << std::endl;
+    //f << H_s.GetOrderedTwoBodyMonopoleMatrix(0,0) << std::endl;
+    //f << Eta.GetOrderedTwoBodyMonopoleMatrix(0,0) << std::endl;
+    f << std::fixed << std::setw(5) << istep;
+    f << std::fixed << std::setw(10) << std::setprecision(3) << s;
+    for(size_t i=0; i<modelspace->GetNumberOrbits(); i++)
+    {
+      for(size_t j=0; j<=i; j++)
+      {
+        f << std::fixed << std::setw(16) << std::setprecision(8) << H_s.TwoBody.GetTBMEmonopole_norm(i,j,i,j);
+      }
+    }
+    f << std::endl;
   }
 }

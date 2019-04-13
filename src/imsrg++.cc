@@ -634,8 +634,10 @@ int main(int argc, char** argv)
     int nOmega = imsrgsolver.GetOmegaSize() + imsrgsolver.GetNOmegaWritten();
     std::cout << "Undoing NO wrt A=" << modelspace.GetAref() << " Z=" << modelspace.GetZref() << std::endl;
     HNO = HNO.UndoNormalOrdering();
-    //rw.WriteTokyoFull(HNO,intfile+".snt");
-    //exit(0);
+    //
+    imsrgsolver.SetHin(HNO);
+    imsrgsolver.WriteStatusFlow1(imsrgsolver.flow1file);
+    //
 
     ms2.SetReference(ms2.core); // change the reference
     HNO.SetModelSpace(ms2);
@@ -645,6 +647,10 @@ int main(int argc, char** argv)
 
 // More flowing is unnecessary, since things should stay decoupled.
     imsrgsolver.SetHin(HNO);
+    //
+    imsrgsolver.SetHin(HNO);
+    imsrgsolver.WriteStatusFlow1(imsrgsolver.flow1file);
+    //
 //    imsrgsolver.SetEtaCriterion(1e-4);
 //    imsrgsolver.Solve();
     // Change operators to the new basis, then apply the rest of the transformation

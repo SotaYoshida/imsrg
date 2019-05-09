@@ -923,7 +923,7 @@ double Operator::GetMP2_Energy()
    double t_start = omp_get_wtime();
    double Emp2 = 0;
    int nparticles = modelspace->particles.size();
-   #pragma omp parallel for reduction(+:Emp2)
+   //#pragma omp parallel for reduction(+:Emp2)
    for ( int ii=0;ii<nparticles;++ii)
    {
      index_t i = modelspace->particles[ii];

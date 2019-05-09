@@ -12,8 +12,8 @@ ALL = libIMSRG.so imsrg++
 INSTDIR = $(HOME)
 INCLUDE   = -I./armadillo
 FLAGS     = -O3 -march=native -std=c++11 -fopenmp -fPIC
-#LIBS = -lopenblas -lgsl -lz
-LIBS = -lblas -lgsl -lz
+LIBS = -lopenblas -lgsl -lz
+#LIBS = -lblas -lgsl -lz
 
 # I assume we're running on linux
 OS = LINUX
@@ -108,8 +108,8 @@ endif
 ifeq ($(THEHOST),cedar)
 #  FLAGS += -DOLD_BOOST
 #  #  FLAGS += -DOPENBLAS_NOUSEOMP=1
-  NEWLIBS := $(filter-out -lopenblas,$(LIBS))
-  LIBS = $(NEWLIBS) -lmkl
+  #NEWLIBS := $(filter-out -lopenblas,$(LIBS))
+  #LIBS = $(NEWLIBS) -lmkl -lmkl_gnu_thread -lmkl_core -lpthread -lgomp -liomp5
   ifneq ($(PYTHON),off)
    ALL += pyIMSRG.so
   endif

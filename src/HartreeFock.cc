@@ -730,10 +730,20 @@ Operator HartreeFock::GetNormalOrderedH()
             V3NO(j,i) = V3NO(i,j);
          }
       }
-
      auto& V2  =  Hbare.TwoBody.GetMatrix(ch);
      auto& OUT =  HNO.TwoBody.GetMatrix(ch);
      OUT  =    D.t() * (V2 + V3NO) * D;
+     //if(J == 2 and tbc.Tz==-1){
+     // for (int i=0; i<npq; ++i) {
+     //    Ket & bra = tbc.GetKet(i);
+     //    for (int j=0; j<npq; ++j) {
+     //       Ket & ket = tbc.GetKet(j);
+     //       std::cout << bra.p << " " << bra.q  << " " <<
+     //         ket.p << " " << ket.q << " " << V2(i,j) <<
+     //         " " << V3NO(i,j) << " " << D(i,j) << " " << OUT(i,j) << std::endl;
+     //    }
+     // }
+     //exit(0);}
    }
 
 //   FreeVmon();

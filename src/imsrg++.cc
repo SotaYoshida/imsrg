@@ -73,6 +73,7 @@ int main(int argc, char** argv)
   std::string basis = parameters.s("basis");
   std::string method = parameters.s("method");
   std::string flowfile = parameters.s("flowfile");
+  std::string smryfile = parameters.s("summaryfile");
   std::string flow1file = parameters.s("flow1file");
   std::string flow2file = parameters.s("flow2file");
   std::string intfile = parameters.s("intfile");
@@ -156,6 +157,10 @@ int main(int argc, char** argv)
   rw.SetLECs_preset(LECs);
   rw.SetScratchDir(scratch);
   rw.Set3NFormat( fmt3 );
+
+  if(smryfile == "default") smryfile = parameters.DefaultSummaryFile();
+  std::ofstream summary;
+  summary.open(smryfile, std::ofstream::out);
 
 //  ModelSpace modelspace;
 
@@ -294,6 +299,7 @@ int main(int argc, char** argv)
   HFMBPT hf(Hbare);
   std::cout << "Solving" << std::endl;
   hf.Solve();
+  summary << "Ecore HF " << hf.EHF << std::endl;
 
 //  Operator HNO;
   Operator& HNO = Hbare;
@@ -306,7 +312,6 @@ int main(int argc, char** argv)
     hf.GetNaturalOrbital();
     HNO = hf.GetNormalOrderedHNAT();
   }
-
 
 
   if ( spwf.size() > 0 )
@@ -341,7 +346,6 @@ int main(int argc, char** argv)
 //    cout << "EMP3 = " << EMP3 << endl;
     std::cout << "To 3rd order, E = " << HNO.ZeroBody+EMP2+EMP3 << std::endl;
   }
-
 
   // Calculate all the desired operators
   for (auto& opname : opnames)
@@ -409,6 +413,7 @@ int main(int argc, char** argv)
     {
       ops[i] = hf.TransformToHFBasis(ops[i]);
     }
+    if (basis == "NAT") ops[i] = hf.TransformHOToNATBasis(ops[i]);
     ops[i] = ops[i].DoNormalOrdering();
     if (method == "MP3")
     {
@@ -430,6 +435,8 @@ int main(int argc, char** argv)
   for (index_t i=0;i<ops.size();++i)
   {
     std::cout << opnames[i] << " = " << ops[i].ZeroBody << std::endl;
+    summary << opnames[i] << "core " << basis << " " <<
+      std::setprecision(8) << ops[i].ZeroBody << std::endl;
   }
 
 
@@ -711,16 +718,20 @@ int main(int argc, char** argv)
   else // single ref. just print the zero body pieces out. (maybe check if its magnus?)
   {
     std::cout << "Core Energy = " << std::setprecision(6) << imsrgsolver.GetH_s().ZeroBody << std::endl;
+    summary << "Ecore IMSRG " << std::setprecision(8) << imsrgsolver.GetH_s().ZeroBody << std::endl;
     for (index_t i=0;i<ops.size();++i)
     {
       Operator& op = ops[i];
       std::cout << opnames[i] << " = " << ops[i].ZeroBody << std::endl;
+      summary << opnames[i] << " = " << ops[i].ZeroBody << std::endl;
       if ( opnames[i] == "Rp2" )
       {
          int Z = modelspace.GetTargetZ();
          int A = modelspace.GetTargetMass();
          std::cout << " IMSRG point proton radius = " << sqrt( op.ZeroBody ) << std::endl;
          std::cout << " IMSRG charge radius = " << sqrt( op.ZeroBody + r2p + r2n*(A-Z)/Z + DF) << std::endl;
+         summary << "IMSRG point proton radius = " << sqrt( op.ZeroBody ) << std::endl;
+         summary << "IMSRG charge radius = " << sqrt( op.ZeroBody + r2p + r2n*(A-Z)/Z + DF) << std::endl;
       }
       if ((op.GetJRank()>0) or (op.GetTRank()>0)) // if it's a tensor, you probably want the full operator
       {
@@ -738,7 +749,7 @@ int main(int argc, char** argv)
     rw.WriteOperatorHuman(imsrgsolver.Omega.back(),intfile+"_omega.op");
   }
 
-
+  summary.close();
   Hbare.PrintTimes();
 
   return 0;

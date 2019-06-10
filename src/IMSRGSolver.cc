@@ -579,6 +579,8 @@ void IMSRGSolver::operator()( const std::deque<Operator>& x, std::deque<Operator
    }
    WriteFlowStatus(flowfile);
    WriteFlowStatus(std::cout);
+   WriteStatusFlow1(flow1file);
+   WriteStatusFlow2(flow2file);
 }
 
 
@@ -788,7 +790,6 @@ void IMSRGSolver::WriteFlowStatus(std::ostream& f)
       //<< std::setw(fwidth) << std::setprecision(fprecision) << H_s.Trace( modelspace->GetAref(), modelspace->GetZref() )
 //        << std::setw(fwidth) << std::setprecision(fprecision) << H_s.OneBodyNorm()
 //        << std::setw(fwidth) << std::setprecision(fprecision) << H_s.TwoBodyNorm()
-//        << std::setw(fwidth) << std::setprecision(fprecision) << Omega.Norm()
         << std::setw(fwidth) << std::setprecision(fprecision) << Omega.back().OneBodyNorm()
         << std::setw(fwidth) << std::setprecision(fprecision) << Omega.back().TwoBodyNorm()
         << std::setw(fwidth) << std::setprecision(fprecision) << Eta.OneBodyNorm()

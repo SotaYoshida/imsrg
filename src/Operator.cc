@@ -750,7 +750,9 @@ Operator Operator::Truncate(ModelSpace& ms_new)
     arma::uvec ibra_old(nkets);
     for (int ibra=0;ibra<nkets;++ibra)
     {
-      ibra_old(ibra) = tbc.GetLocalIndex(tbc_new.GetKetIndex(ibra));
+      //ibra_old(ibra) = tbc.GetLocalIndex(tbc_new.GetKetIndex(ibra));
+      Ket &ket = tbc.GetKet(ibra);
+      ibra_old(ibra) = tbc.GetLocalIndex(ket.p, ket.q);
     }
     Mat_new = Mat.submat(ibra_old,ibra_old);
   }
@@ -946,6 +948,8 @@ double Operator::GetMP2_Energy()
            Orbit& ob = modelspace->GetOrbit(b);
            double eb = OneBody(b,b);
            double denom = ea+eb-ei-ej;
+           if(2*oa.n + oa.l + 2*ob.n + ob.l > modelspace->GetE2max()) continue;
+           if(2*oi.n + oi.l + 2*oj.n + oj.l > modelspace->GetE2max()) continue;
            int Jmin = std::max(std::abs(oi.j2-oj.j2),std::abs(oa.j2-ob.j2))/2;
            int Jmax = std::min(oi.j2+oj.j2,oa.j2+ob.j2)/2;
            for (int J=Jmin; J<=Jmax; ++J)

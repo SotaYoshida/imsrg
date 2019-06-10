@@ -94,6 +94,8 @@ int main(int argc, char** argv)
 
   int eMax = parameters.i("emax");
   int E3max = parameters.i("e3max");
+  int eMax_imsrg = parameters.i("emax_imsrg");
+  int e2Max_imsrg = parameters.i("e2max_imsrg");
   int lmax3 = parameters.i("lmax3");
   int targetMass = parameters.i("A");
   int nsteps = parameters.i("nsteps");
@@ -178,7 +180,7 @@ int main(int argc, char** argv)
   }
 
 
-  ModelSpace modelspace = ( reference=="default" ? ModelSpace(eMax,valence_space) : ModelSpace(eMax,reference,valence_space) );
+  ModelSpace modelspace = ( reference=="default" ? ModelSpace(eMax,2*eMax,valence_space) : ModelSpace(eMax,2*eMax,reference,valence_space) );
 
   if (occ_file != "none" and occ_file != "" )
   {
@@ -187,7 +189,6 @@ int main(int argc, char** argv)
 
   if (nsteps < 0)
     nsteps = modelspace.valence.size()>0 ? 2 : 1;
-
 
   modelspace.SetHbarOmega(hw);
   if (targetMass>0)
@@ -221,7 +222,6 @@ int main(int argc, char** argv)
     for ( auto opn : opnames ) std::cout << opn << " ,  ";
     std::cout << std::endl;
   }
-
 
 
 
@@ -483,6 +483,20 @@ int main(int argc, char** argv)
 //  Eye.ScaleFermiDirac(HNO, Temp, Efermi);  // 0 is roughly fermi surface? we can do beter...
 //  std::cout << "Initial low temp trace with T = " << Temp << " and Ef = " << Efermi << ":   " << HlowT.Trace(modelspace.GetAref(),modelspace.GetZref()) <<"  with normalization  " << Eye.Trace( modelspace.GetAref(),modelspace.GetZref() ) << std::endl;
 
+
+//
+  ModelSpace modelspace2 = ( reference=="default" ? ModelSpace(eMax_imsrg,e2Max_imsrg,valence_space) : ModelSpace(eMax_imsrg,e2Max_imsrg,reference,valence_space) );
+
+  if (occ_file != "none" and occ_file != "" )
+  {
+    modelspace2.Init_occ_from_file(eMax,valence_space,occ_file);
+  }
+
+  if (nsteps < 0)
+    nsteps = modelspace2.valence.size()>0 ? 2 : 1;
+  modelspace2.SetHbarOmega(hw);
+  HNO = HNO.Truncate(modelspace2);
+//
   IMSRGSolver imsrgsolver(HNO);
   imsrgsolver.SetReadWrite(rw);
   imsrgsolver.SetEtaCriterion(eta_criterion);
@@ -578,7 +592,8 @@ int main(int argc, char** argv)
       imsrgsolver.SetDenominatorDeltaOrbit(denominator_delta_orbit);
 
     imsrgsolver.SetGenerator(valence_generator);
-    modelspace.ResetFirstPass();
+    //modelspace.ResetFirstPass();
+    modelspace2.ResetFirstPass();
     if (valence_generator.find("imaginary")!=std::string::npos)
     {
      if (ds_0>1e-2)
@@ -602,6 +617,7 @@ int main(int argc, char** argv)
     for (size_t i=0;i<ops.size();++i)
     {
       std::cout << opnames[i] << " " << std::endl;
+      ops[i] = ops[i].Truncate(modelspace2);
       ops[i] = imsrgsolver.Transform(ops[i]);
       std::cout << " (" << ops[i].ZeroBody << " ) " << std::endl;
 //      rw.WriteOperatorHuman(ops[i],intfile+opnames[i]+"_step2.op");
@@ -616,16 +632,19 @@ int main(int argc, char** argv)
   // If we're doing targeted/ensemble normal ordering
   // we now re-normal order wrt to the core
   // and do any remaining flow.
-  ModelSpace ms2(modelspace);
+  ModelSpace ms2(modelspace2);
   bool renormal_order = false;
-  if (modelspace.valence.size() > 0 )
+  //if (modelspace.valence.size() > 0 )
+  if (modelspace2.valence.size() > 0 )
   {
-    renormal_order = modelspace.holes.size() != modelspace.core.size();
+    //renormal_order = modelspace.holes.size() != modelspace.core.size();
+    renormal_order = modelspace2.holes.size() != modelspace2.core.size();
     if (not renormal_order)
     {
-      for (auto c : modelspace.core)
+      for (auto c : modelspace2.core)
       {
-         if ( (find( modelspace.holes.begin(), modelspace.holes.end(), c) == modelspace.holes.end()) or (std::abs(1-modelspace.GetOrbit(c).occ)>1e-6))
+         //if ( (find( modelspace.holes.begin(), modelspace.holes.end(), c) == modelspace.holes.end()) or (std::abs(1-modelspace.GetOrbit(c).occ)>1e-6))
+         if ( (find( modelspace2.holes.begin(), modelspace2.holes.end(), c) == modelspace2.holes.end()) or (std::abs(1-modelspace2.GetOrbit(c).occ)>1e-6))
          {
            renormal_order = true;
            break;
@@ -639,7 +658,8 @@ int main(int argc, char** argv)
     HNO = imsrgsolver.GetH_s();
 
     int nOmega = imsrgsolver.GetOmegaSize() + imsrgsolver.GetNOmegaWritten();
-    std::cout << "Undoing NO wrt A=" << modelspace.GetAref() << " Z=" << modelspace.GetZref() << std::endl;
+    //std::cout << "Undoing NO wrt A=" << modelspace.GetAref() << " Z=" << modelspace.GetZref() << std::endl;
+    std::cout << "Undoing NO wrt A=" << modelspace2.GetAref() << " Z=" << modelspace2.GetZref() << std::endl;
     HNO = HNO.UndoNormalOrdering();
     //
     imsrgsolver.SetHin(HNO);

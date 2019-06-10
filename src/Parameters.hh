@@ -98,6 +98,7 @@ std::map<std::string,double> Parameters::double_par = {
   {"ode_tolerance",	1e-6},	// error tolerance for the ode solver
   {"denominator_delta",	   0},	// offset added to the denominator in the generator
   {"BetaCM",               0},  // Prefactor for Lawson-Glockner term
+  {"BetaCM_trans",         0},  // Prefactor for Lawson-Glockner term
   {"hwBetaCM",            -1},  // Oscillator frequency used in the Lawson-Glockner term. Negative value means use the frequency of the basis
   {"eta_criterion",     1e-6},  // Threshold on ||eta|| for convergence in the flow
 
@@ -107,6 +108,8 @@ std::map<std::string,int> Parameters::int_par = {
   {"A",	-1},	// Aeff for kinetic energy. -1 means take A of reference
   {"e3max",		12},
   {"emax",		6},
+  {"emax_imsrg",		6},
+  {"e2max_imsrg",		12},
   {"lmax3",		-1}, // lmax for the 3body interaction
   {"nsteps",		-1},	// do the decoupling in 1 step or core-then-valence. -1 means default
   {"file2e1max",	12},

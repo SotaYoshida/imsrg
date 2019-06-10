@@ -437,8 +437,8 @@ void HFMBPT::DensityMatrixPH(Operator& H)
           }
         }
       }
-      rho(a,i) += r * 0.5 / (2*oa.j2+1);
-      rho(i,a) += r * 0.5 / (2*oa.j2+1);
+      rho(a,i) += r * 0.5 / (oa.j2+1);
+      rho(i,a) += r * 0.5 / (oa.j2+1);
     }
   }
 

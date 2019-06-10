@@ -107,8 +107,9 @@ class TwoBodyChannel
    virtual ~TwoBodyChannel();
    TwoBodyChannel();
    TwoBodyChannel(int j, int p, int t, ModelSpace* ms);
-   TwoBodyChannel(int N, ModelSpace* ms);
-   void Initialize(int N, ModelSpace* ms);
+   //TwoBodyChannel(int N, ModelSpace* ms);
+   //void Initialize(int N, ModelSpace* ms);
+   void Initialize(int j, int p, int t, ModelSpace* ms);
 
 
    //Methods
@@ -156,7 +157,7 @@ class TwoBodyChannel
    //Methods
    virtual bool CheckChannel_ket(Orbit* op, Orbit* oq) const;  // check if |pq> participates in this channel
    bool CheckChannel_ket(Ket &ket) const {return CheckChannel_ket(ket.op,ket.oq);};  // check if |pq> participates in this channel
-   
+
 };
 
 
@@ -167,7 +168,7 @@ class TwoBodyChannel_CC : public TwoBodyChannel
    ~TwoBodyChannel_CC();
    TwoBodyChannel_CC();
    TwoBodyChannel_CC(int j, int p, int t, ModelSpace* ms);
-   TwoBodyChannel_CC(int N, ModelSpace* ms);
+   //TwoBodyChannel_CC(int N, ModelSpace* ms);
    bool CheckChannel_ket(Orbit* op, Orbit* oq) const;  // check if |pq> participates in this channel
 //   bool CheckChannel_ket(int p, int q) const;  // check if |pq> participates in this channel
 };
@@ -186,14 +187,14 @@ class ModelSpace
    ModelSpace();
    ModelSpace(const ModelSpace&); // copy constructor
    ModelSpace( ModelSpace&&); // move constructor
-   ModelSpace(int emax, std::vector<std::string> hole_list, std::vector<std::string> valence_list);
-   ModelSpace(int emax, std::vector<std::string> hole_list, std::vector<std::string> core_list, std::vector<std::string> valence_list);
-   ModelSpace(int emax, std::string reference, std::string valence);
-   ModelSpace(int emax, std::string reference);
+   ModelSpace(int emax, int e2max, std::vector<std::string> hole_list, std::vector<std::string> valence_list);
+   ModelSpace(int emax, int e2max, std::vector<std::string> hole_list, std::vector<std::string> core_list, std::vector<std::string> valence_list);
+   ModelSpace(int emax, int e2max, std::string reference, std::string valence);
+   ModelSpace(int emax, int e2max, std::string reference);
 
    // Overloaded operators
-   ModelSpace operator=(const ModelSpace&); 
-   ModelSpace operator=(ModelSpace&&); 
+   ModelSpace operator=(const ModelSpace&);
+   ModelSpace operator=(ModelSpace&&);
 
    // Methods
 
@@ -215,13 +216,17 @@ class ModelSpace
    void AddOrbit(Orbit orb);
    void AddOrbit(int n, int l, int j2, int tz2, double occ, int io);
    // Setter/Getters
-   Orbit& GetOrbit(int i) {return (Orbit&) Orbits[i];}; 
-//   Orbit& GetOrbit(int i) const {return (Orbit&) Orbits[i];}; 
+   Orbit& GetOrbit(int i) {return (Orbit&) Orbits[i];};
+//   Orbit& GetOrbit(int i) const {return (Orbit&) Orbits[i];};
    Ket& GetKet(int i) const {return (Ket&) Kets[i];};
-   Ket& GetKet(int p, int q) const {return (Ket&) Kets[Index2(p,q)];};
-   size_t GetOrbitIndex(int n, int l, int j2, int tz2) const {return Index1(n,l,j2,tz2);};
-   size_t GetKetIndex(int p, int q) const {return Index2(p,q);}; // convention is p<=q
-   size_t GetKetIndex(Ket * ket) const {return Index2(ket->p,ket->q);}; // convention is p<=q
+   //Ket& GetKet(int p, int q) const {return (Ket&) Kets[Index2(p,q)];};
+   Ket& GetKet(int p, int q) {return (Ket&) Kets[Index2(p,q)];};
+   //size_t GetOrbitIndex(int n, int l, int j2, int tz2) const {return Index1(n,l,j2,tz2);};
+   size_t GetOrbitIndex(int n, int l, int j2, int tz2) {return Index1(n,l,j2,tz2);};
+   //size_t GetKetIndex(int p, int q) const {return Index2(p,q);}; // convention is p<=q
+   size_t GetKetIndex(int p, int q) {return Index2(p,q);}; // convention is p<=q
+   //size_t GetKetIndex(Ket * ket) const {return Index2(ket->p,ket->q);}; // convention is p<=q
+   size_t GetKetIndex(Ket * ket) {return Index2(ket->p,ket->q);}; // convention is p<=q
    size_t GetNumberOrbits() const {return norbits;};
    size_t GetNumberKets() const {return Kets.size();};
    void SetHbarOmega(double hw) {hbar_omega = hw;};
@@ -235,8 +240,6 @@ class ModelSpace
    size_t GetNumberTwoBodyChannels() const {return TwoBodyChannels.size();};
    TwoBodyChannel& GetTwoBodyChannel(int ch) const {return (TwoBodyChannel&) TwoBodyChannels[ch];};
    TwoBodyChannel_CC& GetTwoBodyChannel_CC(int ch) const {return (TwoBodyChannel_CC&) TwoBodyChannels_CC[ch];};
-   int GetTwoBodyJmax() const {return TwoBodyJmax;};
-   int GetThreeBodyJmax() const {return ThreeBodyJmax;};
    void SetReference(std::vector<index_t>);
    void SetReference(std::map<index_t,double>);
    void SetReference(std::string);
@@ -258,13 +261,16 @@ class ModelSpace
    bool SixJ_is_empty(){ return SixJList.empty(); };
 
    size_t GetOrbitIndex(std::string);
-   size_t GetTwoBodyChannelIndex(int j, int p, int t);
-   int phase(int x) {return (x%2)==0 ? 1 : -1;};
+   size_t GetTwoBodyChannelIndex(int j, int p, int t) {return TwoBodyJPT2idx[{j,p,t}];};
+   int phase(int x) {return (x%2)==0 ? 1 : -1;}
    int phase(double x) {return phase(int(x));};
 
-   size_t Index1(int n, int l, int j2, int tz2) const {return(2*n+l)*(2*n+l+3) + 1-j2 + (tz2+1)/2 ;};
+//   size_t Index1(int n, int l, int j2, int tz2) const {return(2*n+l)*(2*n+l+3) + 1-j2 + (tz2+1)/2 ;};
+   size_t Index1(int n, int l, int j2, int tz2) {return nljtz2idx[{n,l,j2,tz2}] ;};
 //   inline int Index2(int p, int q) const {return q*(q+1)/2 + p;};
-   size_t Index2(size_t p, size_t q) const {return p*(2*norbits-1-p)/2 + q;};
+//   size_t Index2(size_t p, size_t q) const {return p*(2*norbits-1-p)/2 + q;};
+   size_t Index2(size_t p, size_t q) {return pq2idx[{p,q}];};
+   void SetIndex1(int emax);
 
    void PreCalculateMoshinsky();
    void PreCalculateSixJ();
@@ -290,10 +296,10 @@ class ModelSpace
    std::vector<index_t> proton_orbits;
    std::vector<index_t> neutron_orbits;
 
-   std::vector<index_t> KetIndex_pp; 
+   std::vector<index_t> KetIndex_pp;
    std::vector<index_t> KetIndex_ph;
    std::vector<index_t> KetIndex_hh;
-   std::vector<index_t> KetIndex_cc; 
+   std::vector<index_t> KetIndex_cc;
    std::vector<index_t> KetIndex_vc;
    std::vector<index_t> KetIndex_qc;
    std::vector<index_t> KetIndex_vv;
@@ -312,10 +318,8 @@ class ModelSpace
    int E3max;
    int Lmax2;
    int Lmax3;
-   int OneBodyJmax;
-   int TwoBodyJmax;
-   int ThreeBodyJmax;
    std::map<std::array<int,3>,std::vector<index_t> > OneBodyChannels;
+   std::map<std::array<int,3>,size_t > TwoBodyJPT2idx;
 
    std::vector<unsigned int> SortedTwoBodyChannels;
    std::vector<unsigned int> SortedTwoBodyChannels_CC;
@@ -333,6 +337,8 @@ class ModelSpace
    int Aref;
    int Zref;
    int nTwoBodyChannels;
+   std::map<std::array<int,4>,size_t> nljtz2idx;
+   std::map<std::array<size_t,2>,size_t> pq2idx;
    std::vector<Orbit> Orbits;
    std::vector<Ket> Kets;
    std::vector<TwoBodyChannel> TwoBodyChannels;

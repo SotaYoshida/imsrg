@@ -51,11 +51,9 @@ void Generator::AddToEta(Operator * H_s, Operator * Eta_s)
 // Old method used to test some things out. Not typically used.
 void Generator::SetDenominatorDeltaOrbit(std::string orb)
 {
-  if (orb == "all")
-     SetDenominatorDeltaIndex(-12345);
-  else
-     SetDenominatorDeltaIndex( modelspace->GetOrbitIndex(orb) );
-  std::cout << "Setting denominator delta orbit " << orb << " => " << modelspace->GetOrbitIndex(orb) << std::endl;
+  if (orb == "all") SetDenominatorDeltaIndex( -12345 );
+  else {SetDenominatorDeltaIndex( modelspace->GetOrbitIndex(orb) );
+  std::cout << "Setting denominator delta orbit " << orb << " => " << modelspace->GetOrbitIndex(orb) << std::endl;}
 }
 
 
@@ -70,8 +68,6 @@ double Generator::Get1bDenominator(int i, int j)
 
    if (denominator_delta_index==-12345 or i == denominator_delta_index or j==denominator_delta_index)
      denominator += denominator_delta;
-   //if (i == 12 or i == 13 or i == 14 or i == 15 or i == 16 or i == 17 or i == 18 or i == 19) denominator += denominator_delta;
-   //if (j == 12 or j == 13 or j == 14 or j == 15 or j == 16 or j == 17 or j == 18 or j == 19) denominator += denominator_delta;
 
    if (std::abs(denominator)<denominator_cutoff)
      denominator = denominator_cutoff;
@@ -92,10 +88,6 @@ double Generator::Get2bDenominator(int ch, int ibra, int iket)
    int l = ket.q;
    double denominator = H->OneBody(i,i)+ H->OneBody(j,j) - H->OneBody(k,k) - H->OneBody(l,l);
    if (denominator_delta_index == -12345) denominator += denominator_delta;
-   //if (i == 12 or i == 13 or i == 14 or i == 15 or i == 16 or i == 17 or i == 18 or i == 19) denominator += denominator_delta; // test (ad hoc pf)
-   //if (j == 12 or j == 13 or j == 14 or j == 15 or j == 16 or j == 17 or j == 18 or j == 19) denominator += denominator_delta; // test (ad hoc pf)
-   //if (k == 12 or k == 13 or k == 14 or k == 15 or k == 16 or k == 17 or k == 18 or k == 19) denominator += denominator_delta; // test (ad hoc pf)
-   //if (l == 12 or l == 13 or l == 14 or l == 15 or l == 16 or l == 17 or l == 18 or l == 19) denominator += denominator_delta; // test (ad hoc pf)
    double ni = bra.op->occ;
    double nj = bra.oq->occ;
    double nk = ket.op->occ;

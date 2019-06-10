@@ -45,7 +45,17 @@ while is_spe == True:
     try:
         X,Y = myplt.data2d(f,x=1,y=i)
         label = get_label(i-2)
-        axs.plot(X[:],Y[:],label=label)
+        xx = []
+        yy = []
+        smax = 0.0
+        x_old = 0.0
+        for k in range(len(X)):
+            if(x_old > 200 and X[k] == 0.0):
+                smax = x_old
+            x_old = X[k]
+            xx.append(X[k]+smax)
+            yy.append(Y[k])
+        axs.plot(xx,yy,label=label)
     except:
         is_spe = False
 
@@ -54,7 +64,7 @@ while is_spe == True:
 axs.set_xlabel('$s$')
 axs.set_ylabel('Energy (MeV)')
 ### comment ###
-plt.legend(ncol=2)
+plt.legend(ncol=2,loc='lower left')
 plt.tight_layout()
 #plt.show()
 plt.savefig(fout)

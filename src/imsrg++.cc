@@ -127,6 +127,8 @@ int main(int argc, char** argv)
   std::vector<Operator> ops;
   std::vector<std::string> spwf = parameters.v("SPWF");
 
+  if(eMax_imsrg == -1) eMax_imsrg=eMax;
+  if(e2Max_imsrg == -1) e2Max_imsrg=2*eMax;
 
   std::ifstream test;
   // test 2bme file

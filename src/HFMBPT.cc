@@ -222,7 +222,7 @@ Operator HFMBPT::GetNormalOrderedHNAT()
 
     arma::mat D(npq,npq,arma::fill::zeros);
     arma::mat V3NO(npq,npq,arma::fill::zeros);
-//#pragma omp parallel for schedule(dynamic,1)
+#pragma omp parallel for schedule(dynamic,1)
     for (int i=0; i<npq; ++i)
     {
       Ket & bra = tbc.GetKet(i);

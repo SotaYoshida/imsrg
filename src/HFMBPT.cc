@@ -15,7 +15,6 @@ void HFMBPT::GetNaturalOrbital()
   int norbits = HartreeFock::modelspace->GetNumberOrbits();
   int A = HartreeFock::modelspace->GetTargetMass();
   C_HF2NAT = arma::mat(norbits,norbits,arma::fill::eye);
-  rho      = arma::mat(norbits,norbits,arma::fill::zeros);
   Occ      = arma::vec(norbits,arma::fill::zeros);
   GetDensityMatrix();
   DiagRho();
@@ -279,6 +278,8 @@ void HFMBPT::GetDensityMatrix()
   Operator Hhf = HartreeFock::GetNormalOrderedH();
   Operator& H(Hhf);
   double t_start = omp_get_wtime();
+  int norbits = HartreeFock::modelspace->GetNumberOrbits();
+  rho = arma::mat(norbits,norbits,arma::fill::zeros);
   DensityMatrixPP(H);
   DensityMatrixHH(H);
   DensityMatrixPH(H);

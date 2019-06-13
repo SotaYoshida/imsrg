@@ -732,6 +732,7 @@ Operator HartreeFock::GetNormalOrderedH()
       }
      auto& V2  =  Hbare.TwoBody.GetMatrix(ch);
      auto& OUT =  HNO.TwoBody.GetMatrix(ch);
+     std::cout<<V3NO<<std::endl;
      OUT  =    D.t() * (V2 + V3NO) * D;
      //if(J == 2 and tbc.Tz==-1){
      // for (int i=0; i<npq; ++i) {

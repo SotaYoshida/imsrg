@@ -79,6 +79,7 @@ namespace imsrg_util
          std::istringstream( opnamesplit[1] ) >> hw_HCM;
          int A = modelspace.GetTargetMass();
          return TCM_Op(modelspace) + 0.5*A*M_NUCLEON*hw_HCM*hw_HCM/HBARC/HBARC*R2CM_Op(modelspace);
+         //return PSquaredOp(modelspace)/A + 0.5*M_NUCLEON*hw_HCM*hw_HCM/HBARC/HBARC*RSquaredOp(modelspace) / A;
       }
       else if (opnamesplit[0] == "VCM") // GetHCM with a different frequency, ie HCM_24 for hw=24
       {
@@ -3221,6 +3222,38 @@ std::cout<<MF<<",  "<<MGT<<",  "<<Mtbme<<std::endl;
 //   return VectorUnion(vec, args...);
 // }
 
+/// Center of mass kinetic energy, including the hw/A factor
+/// \f[
+/// T = \frac{\hbar\omega}{A}\sum_{ij} t_{ij} a^{\dagger}_{i} a_{j}
+/// \f]
+/// with a one-body piece
+/// \f[
+/// t_{ij} = \frac{1}{\hbar\omega} \left\langle i | T_{12} | j \right\rangle = \frac{1}{2}(2n_i+\ell_i+3/2) \delta_{ij} + \frac{1}{2}\sqrt{n_j(n_j+\ell_j+\frac{1}{2})} \delta_{n_i,n_j-1}\delta_{k_i k_j}
+/// \f]
+ Operator PSquaredOp(ModelSpace& modelspace)
+ {
+   double hw = modelspace.GetHbarOmega();
+   Operator TcmOp = Operator(modelspace);
+   TcmOp.SetHermitian();
+   // One body piece = p**2/(2mA)
+   int norb = modelspace.GetNumberOrbits();
+   for (int i=0; i<norb; ++i)
+   {
+      Orbit & oi = modelspace.GetOrbit(i);
+      for (int j : TcmOp.OneBodyChannels.at({oi.l,oi.j2,oi.tz2}) )
+      {
+         Orbit & oj = modelspace.GetOrbit(j);
+         if (j<i) continue;
+         double tij = 0;
+         if (oi.n == oj.n) tij = 0.5*(2*oi.n+oi.l + 1.5) * hw;
+         else if (oi.n == oj.n-1) tij = 0.5*sqrt(oj.n*(oj.n+oj.l + 0.5)) * hw;
+         TcmOp.OneBody(i,j) = tij;
+         TcmOp.OneBody(j,i) = tij;
+      }
+   }
+
+   return TcmOp;
+ }
 
 }// namespace imsrg_util
 

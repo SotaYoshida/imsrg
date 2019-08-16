@@ -64,7 +64,6 @@ double Generator::Get1bDenominator(int i, int j)
 {
    double ni = modelspace->GetOrbit(i).occ;
    double nj = modelspace->GetOrbit(j).occ;
-
    double denominator = H->OneBody(i,i) - H->OneBody(j,j);
    denominator += ( ni-nj ) * H->TwoBody.GetTBMEmonopole(i,j,i,j);
 
@@ -348,7 +347,10 @@ void Generator::ConstructGenerator_ShellModel_Atan()
       {
          if (i==a) continue;
          double denominator = Get1bDenominator(i,a);
-         Eta->OneBody(i,a) = 0.5*atan(2*H->OneBody(i,a)/denominator);
+         double f_reduction = 1.0;
+         //if (a == 12 or a == 13 or a == 14 or a == 15 or a == 16 or a == 17 or a == 18 or a == 19) f_reduction = 0.05;
+         //if (i == 12 or i == 13 or i == 14 or i == 15 or i == 16 or i == 17 or i == 18 or i == 19) f_reduction = 0.05;
+         Eta->OneBody(i,a) = 0.5*atan(2*H->OneBody(i,a)/denominator * f_reduction);
          Eta->OneBody(a,i) = - Eta->OneBody(i,a);
       }
    }
@@ -368,8 +370,15 @@ void Generator::ConstructGenerator_ShellModel_Atan()
       {
          for ( auto& ibra : VectorUnion( tbc.GetKetIndex_vv(), tbc.GetKetIndex_qv(), tbc.GetKetIndex_qq() ) )
          {
+           Ket & bra = tbc.GetKet(ibra);
+           Ket & ket = tbc.GetKet(iket);
+           double f_reduction = 1.0;
+           //if (bra.p == 12 or bra.p == 13 or bra.p == 14 or bra.p == 15 or bra.p == 16 or bra.p == 17 or bra.p == 18 or bra.p == 19) f_reduction = 0.05;
+           //if (bra.q == 12 or bra.q == 13 or bra.q == 14 or bra.q == 15 or bra.q == 16 or bra.q == 17 or bra.q == 18 or bra.q == 19) f_reduction = 0.05;
+           //if (ket.p == 12 or ket.p == 13 or ket.p == 14 or ket.p == 15 or ket.p == 16 or ket.p == 17 or ket.p == 18 or ket.p == 19) f_reduction = 0.05;
+           //if (ket.q == 12 or ket.q == 13 or ket.q == 14 or ket.q == 15 or ket.q == 16 or ket.q == 17 or ket.q == 18 or ket.q == 19) f_reduction = 0.05;
             double denominator = Get2bDenominator(ch,ibra,iket);
-            ETA2(ibra,iket) = 0.5*atan(2*H2(ibra,iket) / denominator);
+            ETA2(ibra,iket) = 0.5*atan(2*H2(ibra,iket) / denominator * f_reduction);
             ETA2(iket,ibra) = - ETA2(ibra,iket) ; // Eta needs to be antisymmetric
          }
 
@@ -380,8 +389,15 @@ void Generator::ConstructGenerator_ShellModel_Atan()
       {
          for ( auto& ibra : VectorUnion( tbc.GetKetIndex_qv(), tbc.GetKetIndex_qq() ) )
          {
+           Ket & bra = tbc.GetKet(ibra);
+           Ket & ket = tbc.GetKet(iket);
+           double f_reduction = 1.0;
+           //if (bra.p == 12 or bra.p == 13 or bra.p == 14 or bra.p == 15 or bra.p == 16 or bra.p == 17 or bra.p == 18 or bra.p == 19) f_reduction = 0.05;
+           //if (bra.q == 12 or bra.q == 13 or bra.q == 14 or bra.q == 15 or bra.q == 16 or bra.q == 17 or bra.q == 18 or bra.q == 19) f_reduction = 0.05;
+           //if (ket.p == 12 or ket.p == 13 or ket.p == 14 or ket.p == 15 or ket.p == 16 or ket.p == 17 or ket.p == 18 or ket.p == 19) f_reduction = 0.05;
+           //if (ket.q == 12 or ket.q == 13 or ket.q == 14 or ket.q == 15 or ket.q == 16 or ket.q == 17 or ket.q == 18 or ket.q == 19) f_reduction = 0.05;
             double denominator = Get2bDenominator(ch,ibra,iket);
-            ETA2(ibra,iket) = 0.5*atan(2*H2(ibra,iket) / denominator) ;
+            ETA2(ibra,iket) = 0.5*atan(2*H2(ibra,iket) / denominator * f_reduction) ;
             ETA2(iket,ibra) = - ETA2(ibra,iket) ; // Eta needs to be antisymmetric
          }
       }

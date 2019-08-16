@@ -866,6 +866,28 @@ void IMSRGSolver::WriteStatusFlow1(std::ostream& f)
   if ( f.good() )
   {
     auto& H_s = FlowingOps[0];
+
+    //int norbs = modelspace->GetNumberOrbits();
+    //std::unordered_map<int,int> remap;
+    //int i = 0;
+    //for ( auto& it: H_s.OneBodyChannels ) {
+    //  for ( auto& n : it.second){
+    //    remap[i] = n;
+    //    i+=1;
+    //  }
+    //}
+    //for (auto& a : modelspace->core) { remap[i] = a; i+=1;}
+    //for (auto& a : modelspace->valence) { remap[i] = a; i+=1;}
+    //for (auto& a : modelspace->qspace) { remap[i] = a; i+=1;}
+    //arma::mat fmat(norbs,norbs,arma::fill::zeros);
+    //for (int ibra=0; ibra<norbs; ibra++){
+    //  for (int iket=0; iket<norbs; iket++){
+    //    fmat(ibra,iket) = H_s.OneBody(remap[ibra], remap[iket]);
+    //  }
+    //}
+    //f << fmat << std::endl;
+
+
     f << std::fixed << std::setw(5) << istep;
     f << std::fixed << std::setw(10) << std::setprecision(3) << s;
     for(size_t i=0; i<modelspace->GetNumberOrbits(); i++){
@@ -900,17 +922,17 @@ void IMSRGSolver::WriteStatusFlow2(std::ostream& f)
   if ( f.good() )
   {
     auto& H_s = FlowingOps[0];
-    //f << H_s.GetOrderedTwoBodyMonopoleMatrix(0,0) << std::endl;
+    f << H_s.GetOrderedTwoBodyMonopoleMatrix(0,0) << std::endl;
     //f << Eta.GetOrderedTwoBodyMonopoleMatrix(0,0) << std::endl;
-    f << std::fixed << std::setw(5) << istep;
-    f << std::fixed << std::setw(10) << std::setprecision(3) << s;
-    for(size_t i=0; i<modelspace->GetNumberOrbits(); i++)
-    {
-      for(size_t j=0; j<=i; j++)
-      {
-        f << std::fixed << std::setw(16) << std::setprecision(8) << H_s.TwoBody.GetTBMEmonopole_norm(i,j,i,j);
-      }
-    }
-    f << std::endl;
+    //f << std::fixed << std::setw(5) << istep;
+    //f << std::fixed << std::setw(10) << std::setprecision(3) << s;
+    //for(size_t i=0; i<modelspace->GetNumberOrbits(); i++)
+    //{
+    //  for(size_t j=0; j<=i; j++)
+    //  {
+    //    f << std::fixed << std::setw(16) << std::setprecision(8) << H_s.TwoBody.GetTBMEmonopole_norm(i,j,i,j);
+    //  }
+    //}
+    //f << std::endl;
   }
 }

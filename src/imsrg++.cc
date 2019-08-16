@@ -226,7 +226,6 @@ int main(int argc, char** argv)
   }
 
 
-
 //  std::cout << "Making the Hamiltonian..." << std::endl;
   int particle_rank = input3bme=="none" ? 2 : 3;
   Operator Hbare = Operator(modelspace,0,0,0,particle_rank);

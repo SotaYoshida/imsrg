@@ -280,6 +280,8 @@ void HFMBPT::GetDensityMatrix()
   int norbits = HartreeFock::modelspace->GetNumberOrbits();
   rho      = arma::mat(norbits,norbits,arma::fill::zeros);
   double t_start = omp_get_wtime();
+  int norbits = HartreeFock::modelspace->GetNumberOrbits();
+  rho = arma::mat(norbits,norbits,arma::fill::zeros);
   DensityMatrixPP(H);
   DensityMatrixHH(H);
   DensityMatrixPH(H);

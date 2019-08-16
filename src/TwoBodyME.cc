@@ -120,6 +120,12 @@ double TwoBodyME::GetTBME_norm(int ch_bra, int ch_ket, int a, int b, int c, int 
    TwoBodyChannel& tbc_ket =  modelspace->GetTwoBodyChannel(ch_ket);
    auto bra_ind = tbc_bra.GetLocalIndex(std::min(a,b),std::max(a,b));
    auto ket_ind = tbc_ket.GetLocalIndex(std::min(c,d),std::max(c,d));
+   Orbit& oa = modelspace->GetOrbit(a);
+   Orbit& ob = modelspace->GetOrbit(b);
+   Orbit& oc = modelspace->GetOrbit(c);
+   Orbit& od = modelspace->GetOrbit(d);
+   if(2*oa.n + oa.l + 2*ob.n + ob.l > modelspace->GetE2max()) return 0;
+   if(2*oc.n + oc.l + 2*od.n + od.l > modelspace->GetE2max()) return 0;
    if (bra_ind < 0 or ket_ind < 0 or bra_ind > tbc_bra.GetNumberKets() or ket_ind > tbc_ket.GetNumberKets() )
      return 0;
    Ket & bra = tbc_bra.GetKet(bra_ind);

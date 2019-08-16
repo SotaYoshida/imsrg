@@ -279,36 +279,25 @@ std::string Parameters::DefaultIntFile()
 std::string Parameters::GetFileName(std::string name, std::string ext)
 {
   char strbuf[200];
-  if(double_par["BetaCM"] < 1.e-3){
-    sprintf(strbuf, "%s/%s%s_%s_%s_%s_hw%.0f_e%d_A%d_delta%.0f%s",
-        string_par["outputdir"].c_str(),
-        name.c_str(),
-        string_par["method"].c_str(),
-        string_par["reference"].c_str(),
-        string_par["valence_space"].c_str(),
-        string_par["basis"].c_str(),
-        double_par["hw"],
-        int_par["emax"],
-        int_par["A"],
-        double_par["denominator_delta"],
-        ext.c_str()
-        );
-  }
-  else{
-    sprintf(strbuf, "%s/%s%s_%s_%s_%s_hw%.0f_e%d_A%d_beta%.1f_delta%.0f%s",
-        string_par["outputdir"].c_str(),
-        name.c_str(),
-        string_par["method"].c_str(),
-        string_par["reference"].c_str(),
-        string_par["valence_space"].c_str(),
-        string_par["basis"].c_str(),
-        double_par["hw"],
-        int_par["emax"],
-        int_par["A"],
-        double_par["BetaCM"],
-        double_par["denominator_delta"],
-        ext.c_str()
-        );
-  }
+  int eimsrg=int_par["emax_imsrg"];
+  int e2imsrg=int_par["e2max_imsrg"];
+  if(eimsrg == -1) eimsrg = int_par["emax"];
+  if(e2imsrg == -1) e2imsrg = 2*eimsrg;
+  sprintf(strbuf, "%s/%s%s_%s_%s_%s_hw%.0f_e%d_eimsrg%d_e2imsrg%d_A%d_beta%.1f_delta%.0f%s",
+      string_par["outputdir"].c_str(),
+      name.c_str(),
+      string_par["method"].c_str(),
+      string_par["reference"].c_str(),
+      string_par["valence_space"].c_str(),
+      string_par["basis"].c_str(),
+      double_par["hw"],
+      int_par["emax"],
+      eimsrg,
+      e2imsrg,
+      int_par["A"],
+      double_par["BetaCM"],
+      double_par["denominator_delta"],
+      ext.c_str()
+      );
   return std::string(strbuf);
 }

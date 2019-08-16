@@ -516,7 +516,7 @@ namespace Commutator {
   void comm121ss( const Operator& X, const Operator& Y, Operator& Z)
   {
     index_t norbits = Z.modelspace->GetNumberOrbits();
-#pragma omp parallel for
+//#pragma omp parallel for
     for (index_t i=0;i<norbits;++i)
     {
       Orbit &oi = Z.modelspace->GetOrbit(i);
@@ -1181,6 +1181,8 @@ namespace Commutator {
 
           int jmin = std::max(std::abs(int(ji-jl)),std::abs(int(jk-jj)));
           int jmax = std::min(int(ji+jl),int(jk+jj));
+          //if( 2*oi.n + oi.l + 2*ol.n + ol.l <= Z.modelspace->GetE2max()
+          //    and 2*ok.n + ok.l + 2*oj.n + oj.l <= Z.modelspace->GetE2max()){
           if ( ((oi.l+ol.l)%2==parity_cc)  and  (std::abs(oi.tz2+ol.tz2)==Tz_cc*2) and (Jcc>=jmin) and (Jcc<=jmax) )
           {
             double sixj = Z.modelspace->GetSixJ(ji,jj,J,jk,jl,Jcc);
@@ -1189,7 +1191,10 @@ namespace Commutator {
             commij -= Jhat2 * sixj * Zbar(indx_il,indx_kj) ;
 
           }
+          //}
 
+          //if( 2*oi.n + oi.l + 2*ok.n + ok.l <= Z.modelspace->GetE2max()
+          //    and 2*ol.n + ol.l + 2*oj.n + oj.l <= Z.modelspace->GetE2max()){
           if (k==l)
           {
             commji = commij;
@@ -1215,6 +1220,7 @@ namespace Commutator {
 
             }
           }
+          //}
           double norm = bra.delta_pq()==ket.delta_pq() ? 1+bra.delta_pq() : SQRT2;
 #pragma omp atomic
           Zmat(ibra,iket) -= (commij - Z.modelspace->phase(jk+jl-J ) * commji) / norm;
@@ -1500,7 +1506,6 @@ namespace Commutator {
 
     // Perform inverse Pandya transform on Z_bar to get Z
     t_start = omp_get_wtime();
-
     // Actually, the Pandya transform has a minus sign in the definition,
     // and the ph commutator has an overall minus sign, so we're technically subtracting
     // the inverse Pandya transformation. Also, the inverse Pandya transformation

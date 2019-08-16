@@ -751,7 +751,7 @@ Operator Operator::Truncate(ModelSpace& ms_new)
     for (int ibra=0;ibra<nkets;++ibra)
     {
       //ibra_old(ibra) = tbc.GetLocalIndex(tbc_new.GetKetIndex(ibra));
-      Ket &ket = tbc.GetKet(ibra);
+      Ket &ket = tbc_new.GetKet(ibra);
       ibra_old(ibra) = tbc.GetLocalIndex(ket.p, ket.q);
     }
     Mat_new = Mat.submat(ibra_old,ibra_old);

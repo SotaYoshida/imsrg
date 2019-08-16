@@ -163,6 +163,8 @@ int main(int argc, char** argv)
   rw.Set3NFormat( fmt3 );
 
   if(smryfile == "default") smryfile = parameters.DefaultSummaryFile();
+  if(flow1file != "") flow1file = parameters.DefaultFlow1File();
+  if(flow2file != "") flow2file = parameters.DefaultFlow2File();
   std::ofstream summary;
   summary.open(smryfile, std::ofstream::out);
 
@@ -174,8 +176,6 @@ int main(int argc, char** argv)
     {
       parameters.string_par["valence_space"] = "custom";
       flowfile = parameters.DefaultFlowFile();
-      if(flow1file != "") flow1file = parameters.DefaultFlow1File();
-      if(flow2file != "") flow2file = parameters.DefaultFlow2File();
       intfile = parameters.DefaultIntFile();
     }
     valence_space = custom_valence_space;
@@ -494,8 +494,7 @@ int main(int argc, char** argv)
     modelspace2.Init_occ_from_file(eMax,valence_space,occ_file);
   }
 
-  if (nsteps < 0)
-    nsteps = modelspace2.valence.size()>0 ? 2 : 1;
+  if (nsteps < 0) nsteps = modelspace2.valence.size()>0 ? 2 : 1;
   modelspace2.SetHbarOmega(hw);
   HNO = HNO.Truncate(modelspace2);
 //

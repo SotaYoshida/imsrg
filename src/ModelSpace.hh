@@ -174,7 +174,7 @@ struct TwoBodyChannel
 
    virtual bool CheckChannel_ket(Orbit* op, Orbit* oq) const;  // check if |pq> participates in this channel
    bool CheckChannel_ket(Ket &ket) const {return CheckChannel_ket(ket.op,ket.oq);};  // check if |pq> participates in this channel
-   
+
 };
 
 
@@ -257,6 +257,12 @@ class ModelSpace
    int Aref;          // Particle number of the normal-ordering reference
    int Zref;          // Proton number of the normal-ordering reference
 
+   // Fields for atomic system
+   int Z_atom;   // electric charge of nucleus
+   int Nele_atom;   // electron number
+   std::string basis; // basis function, Hy, HO, Laguerre, ...
+
+
    std::vector<Orbit> Orbits; // vector of one-body Orbit structs
    std::vector<Ket> Kets;     // vector of two-body Ket structs
    std::vector<Ket3> Kets3;   // vector of three-body Ket3 structs
@@ -298,10 +304,10 @@ class ModelSpace
 //   std::set<std::array<int,3>> hole_quantum_numbers; // For checking if an orbit could mix with the hole orbits
    std::set<std::array<int,2>> hole_quantum_numbers; // For checking if an orbit could mix with the hole orbits
 
-   std::vector<index_t> KetIndex_pp; 
+   std::vector<index_t> KetIndex_pp;
    std::vector<index_t> KetIndex_ph;
    std::vector<index_t> KetIndex_hh;
-   std::vector<index_t> KetIndex_cc; 
+   std::vector<index_t> KetIndex_cc;
    std::vector<index_t> KetIndex_vc;
    std::vector<index_t> KetIndex_qc;
    std::vector<index_t> KetIndex_vv;
@@ -348,8 +354,8 @@ class ModelSpace
 
 
    // Overloaded operators
-   ModelSpace operator=(const ModelSpace&); 
-   ModelSpace operator=(ModelSpace&&); 
+   ModelSpace operator=(const ModelSpace&);
+   ModelSpace operator=(ModelSpace&&);
 
    // Methods
 
@@ -374,13 +380,19 @@ class ModelSpace
    void ParseCommaSeparatedValenceSpace(std::string valence, std::set<index_t>& core_list, std::set<index_t>& valence_list);
 //   void ParseCommaSeparatedValenceSpace(std::string valence, std::vector<index_t>& core_list, std::vector<index_t>& valence_list);
 
+// Methods for atomic system, not assuming HO orbital
+   void InitAtomicSpace( int emax, std::string filename, std::string reference, std::string valence);
+   void Get0hwAtomicSpace(int Nele, std::set<index_t>& core_list, std::set<index_t>& valence_list);
+   std::map<index_t,double> GetAtomicOrbitals(int N);
+   void GetZNelefromString(std::string str, int& Z, int& Nele);
+
    void SetupKets();
    void Setup3bKets();
    void AddOrbit(Orbit orb);
    void AddOrbit(int n, int l, int j2, int tz2, double occ, int io);
    // Setter/Getters
-//   Orbit& GetOrbit(int i) {return (Orbit&) Orbits[i];}; 
-   Orbit& GetOrbit(int i); 
+//   Orbit& GetOrbit(int i) {return (Orbit&) Orbits[i];};
+   Orbit& GetOrbit(int i);
    Ket& GetKet(int i) const {return (Ket&) Kets[i];};
    Ket& GetKet(int p, int q) const {return (Ket&) Kets[Index2(p,q)];};
    Ket3& GetKet3(int i) const {return (Ket3&) Kets3[i];};
@@ -444,7 +456,7 @@ class ModelSpace
    int phase(int x) {return (x%2)==0 ? 1 : -1;};
 //   int phase(double x) {return phase(int(x));};
 
-   
+
    size_t GetThreeBodyChannelIndex( int twoJ, int parity, int twoTz );
 
 

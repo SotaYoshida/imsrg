@@ -56,7 +56,7 @@
 #include "IMSRG.hh"
 #include "Parameters.hh"
 #include "PhysicalConstants.hh"
-
+#include "Atom.hh"
 
 int main(int argc, char** argv)
 {
@@ -134,6 +134,7 @@ int main(int argc, char** argv)
   std::vector<Operator> ops;
   std::vector<std::string> spwf = parameters.v("SPWF");
 
+  if(physical_system == "atomic") return Atom::MainAtom(parameters);
 
   std::ifstream test;
   // test 2bme file
@@ -216,7 +217,6 @@ int main(int argc, char** argv)
 
 
   ModelSpace modelspace = ( reference=="default" ? ModelSpace(eMax,valence_space) : ModelSpace(eMax,reference,valence_space) );
-
   modelspace.SetLmax(lmax);
 
 

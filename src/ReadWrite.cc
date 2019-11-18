@@ -4624,6 +4624,93 @@ void ReadWrite::ReadTokyo(std::string filename, Operator& op)
   infile.close();
 }
 
+// Read Tokyo format Ascii
+void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op)
+{
+  std::string line;
+  std::ifstream infile;
+  infile.open(filename);
+  if (!infile.good() )
+  {
+    std::cerr << "************************************" << std::endl
+          << "**    Trouble reading file  !!!   **" << filename << std::endl
+          << "************************************" << std::endl;
+     return;
+  }
+  ModelSpace * modelspace = op.GetModelSpace();
+  std::unordered_map<int,int> orbits_remap;
+
+  skip_comments(infile);
+  int prtorb, ntnorb, pcore, ncore;
+  infile >> prtorb >> ntnorb >> pcore >> ncore;
+  int num=prtorb+ntnorb;
+  int norb = modelspace->GetNumberOrbits();
+  for(int i=0; i<num; i++)
+  {
+    int iorb, n, l, j, tz;
+    infile >> iorb >> n >> l >> j >> tz;
+    size_t orbit_hash = modelspace->GetOrbitIndex(n,l,j,tz);
+    int io = modelspace->OrbitLookup[orbit_hash];
+    if(io >= norb) continue;
+    orbits_remap[iorb] = io;
+    std::cout << io << " " << iorb << " " << n << " " << l << " " << j << " " << tz << std::endl;
+  }
+  getline(infile, line);
+
+  skip_comments(infile);
+  double zerobody;
+  infile >> zerobody;
+  // op.ZeroBody = zerobody;
+  getline(infile, line);
+  skip_comments(infile);
+
+  infile >> num;
+  getline(infile, line);
+  skip_comments(infile);
+  int Z = modelspace->Z_atom;
+  for(int n=0; n<num; n++)
+  {
+    int i, j;
+    double t, v, ovlp;
+    infile >> i >> j >> t >> v >> ovlp;
+    if( orbits_remap.find(i) == orbits_remap.end() ) continue;
+    if( orbits_remap.find(j) == orbits_remap.end() ) continue;
+    int io = orbits_remap.at(i);
+    int jo = orbits_remap.at(j);
+    op.OneBody(io,jo) = t - Z * v;
+    if (op.IsHermitian())
+      op.OneBody(jo,io) = op.OneBody(io,jo);
+    else if (op.IsAntiHermitian())
+      op.OneBody(jo,io) = -op.OneBody(io,jo);
+    std::cout << io << " " << jo << " " << op.OneBody(io,jo) << std::endl;
+  }
+  getline(infile, line);
+
+  skip_comments(infile);
+  infile >> num;
+  getline(infile, line);
+  skip_comments(infile);
+  for(int n=0; n<num; n++)
+  {
+    int i, j, k, l, jj;
+    double tbme;
+    infile >> i >> j >> k >> l >> jj >> tbme;
+    if( orbits_remap.find(i) == orbits_remap.end() ) continue;
+    if( orbits_remap.find(j) == orbits_remap.end() ) continue;
+    if( orbits_remap.find(k) == orbits_remap.end() ) continue;
+    if( orbits_remap.find(l) == orbits_remap.end() ) continue;
+    int io = orbits_remap.at(i);
+    int jo = orbits_remap.at(j);
+    int ko = orbits_remap.at(k);
+    int lo = orbits_remap.at(l);
+    if ( (io==jo or ko==lo) and (jj%2)>0 ) continue;
+    if (std::abs(tbme)<1e-6) continue;
+    op.TwoBody.SetTBME_J(jj,io,jo,ko,lo,tbme);
+    //cout << io << " " << jo << " " << ko << " " << lo << " " <<  jj << " " << tbme << endl;
+  }
+  infile.close();
+}
+
 // Tokyo format (Kshell format, snt file)
 void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
 {

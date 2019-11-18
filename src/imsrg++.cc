@@ -134,7 +134,7 @@ int main(int argc, char** argv)
   std::vector<Operator> ops;
   std::vector<std::string> spwf = parameters.v("SPWF");
 
-  if(physical_system == "atomic") return Atom::MainAtom(parameters);
+  if(physical_system == "atomic") return Atom::MainAtom(argc, argv);
 
   std::ifstream test;
   // test 2bme file

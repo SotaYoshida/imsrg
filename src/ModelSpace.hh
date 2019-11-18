@@ -385,6 +385,7 @@ class ModelSpace
    void Get0hwAtomicSpace(int Nele, std::set<index_t>& core_list, std::set<index_t>& valence_list);
    std::map<index_t,double> GetAtomicOrbitals(int N);
    void GetZNelefromString(std::string str, int& Z, int& Nele);
+   void SetUpAtomicOrbits();
 
    void SetupKets();
    void Setup3bKets();

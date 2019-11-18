@@ -68,6 +68,7 @@ std::map<std::string,std::string> Parameters::string_par = {
   {"valence_space",		""},		// either valence space or nucleus for single reference
   {"custom_valence_space",      ""},		// if the provided valence spaces just aren't good enough for you
   {"basis",			"HF"},		// use HF basis or oscillator basis. HF is better.
+  {"basis_type",			"AO"},		// Basis type, harmonic oscillator (HO) or atomic orbital (AO)
   {"method",			"magnus"},	// can be magnus or flow or a few other things
   {"denominator_delta_orbit",	"none"},	// pick specific orbit to apply the delta
   {"LECs",			"EM2.0_2.0"},	// low energy constants for the interaction, only used with Johannes' hdf5 file format

@@ -246,6 +246,7 @@ void ModelSpace::SetUpOrbits( )
    if (single_species) IsospinList.pop_back(); // just use tz = -1 in this case
 
    norbits = (Emax+1)*(Emax+2);
+//   OrbitLookup.clear();
    Orbits.resize(0);
 //   std::cout << "Starting loop in SetUpOrbits " << std::endl;
    for (int N=0; N<=Emax; ++N)
@@ -1806,19 +1807,21 @@ void ModelSpace::CalculatePandyaLookup(int rank_J, int rank_T, int parity)
 //
 // Atomic system
 //
-void ModelSpace::InitAtomicSpace(int emax, std::string filename, std::string reference, std::string valence)
+void ModelSpace::InitAtomicSpace(int emax, std::string basis, std::string reference, std::string valence)
 {
-  single_species = true;
   ClearVectors();
+  single_species = true;
+  Emax = emax;
+  if(basis == "HO" or basis == "ho") { SetUpOrbits(); }
+  else if(basis == "AO" or basis == "ao") { SetUpAtomicOrbits(); }
   GetZNelefromString(reference, Z_atom, Nele_atom);
   std::map<index_t,double> hole_list = GetAtomicOrbitals(Nele_atom);
   std::set<index_t> valence_list, core_list;
-  //if (valence == "single-shell") {
   if (valence == "0hw-shell") {
     Get0hwAtomicSpace(Nele_atom, core_list, valence_list);
   }
   else if(valence.find(",")!=std::string::npos) {
-    std::cout << "Valence-space other than single-shell is not implemented yet" << std::endl;;
+    std::cout << "Valence-space other than 0hw-shell is not implemented yet" << std::endl;;
   }
   else {
     int N_core;
@@ -1826,13 +1829,23 @@ void ModelSpace::InitAtomicSpace(int emax, std::string filename, std::string ref
     GetZNelefromString(core_str, Z_atom, N_core);
     for ( auto& it_core: GetAtomicOrbitals(N_core) ) core_list.insert(it_core.first);
   }
-  std::cout << "Creating a model space with Emax = " << Emax << "  and hole orbits [";
-  for (auto& h : hole_list)  std::cout << h.first << " ";
-  std::cout << "]   and core orbits [";
-  for (auto& c : core_list)    std::cout << c << " ";
-  std::cout << "]   and valence orbits [";
-  for (auto& v : valence_list)   std::cout << v << " ";
-  std::cout << "]" << std::endl;
+  std::cout << "core list: ";
+  for (auto& c : core_list) std::cout << c << " ";
+  std::cout << std::endl;
+  std::cout << "valence list: ";
+  for (auto& v : valence_list) std::cout << v << " ";
+  std::cout << std::endl;
+  std::cout << "hole list: ";
+  for (auto& h : hole_list) std::cout << h.first << " ( " << h.second << " ) ";
+  std::cout << std::endl;
+
+  // Make sure no orbits are both core and valence
+  for (auto& c : core_list)
+  {
+    if ( find(valence_list.begin(), valence_list.end(), c) != valence_list.end() )
+      std::cout << "!!!!!!!!!!!!! ModelSpace::Init : Conflicting definition. Orbit " << c << " is in core and valence spaces." << std::endl;
+  }
+  SetupKets();
 }
 
 void ModelSpace::GetZNelefromString(std::string str, int& Z, int& Nele)
@@ -1854,7 +1867,7 @@ std::map<index_t,double> ModelSpace::GetAtomicOrbitals(int N_ele)
   // e = n + l
   int N = 0;
   std::map<index_t,double> holes;
-  for (int e=0; e<Emax; ++e) {
+  for (int e=0; e<=Emax; ++e) {
     int d = std::min(N_ele-N, 2); // n=e, l=0
     holes[Index1(e, 0, 1, -1)] = d * 0.5;
     N += d;
@@ -1866,13 +1879,12 @@ std::map<index_t,double> ModelSpace::GetAtomicOrbitals(int N_ele)
       {
         d = std::min(N_ele-N, j2+1);
         holes[Index1(n, l, j2, -1)] = d / (j2+1.0);
-        std::cout << Index1(n,l,j2,-1) << " " << d / (j2+1.0) << std::endl;
         N += d;
         if(N==N_ele) return holes;
       }
     }
   }
-  std::cout << "Something seems wrong in GetAtomicOrbitals" << std::endl;
+  std::cout << "Something seems wrong in GetAtomicOrbitals, N=" << N << std::endl;
   return holes;
 }
 
@@ -1891,7 +1903,7 @@ void ModelSpace::Get0hwAtomicSpace(int N_ele, std::set<index_t>& core_list, std:
   int e_core = 0;
   int e_valence = 0;
   int N = 0;
-  for (int e=0; e<Emax; ++e) {
+  for (int e=0; e<=Emax; ++e) {
     N += 2;
     for (int l=e; l>=1; --l){
       int n = e - l - std::max(0,l-1);
@@ -1904,7 +1916,7 @@ void ModelSpace::Get0hwAtomicSpace(int N_ele, std::set<index_t>& core_list, std:
     e_core = e;
   }
   e_valence = e_core + 1;
-  for (int e=0; e<e_core; ++e) {
+  for (int e=0; e<=e_core; ++e) {
     core_list.insert(Index1(e,0,1,-1));
     for (int l=e; l>=1; --l){
       int n = e - l - std::max(0,l-1);
@@ -1922,4 +1934,26 @@ void ModelSpace::Get0hwAtomicSpace(int N_ele, std::set<index_t>& core_list, std:
       valence_list.insert(Index1(n,l,j2,-1));
     }
   }
+}
+
+void ModelSpace::SetUpAtomicOrbits( )
+{
+   OrbitLookup.clear();
+   Orbits.resize(0);
+   for (int e=0; e<=Emax; ++e) {
+     for (int l=0; l<=e; ++l){
+       if (l>Lmax) continue;
+       int n = e - l;
+       for (int j2=std::abs(2*l-1); j2<=(2*l+1); j2+=2) {
+         double occ = 0;
+         int cvq = 2;
+         AddOrbit(n,l,j2,-1,occ,cvq);
+         //std::cout << std::setw(4) << Index1_hash(n,l,j2,-1) <<
+         //  std::setw(4) << n <<
+         //  std::setw(4) << l <<
+         //  std::setw(4) << j2 << std::endl;
+       }
+     }
+   }
+   norbits = all_orbits.size();
 }

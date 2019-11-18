@@ -156,7 +156,8 @@ ModelSpace::ModelSpace(const ModelSpace& ms)
    SortedTwoBodyChannels_CC(ms.SortedTwoBodyChannels_CC),
    sixj_has_been_precalculated(ms.sixj_has_been_precalculated),
    moshinsky_has_been_precalculated(ms.moshinsky_has_been_precalculated),
-   scalar_transform_first_pass(true), tensor_transform_first_pass(40,true), single_species(ms.single_species)
+   scalar_transform_first_pass(true), tensor_transform_first_pass(40,true), single_species(ms.single_species),
+   system(ms.system)
 {
    for (TwoBodyChannel& tbc : TwoBodyChannels)   tbc.modelspace = this;
    for (TwoBodyChannel_CC& tbc_cc : TwoBodyChannels_CC)   tbc_cc.modelspace = this;
@@ -190,7 +191,8 @@ ModelSpace::ModelSpace(ModelSpace&& ms)
    SortedTwoBodyChannels_CC(std::move(ms.SortedTwoBodyChannels_CC)),
    sixj_has_been_precalculated(ms.sixj_has_been_precalculated),
    moshinsky_has_been_precalculated(ms.moshinsky_has_been_precalculated),
-   scalar_transform_first_pass(true), tensor_transform_first_pass(40,true), single_species(ms.single_species)
+   scalar_transform_first_pass(true), tensor_transform_first_pass(40,true), single_species(ms.single_species),
+   system(std::move(ms.system))
 {
    for (TwoBodyChannel& tbc : TwoBodyChannels)   tbc.modelspace = this;
    for (TwoBodyChannel_CC& tbc_cc : TwoBodyChannels_CC)   tbc_cc.modelspace = this;
@@ -705,6 +707,10 @@ void ModelSpace::SetReference(std::set<index_t> new_reference)
   std::map<index_t,double> h;
   for (auto r : new_reference) h[r] = 1.0;
   ClearVectors();
+  if(system == "Atomic"){
+    InitAtomicSpace(Emax, h, c, v);
+    return;
+  }
   Init(Emax, h,c,v);
 }
 
@@ -722,6 +728,10 @@ void ModelSpace::SetReference(std::map<index_t,double> new_reference)
 //    for ( auto iter : new_reference )  c.push_back(iter.first);
   }
   ClearVectors();
+  if(system == "Atomic"){
+    InitAtomicSpace(Emax, new_reference, c, v);
+    return;
+  }
   Init(Emax, new_reference,c,v);
 }
 
@@ -734,6 +744,10 @@ void ModelSpace::SetReference(std::string new_reference)
   ClearVectors();
   GetAZfromString(new_reference,Aref,Zref);
   std::map<index_t,double> h = GetOrbitsAZ(Aref,Zref);
+  if(system == "Atomic"){
+    InitAtomicSpace(Emax, h, c, v);
+    return;
+  }
   Init(Emax, h,c,v);
 }
 
@@ -1006,69 +1020,69 @@ size_t ModelSpace::Index2(size_t p, size_t q) const
 
 void ModelSpace::SetupKets()
 {
-   Kets.resize(Index2(all_orbits.size()-1,all_orbits.size()-1)+1);
-   for (auto p : all_orbits )
-   {
-     for (auto q : all_orbits )
-     {
-        if (q<p) continue;
-        index_t index = Index2(p,q);
-        Kets[index] = Ket(GetOrbit(p),GetOrbit(q));
-     }
-   }
-    for (auto p : all_orbits)
+  Kets.resize(Index2(all_orbits.size()-1,all_orbits.size()-1)+1);
+  for (auto p : all_orbits )
+  {
+    for (auto q : all_orbits )
     {
+      if (q<p) continue;
+      index_t index = Index2(p,q);
+      Kets[index] = Ket(GetOrbit(p),GetOrbit(q));
+    }
+  }
+  for (auto p : all_orbits)
+  {
     for (auto q : all_orbits)
     {
-     if (q<p) continue;
-    index_t index = Index2(p,q);
-    Ket& ket = Kets[index];
-    int Tz = (ket.op->tz2 + ket.oq->tz2)/2;
-    int parity = (ket.op->l + ket.oq->l)%2;
-//   The old way this was written led to undefined behavior, depending on when the structure was expanded.
-//    MonopoleKets[Tz+1][parity][index] = MonopoleKets[Tz+1][parity].size()-1;
-    index_t size = MonopoleKets[Tz+1][parity].size();
-    MonopoleKets[Tz+1][parity][index] = size;
-    double occp = ket.op->occ;
-    double occq = ket.oq->occ;
-    int cvq_p = ket.op->cvq;
-    int cvq_q = ket.oq->cvq;
-    if (cvq_p+cvq_q==0)      KetIndex_cc.push_back(index); // 00
-    if (cvq_p+cvq_q==1)      KetIndex_vc.push_back(index); // 01
-    if (std::abs(cvq_p-cvq_q)==2) KetIndex_qc.push_back(index); // 02
-    if (cvq_p*cvq_q==1)      KetIndex_vv.push_back(index); // 11
-    if (cvq_p+cvq_q==3)      KetIndex_qv.push_back(index); // 12
-    if (cvq_p+cvq_q==4)      KetIndex_qq.push_back(index); // 22
-    if (occp<OCC_CUT and occq<OCC_CUT) KetIndex_pp.push_back(index);
-    if ( (occp>OCC_CUT) xor (occq>OCC_CUT) )
-    {
-       KetIndex_ph.push_back(index);
-       Ket_occ_ph.push_back(occp*occq);
-       Ket_unocc_ph.push_back((1-occp)*(1-occq));
+      if (q<p) continue;
+      index_t index = Index2(p,q);
+      Ket& ket = Kets[index];
+      int Tz = (ket.op->tz2 + ket.oq->tz2)/2;
+      int parity = (ket.op->l + ket.oq->l)%2;
+      //   The old way this was written led to undefined behavior, depending on when the structure was expanded.
+      //    MonopoleKets[Tz+1][parity][index] = MonopoleKets[Tz+1][parity].size()-1;
+      index_t size = MonopoleKets[Tz+1][parity].size();
+      MonopoleKets[Tz+1][parity][index] = size;
+      double occp = ket.op->occ;
+      double occq = ket.oq->occ;
+      int cvq_p = ket.op->cvq;
+      int cvq_q = ket.oq->cvq;
+      if (cvq_p+cvq_q==0)      KetIndex_cc.push_back(index); // 00
+      if (cvq_p+cvq_q==1)      KetIndex_vc.push_back(index); // 01
+      if (std::abs(cvq_p-cvq_q)==2) KetIndex_qc.push_back(index); // 02
+      if (cvq_p*cvq_q==1)      KetIndex_vv.push_back(index); // 11
+      if (cvq_p+cvq_q==3)      KetIndex_qv.push_back(index); // 12
+      if (cvq_p+cvq_q==4)      KetIndex_qq.push_back(index); // 22
+      if (occp<OCC_CUT and occq<OCC_CUT) KetIndex_pp.push_back(index);
+      if ( (occp>OCC_CUT) xor (occq>OCC_CUT) )
+      {
+        KetIndex_ph.push_back(index);
+        Ket_occ_ph.push_back(occp*occq);
+        Ket_unocc_ph.push_back((1-occp)*(1-occq));
+      }
+      if (occp>OCC_CUT and occq>OCC_CUT)
+      {
+        KetIndex_hh.push_back(index);
+        Ket_occ_hh.push_back(occp*occq);
+        Ket_unocc_hh.push_back((1-occp)*(1-occq));
+      }
     }
-    if (occp>OCC_CUT and occq>OCC_CUT)
-    {
-       KetIndex_hh.push_back(index);
-       Ket_occ_hh.push_back(occp*occq);
-       Ket_unocc_hh.push_back((1-occp)*(1-occq));
-    }
-   }
-   }
+  }
 
-   SortedTwoBodyChannels.resize(nTwoBodyChannels);
-   SortedTwoBodyChannels_CC.resize(nTwoBodyChannels);
-   for (int ch=0;ch<nTwoBodyChannels;++ch)
-   {
-      TwoBodyChannels.emplace_back(TwoBodyChannel(ch,this));
-      TwoBodyChannels_CC.emplace_back(TwoBodyChannel_CC(ch,this));
-      SortedTwoBodyChannels[ch] = ch;
-      SortedTwoBodyChannels_CC[ch] = ch;
-   }
-   // Hopefully this can help with load balancing.
-   sort(SortedTwoBodyChannels.begin(),SortedTwoBodyChannels.end(),[this](int i, int j){ return TwoBodyChannels[i].GetNumberKets() > TwoBodyChannels[j].GetNumberKets(); }  );
-   sort(SortedTwoBodyChannels_CC.begin(),SortedTwoBodyChannels_CC.end(),[this](int i, int j){ return TwoBodyChannels_CC[i].GetNumberKets() > TwoBodyChannels_CC[j].GetNumberKets(); }  );
-   while (  TwoBodyChannels[ SortedTwoBodyChannels.back() ].GetNumberKets() <1 ) SortedTwoBodyChannels.pop_back();
-   while (  TwoBodyChannels_CC[ SortedTwoBodyChannels_CC.back() ].GetNumberKets() <1 ) SortedTwoBodyChannels_CC.pop_back();
+  SortedTwoBodyChannels.resize(nTwoBodyChannels);
+  SortedTwoBodyChannels_CC.resize(nTwoBodyChannels);
+  for (int ch=0;ch<nTwoBodyChannels;++ch)
+  {
+    TwoBodyChannels.emplace_back(TwoBodyChannel(ch,this));
+    TwoBodyChannels_CC.emplace_back(TwoBodyChannel_CC(ch,this));
+    SortedTwoBodyChannels[ch] = ch;
+    SortedTwoBodyChannels_CC[ch] = ch;
+  }
+  // Hopefully this can help with load balancing.
+  sort(SortedTwoBodyChannels.begin(),SortedTwoBodyChannels.end(),[this](int i, int j){ return TwoBodyChannels[i].GetNumberKets() > TwoBodyChannels[j].GetNumberKets(); }  );
+  sort(SortedTwoBodyChannels_CC.begin(),SortedTwoBodyChannels_CC.end(),[this](int i, int j){ return TwoBodyChannels_CC[i].GetNumberKets() > TwoBodyChannels_CC[j].GetNumberKets(); }  );
+  while (  TwoBodyChannels[ SortedTwoBodyChannels.back() ].GetNumberKets() <1 ) SortedTwoBodyChannels.pop_back();
+  while (  TwoBodyChannels_CC[ SortedTwoBodyChannels_CC.back() ].GetNumberKets() <1 ) SortedTwoBodyChannels_CC.pop_back();
 }
 
 
@@ -1810,15 +1824,16 @@ void ModelSpace::CalculatePandyaLookup(int rank_J, int rank_T, int parity)
 void ModelSpace::InitAtomicSpace(int emax, std::string basis, std::string reference, std::string valence)
 {
   ClearVectors();
+  system = "Atomic";
   single_species = true;
   Emax = emax;
   if(basis == "HO" or basis == "ho") { SetUpOrbits(); }
   else if(basis == "AO" or basis == "ao") { SetUpAtomicOrbits(); }
-  GetZNelefromString(reference, Z_atom, Nele_atom);
-  std::map<index_t,double> hole_list = GetAtomicOrbitals(Nele_atom);
+  GetZNelefromString(reference, Zref, Aref);
+  std::map<index_t,double> hole_list = GetAtomicOrbitals(Aref);
   std::set<index_t> valence_list, core_list;
   if (valence == "0hw-shell") {
-    Get0hwAtomicSpace(Nele_atom, core_list, valence_list);
+    Get0hwAtomicSpace(Aref, core_list, valence_list);
   }
   else if(valence.find(",")!=std::string::npos) {
     std::cout << "Valence-space other than 0hw-shell is not implemented yet" << std::endl;;
@@ -1826,9 +1841,36 @@ void ModelSpace::InitAtomicSpace(int emax, std::string basis, std::string refere
   else {
     int N_core;
     std::string core_str = valence;
-    GetZNelefromString(core_str, Z_atom, N_core);
+    GetZNelefromString(core_str, Zref, N_core);
     for ( auto& it_core: GetAtomicOrbitals(N_core) ) core_list.insert(it_core.first);
   }
+  InitAtomicSpace(emax, hole_list, core_list, valence_list);
+}
+
+void ModelSpace::InitAtomicSpace(int emax, std::map<index_t,double> hole_list, std::set<index_t> core_list, std::set<index_t> valence_list)
+{
+  ClearVectors();
+  Emax = emax;
+  OrbitLookup.clear();
+  Orbits.resize(0);
+  for (int e=0; e<=Emax; ++e) {
+    for (int l=0; l<=e; ++l){
+      if (l>Lmax) continue;
+      int n = e - l;
+      for (int j2=std::abs(2*l-1); j2<=(2*l+1); j2+=2) {
+        double occ = 0.0;
+        int cvq = 2;
+        AddOrbit(n,l,j2,-1,occ,cvq);
+        int i = Index1(n,l,j2,-1);
+        if(  hole_list.find(i) != hole_list.end() ) occ = hole_list[i];
+        if( find(core_list.begin(), core_list.end(), i) != core_list.end() ) cvq = 0;
+        if( find(valence_list.begin(), valence_list.end(), i) != valence_list.end() ) cvq = 1;
+        AddOrbit(n,l,j2,-1,occ,cvq);
+      }
+    }
+  }
+
+  norbits = all_orbits.size();
   std::cout << "core list: ";
   for (auto& c : core_list) std::cout << c << " ";
   std::cout << std::endl;
@@ -1838,6 +1880,8 @@ void ModelSpace::InitAtomicSpace(int emax, std::string basis, std::string refere
   std::cout << "hole list: ";
   for (auto& h : hole_list) std::cout << h.first << " ( " << h.second << " ) ";
   std::cout << std::endl;
+  SetTargetMass(Aref);
+  SetTargetZ(Aref);
 
   // Make sure no orbits are both core and valence
   for (auto& c : core_list)

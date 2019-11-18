@@ -258,9 +258,8 @@ class ModelSpace
    int Zref;          // Proton number of the normal-ordering reference
 
    // Fields for atomic system
-   int Z_atom;   // electric charge of nucleus
-   int Nele_atom;   // electron number
    std::string basis; // basis function, Hy, HO, Laguerre, ...
+   std::string system="nuclear";
 
 
    std::vector<Orbit> Orbits; // vector of one-body Orbit structs
@@ -382,6 +381,7 @@ class ModelSpace
 
 // Methods for atomic system, not assuming HO orbital
    void InitAtomicSpace( int emax, std::string filename, std::string reference, std::string valence);
+   void InitAtomicSpace( int emax, std::map<index_t,double>, std::set<index_t>, std::set<index_t>);
    void Get0hwAtomicSpace(int Nele, std::set<index_t>& core_list, std::set<index_t>& valence_list);
    std::map<index_t,double> GetAtomicOrbitals(int N);
    void GetZNelefromString(std::string str, int& Z, int& Nele);

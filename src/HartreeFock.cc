@@ -1048,7 +1048,8 @@ void HartreeFock::UpdateReference()
      }
   }
 //  std::cout << "Before calling SetReference, A,Z = " << modelspace->GetAref() << " " << modelspace->GetZref() << std::endl;
-  if (changed_occupations)  modelspace->SetReference( hole_map );
+  //if (changed_occupations)  modelspace->SetReference( hole_map );
+  modelspace->SetReference( hole_map );
 
 }
 

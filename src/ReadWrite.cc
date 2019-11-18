@@ -4643,23 +4643,26 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op)
   skip_comments(infile);
   int prtorb, ntnorb, pcore, ncore;
   infile >> prtorb >> ntnorb >> pcore >> ncore;
+  //std::cout << prtorb << " " << ntnorb << " " << pcore << " " << ncore << std::endl;
+
+  getline(infile, line);
+  skip_comments(infile);
   int num=prtorb+ntnorb;
   int norb = modelspace->GetNumberOrbits();
   for(int i=0; i<num; i++)
   {
-    int iorb, n, l, j, tz;
-    infile >> iorb >> n >> l >> j >> tz;
-    size_t orbit_hash = modelspace->GetOrbitIndex(n,l,j,tz);
-    int io = modelspace->OrbitLookup[orbit_hash];
+    int iorb, n, l, j, e, tz;
+    infile >> iorb >> n >> l >> j >> e >> tz;
+    int io = modelspace->GetOrbitIndex(n,l,j,tz);
     if(io >= norb) continue;
     orbits_remap[iorb] = io;
-    std::cout << io << " " << iorb << " " << n << " " << l << " " << j << " " << tz << std::endl;
+    //std::cout << io << " " << iorb << " " << n << " " << l << " " << j << " " << tz << std::endl;
   }
-  getline(infile, line);
 
-  skip_comments(infile);
-  double zerobody;
-  infile >> zerobody;
+  //getline(infile, line);
+  //skip_comments(infile);
+  // double zerobody;
+  // infile >> zerobody;
   // op.ZeroBody = zerobody;
   getline(infile, line);
   skip_comments(infile);
@@ -4667,7 +4670,7 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op)
   infile >> num;
   getline(infile, line);
   skip_comments(infile);
-  int Z = modelspace->Z_atom;
+  int Z = modelspace->GetZref();
   for(int n=0; n<num; n++)
   {
     int i, j;
@@ -4682,12 +4685,14 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op)
       op.OneBody(jo,io) = op.OneBody(io,jo);
     else if (op.IsAntiHermitian())
       op.OneBody(jo,io) = -op.OneBody(io,jo);
-    std::cout << io << " " << jo << " " << op.OneBody(io,jo) << std::endl;
+    //std::cout << io << " " << jo << " " << t << " " << v  << std::endl;
   }
-  getline(infile, line);
 
+  getline(infile, line);
   skip_comments(infile);
+
   infile >> num;
+
   getline(infile, line);
   skip_comments(infile);
   for(int n=0; n<num; n++)
@@ -4706,7 +4711,7 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op)
     if ( (io==jo or ko==lo) and (jj%2)>0 ) continue;
     if (std::abs(tbme)<1e-6) continue;
     op.TwoBody.SetTBME_J(jj,io,jo,ko,lo,tbme);
-    //cout << io << " " << jo << " " << ko << " " << lo << " " <<  jj << " " << tbme << endl;
+    //std::cout << io << " " << jo << " " << ko << " " << lo << " " <<  jj << " " << tbme << std::endl;
   }
   infile.close();
 }

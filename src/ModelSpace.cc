@@ -1869,8 +1869,24 @@ void ModelSpace::InitAtomicSpace(int emax, std::map<index_t,double> hole_list, s
       }
     }
   }
-
   norbits = all_orbits.size();
+  double atmp=0;
+  double ztmp=0;
+  for (auto& h : hole_list)
+  {
+    Orbit& oh = GetOrbit(h.first);
+    atmp += (oh.j2+1.)*oh.occ;
+    if (oh.tz2 < 0) ztmp += (oh.j2+1.)*oh.occ;
+  }
+  Aref = round(atmp);
+  Zref = round(ztmp);
+  if (std::abs(Aref-atmp)>1e-5 or std::abs(Zref-ztmp)>1e-5)
+  {
+    std::cout << std::endl << "!!!! WARNING  " << __func__ << " recomputed A,Z and got " << atmp << " " << ztmp << std::endl;
+  }
+  Aref = round(atmp);
+  Zref = round(ztmp);
+
   std::cout << "core list: ";
   for (auto& c : core_list) std::cout << c << " ";
   std::cout << std::endl;
@@ -1948,6 +1964,7 @@ void ModelSpace::Get0hwAtomicSpace(int N_ele, std::set<index_t>& core_list, std:
   int e_valence = 0;
   int N = 0;
   for (int e=0; e<=Emax; ++e) {
+    e_core = e;
     N += 2;
     for (int l=e; l>=1; --l){
       int n = e - l - std::max(0,l-1);
@@ -1957,8 +1974,8 @@ void ModelSpace::Get0hwAtomicSpace(int N_ele, std::set<index_t>& core_list, std:
       }
     }
     if(N_ele - N < 0) break;
-    e_core = e;
   }
+  e_core -= 1;
   e_valence = e_core + 1;
   for (int e=0; e<=e_core; ++e) {
     core_list.insert(Index1(e,0,1,-1));

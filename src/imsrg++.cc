@@ -112,6 +112,7 @@ int main(int argc, char** argv)
   int file3e2max = parameters.i("file3e2max");
   int file3e3max = parameters.i("file3e3max");
   int atomicZ = parameters.i("atomicZ");
+  int emax_unocc = parameters.i("emax_unocc");
 
   double hw = parameters.d("hw");
   double smax = parameters.d("smax");
@@ -124,6 +125,7 @@ int main(int argc, char** argv)
   double BetaCM = parameters.d("BetaCM");
   double hwBetaCM = parameters.d("hwBetaCM");
   double eta_criterion = parameters.d("eta_criterion");
+  double hw_trap = parameters.d("hw_trap");
 
   std::vector<std::string> opnames = parameters.v("Operators");
   std::vector<std::string> opsfromfile = parameters.v("OperatorsFromFile");
@@ -219,6 +221,10 @@ int main(int argc, char** argv)
   ModelSpace modelspace = ( reference=="default" ? ModelSpace(eMax,valence_space) : ModelSpace(eMax,reference,valence_space) );
   modelspace.SetLmax(lmax);
 
+  if (emax_unocc>0)
+  {
+    modelspace.SetEmaxUnocc(emax_unocc);
+  }
 
   if (physical_system == "atomic")
   {
@@ -268,6 +274,17 @@ int main(int argc, char** argv)
     std::cout << std::endl;
   }
 
+  if ( std::find( opnames.begin(), opnames.end(), "DaggerAlln_valence") != opnames.end() )
+  {
+    opnames.erase( std::remove( opnames.begin(), opnames.end(), "DaggerAlln_valence"), std::end(opnames) );
+    for ( auto v : modelspace.valence )
+    {
+      opnames.push_back( "DaggerAlln_"+modelspace.Index2String(v) );
+    }
+    std::cout << "I found DaggerAlln_valence, so I'm changing the opnames list to :" << std::endl;
+    for ( auto opn : opnames ) std::cout << opn << " ,  ";
+    std::cout << std::endl;
+  }
 
 
 //  std::cout << "Making the Hamiltonian..." << std::endl;
@@ -335,7 +352,7 @@ int main(int argc, char** argv)
     Hbare /= PhysConst::HARTREE; // Convert to Hartree
   }
 
-  if (fmt2 != "nushellx" and physical_system != "atomic")  // Don't need to add kinetic energy if we read a shell model interaction
+  if (fmt2 != "nushellx" and physical_system != "atomic" and hw_trap < 0)  // Don't need to add kinetic energy if we read a shell model interaction
   {
     Hbare += imsrg_util::Trel_Op(modelspace);
     if (Hbare.OneBody.has_nan())
@@ -343,6 +360,13 @@ int main(int argc, char** argv)
        std::cout << "  Looks like the Trel op is hosed from the get go." << std::endl;
     }
   }
+
+  if ( hw_trap > 0 )
+  {
+    Hbare += 0.5 * (PhysConst::M_NUCLEON * hw_trap * hw_trap)/(PhysConst::HBARC*PhysConst::HBARC) * imsrg_util::RSquaredOp(modelspace); // add lab-frame harmonic trap
+    Hbare += imsrg_util::KineticEnergy_Op(modelspace); // use lab-frame kinetic energy
+  }
+
 
   if ( nucleon_mass_correction == "true" or nucleon_mass_correction == "True" )
   {  // correction to kinetic energy because M_proton != M_neutron
@@ -820,9 +844,15 @@ int main(int argc, char** argv)
       rw.WriteAntoine_input(imsrgsolver.GetH_s(),intfile+".inp",modelspace.GetAref(),modelspace.GetZref());
     }
     std::cout << "Writing files: " << intfile << std::endl;
-    //rw.WriteNuShellX_int(imsrgsolver.GetH_s(),intfile+".int");
-    //rw.WriteNuShellX_sps(imsrgsolver.GetH_s(),intfile+".sp");
-    rw.WriteTokyo(imsrgsolver.GetH_s(),intfile+".snt", "");
+    if (valence_file_format == "tokyo")
+    {
+     rw.WriteTokyo(imsrgsolver.GetH_s(),intfile+".snt", "");
+    }
+    else
+    {
+      rw.WriteNuShellX_int(imsrgsolver.GetH_s(),intfile+".int");
+      rw.WriteNuShellX_sps(imsrgsolver.GetH_s(),intfile+".sp");
+    }
 
     if (method == "magnus" or method=="flow_RK4")
     {
@@ -830,8 +860,14 @@ int main(int argc, char** argv)
        {
           if ( ((ops[i].GetJRank()+ops[i].GetTRank()+ops[i].GetParity())<1) and (ops[i].GetNumberLegs()%2==0) )
           {
-            //rw.WriteNuShellX_op(ops[i],intfile+opnames[i]+".int");
-            rw.WriteTokyo(ops[i],intfile+opnames[i]+".snt", "op");
+            if (valence_file_format == "tokyo")
+            {
+              rw.WriteTokyo(ops[i],intfile+opnames[i]+".snt", "op");
+            }
+            else
+            {
+              rw.WriteNuShellX_op(ops[i],intfile+opnames[i]+".int");
+            }
           }
           else if ( ops[i].GetNumberLegs()%2==1) // odd number of legs -> this is a dagger operator
           {
@@ -840,9 +876,15 @@ int main(int argc, char** argv)
           }
           else
           {
-            //rw.WriteTensorOneBody(intfile+opnames[i]+"_1b.op",ops[i],opnames[i]);
-            //rw.WriteTensorTwoBody(intfile+opnames[i]+"_2b.op",ops[i],opnames[i]);
-            rw.WriteTensorTokyo(intfile+opnames[i]+"_2b.snt",ops[i]);
+            if (valence_file_format == "tokyo")
+            {
+              rw.WriteTensorTokyo(intfile+opnames[i]+"_2b.snt",ops[i]);
+            }
+            else
+            {
+              rw.WriteTensorOneBody(intfile+opnames[i]+"_1b.op",ops[i],opnames[i]);
+              rw.WriteTensorTwoBody(intfile+opnames[i]+"_2b.op",ops[i],opnames[i]);
+            }
           }
        }
     }

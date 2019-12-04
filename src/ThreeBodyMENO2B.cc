@@ -457,6 +457,7 @@ long long unsigned int ThreeBodyMENO2B::CountME()
 
               int Jmin = std::max( std::abs(j1-j2), std::abs(j4-j5) )/2;
               int Jmax =std::min( j1+j2, j4+j5 )/2;
+              if (Jmin>Jmax) continue;
               size_t JT_block_size = (Jmax+1-Jmin) * 5; // 5 comes from the 5 possible isospin combinations 001 011 101 111 113
 
               counter += JT_block_size;
@@ -498,6 +499,7 @@ void ThreeBodyMENO2B::ReadBinaryStream( std::vector<ThreeBME_type> & v, size_t n
 //  std::vector<ThreeBME_type> v(buffer_size,0.0);
 //
 //  std::cout << "Size of v is " << v.size() << std::endl;
+  std::cout << "Reading " << n_elms << " elements from binary file" << std::endl;
 
   #pragma omp parallel  // not a for block. all the threads go through each step of the for loops
   {
@@ -514,8 +516,10 @@ void ThreeBodyMENO2B::ReadBinaryStream( std::vector<ThreeBME_type> & v, size_t n
     int j1 = o1.j;
     int l1 = o1.l;
     int e1 = o1.e;
-    if(e1 > Emax) continue;
-    if(e1 > Emax_file) continue;
+    if(e1 > Emax) break;
+//    if(e1 > Emax) continue;
+    if(e1 > Emax_file) break;
+//    if(e1 > Emax_file) continue;
     for (int i2=0; i2 <= i1; i2++) {
       OrbitIsospin & o2 = iOrbits[i2];
       int j2 = o2.j;
@@ -563,8 +567,8 @@ void ThreeBodyMENO2B::ReadBinaryStream( std::vector<ThreeBME_type> & v, size_t n
 
               int Jmin = std::max( std::abs(j1-j2), std::abs(j4-j5) )/2;
               int Jmax =std::min( j1+j2, j4+j5 )/2;
+              if (Jmin>Jmax) continue;
               int JT_block_size = (Jmax+1-Jmin) * 5; // 5 comes from the 5 possible isospin combinations 001 011 101 111 113
-              if (JT_block_size<=0) continue;
 
 //              std::cout << "   thread, orbit_counter:  " << this_thread << "  " << orbit_counter << std::endl;
               

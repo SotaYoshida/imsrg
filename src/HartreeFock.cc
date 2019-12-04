@@ -69,32 +69,50 @@ void HartreeFock::Solve()
    double t_start = omp_get_wtime();
    iterations = 0; // counter so we don't go on forever
    int maxiter = 1000;
-   double mixing_factor = 0.1;
+   double density_mixing_factor = 0.2;
+   double field_mixing_factor = 0.0;
 //   double mixing_factor = 0.0;
 
    for (iterations=0; iterations<maxiter; ++iterations)
    {
       Diagonalize();          // Diagonalize the Fock matrix
       ReorderCoefficients();  // Reorder columns of C so we can properly identify the hole orbits.
-      if (not freeze_occupations) FillLowestOrbits(); // if we don't freeze the occupations, then calculate the new ones.
+      if (iterations%2==0 and not freeze_occupations) FillLowestOrbits(); // if we don't freeze the occupations, then calculate the new ones.
 
       // After 50 iterations, do the first 20 out of every 50 with DIIS, which hopefully helps us break out of any cycles
 //      if (iterations > 50 and (iterations%50)<20 )
-//    Use DIIS for the first few iterations and then drop down to linear mixing.
 //      if (iterations < -20 and (DIIS_error_mats.size()<1 or arma::norm( DIIS_error_mats.back(),"fro")>0.1)  )
-      if (iterations < 20 and (DIIS_error_mats.size()<1 or arma::norm( DIIS_error_mats.back(),"fro")>0.1)  )
+//      if (iterations < 20 and (DIIS_error_mats.size()<1 or arma::norm( DIIS_error_mats.back(),"fro")>0.1)  )
+
+      if (iterations == 500)
       {
-        UpdateDensityMatrix_DIIS();
+        density_mixing_factor = 0.7;
+        field_mixing_factor = 0.5;
+        std::cout << "Still not converged after 500 iterations. Setting density_mixing_factor => " << density_mixing_factor
+                  << " field_mixing_factor => " << field_mixing_factor << std::endl;
+      }
+
+      if (iterations >100 and (DIIS_error_mats.size()<1 or arma::norm( DIIS_error_mats.back(),"fro")>0.01)  )
+      {
+         if (iterations==100)
+         {
+           std::cout << "Still not converged after 100 iterations. Switching to DIIS." << std::endl;
+         }
+         UpdateDensityMatrix_DIIS();
+         if ( arma::norm( DIIS_error_mats.back(),"fro")<0.01)
+         {
+           std::cout << "DIIS error matrix below 0.01, switching back to simpler SCF algorithm." << std::endl;
+         }
       }
       else
       {
-//        DIIS_error_mats.resize(0);
-//        DIIS_density_mats.resize(0);
         arma::mat last_rho = rho;
         UpdateDensityMatrix();  // Update the 1 body density matrix, used in UpdateF()
-        rho = (1.0 - mixing_factor)*rho + mixing_factor*last_rho;
+        rho = (1.0 - density_mixing_factor)*rho + density_mixing_factor*last_rho;
       }
+      arma::mat last_F = F;
       UpdateF();              // Update the Fock matrix
+      F = (1.0 - field_mixing_factor)*F + field_mixing_factor * last_F;
 
       if ( CheckConvergence() ) break;
    }
@@ -381,14 +399,16 @@ void HartreeFock::BuildMonopoleV3()
        int j2a = modelspace->GetOrbit(a).j2;
        int j2c = modelspace->GetOrbit(c).j2;
        int j2i = modelspace->GetOrbit(i).j2;
-       int j2b = modelspace->GetOrbit(b).j2;  // this seems unnecessary
-       int j2d = modelspace->GetOrbit(d).j2;  // this seems unnecessary
-       int j2j = modelspace->GetOrbit(j).j2;  // this seems unnecessary
+//       int j2b = modelspace->GetOrbit(b).j2;  // this seems unnecessary
+//       int j2d = modelspace->GetOrbit(d).j2;  // this seems unnecessary
+//       int j2j = modelspace->GetOrbit(j).j2;  // this seems unnecessary
 
        // TODO: We can probably use some permutation symmetries to avoid recomputing things
        // at the very least, we can treat the permutation of the first two indices
-       int j2min = std::max( std::abs(j2a-j2c), std::abs(j2b-j2d) )/2;
-       int j2max = std::min( j2a+j2c, j2b+j2d )/2;
+       int j2min =  std::abs(j2a-j2c) /2;
+       int j2max = (j2a+j2c)/2;
+//       int j2min = std::max( std::abs(j2a-j2c), std::abs(j2b-j2d) )/2;
+//       int j2max = std::min( j2a+j2c, j2b+j2d )/2;
        for (int j2=j2min; j2<=j2max; ++j2)
        {
          v += Hbare.ThreeBodyNO2B.GetThBME(a,c,i,b,d,j,j2);
@@ -410,18 +430,22 @@ void HartreeFock::BuildMonopoleV3()
        int j2a = modelspace->GetOrbit(a).j2;
        int j2c = modelspace->GetOrbit(c).j2;
        int j2i = modelspace->GetOrbit(i).j2;
-       int j2b = modelspace->GetOrbit(b).j2;  // this seems unnecessary
-       int j2d = modelspace->GetOrbit(d).j2;  // this seems unnecessary
-       int j2j = modelspace->GetOrbit(j).j2;  // this seems unnecessary
+//       int j2b = modelspace->GetOrbit(b).j2;  // this seems unnecessary
+//       int j2d = modelspace->GetOrbit(d).j2;  // this seems unnecessary
+//       int j2j = modelspace->GetOrbit(j).j2;  // this seems unnecessary
 
        // TODO: We can probably use some permutation symmetries to avoid recomputing things
        // at the very least, we can treat the permutation of the first two indices
-       int j2min = std::max( std::abs(j2a-j2c), std::abs(j2b-j2d) )/2;
-       int j2max = std::min( j2a+j2c, j2b+j2d )/2;
+//       int j2min = std::max( std::abs(j2a-j2c), std::abs(j2b-j2d) )/2;
+//       int j2max = std::min( j2a+j2c, j2b+j2d )/2;
+       int j2min =  std::abs(j2a-j2c) /2;
+       int j2max = (j2a+j2c)/2;
        for (int j2=j2min; j2<=j2max; ++j2)
        {
-         int Jmin = std::max( std::abs(2*j2-j2i), std::abs(2*j2-j2j) );
-         int Jmax = 2*j2 + std::min(j2i, j2j);
+//         int Jmin = std::max( std::abs(2*j2-j2i), std::abs(2*j2-j2j) );
+//         int Jmax = 2*j2 + std::min(j2i, j2j);
+         int Jmin =  std::abs(2*j2-j2i) ;
+         int Jmax = 2*j2 + j2i;
          for (int J2=Jmin; J2<=Jmax; J2+=2)
          {
            v += Hbare.ThreeBody.GetME_pn(j2,j2,J2,a,c,i,b,d,j) * (J2+1);
@@ -761,7 +785,9 @@ void HartreeFock::FillLowestOrbits()
 {
   // vector of indices such that they point to elements of F(i,i)
   // in ascending order of energy
-  arma::uvec sorted_indices = arma::stable_sort_index( F.diag() );
+  arma::mat F_hfbasis = C.t() * F * C;
+  arma::uvec sorted_indices = arma::stable_sort_index( F_hfbasis.diag() );
+//  arma::uvec sorted_indices = arma::stable_sort_index( F.diag() );
   int targetZ = modelspace->GetZref();
   int targetN = modelspace->GetAref() - targetZ;
   int placedZ = 0;
@@ -810,17 +836,29 @@ void HartreeFock::FillLowestOrbits()
 void HartreeFock::UpdateF()
 {
    double start_time = omp_get_wtime();
-//   int norbits = modelspace->GetNumberOrbits();
+   int norbits = modelspace->GetNumberOrbits();
    Vij.zeros();
    V3ij.zeros();
 
 
    // This loop isn't thread safe for some reason. Regardless, parallelizing it makes it slower.
-//   for (int i=0;i<norbits;i++)
-   for (auto i : modelspace->all_orbits)
+//   for (auto i : modelspace->all_orbits)
+//   std::vector<arma::mat> V2vec(omp_get_max_threads(),Vij);
+//   #pragma omp parallel for schedule(dynamic,1)
+   std::vector<std::array<int,3>> onebodychannels;
+   for (auto it : Hbare.OneBodyChannels ) onebodychannels.push_back(it.first);
+
+   #pragma omp parallel for schedule(dynamic,1)
+   for (size_t obc=0; obc<onebodychannels.size(); obc++)
    {
+    auto& chvec = Hbare.OneBodyChannels.at(onebodychannels[obc]);
+//   for (index_t i=0;i<norbits;i++)
+   for (index_t i : chvec )
+   {
+//      arma::mat& v2ij = V2vec[omp_get_thread_num()];
       Orbit& oi = modelspace->GetOrbit(i);
-      for (auto j : Hbare.OneBodyChannels.at({oi.l,oi.j2,oi.tz2}) )
+//      for (auto j : Hbare.OneBodyChannels.at({oi.l,oi.j2,oi.tz2}) )
+      for (auto j : chvec )
       {
          if (j<i) continue;
 //         for (int a=0;a<norbits;++a)
@@ -837,14 +875,19 @@ void HartreeFock::UpdateF()
                int local_ket = modelspace->MonopoleKets[Tz+1][parity][ket];
                // 2body term <ai|V|bj>
                if ((a>i) xor (b>j))  // code needed some obfuscation, so threw an xor in there...
+//                  v2ij(i,j) += rho(a,b)*Vmon_exch[Tz+1][parity](local_bra,local_ket); // <a|rho|b> * <ai|Vmon|jb>
                   Vij(i,j) += rho(a,b)*Vmon_exch[Tz+1][parity](local_bra,local_ket); // <a|rho|b> * <ai|Vmon|jb>
                else
+//                  v2ij(i,j) += rho(a,b)*Vmon[Tz+1][parity](local_bra,local_ket); // <a|rho|b> * <ai|Vmon|bj>
                   Vij(i,j) += rho(a,b)*Vmon[Tz+1][parity](local_bra,local_ket); // <a|rho|b> * <ai|Vmon|bj>
            }
          }
       }
       Vij.col(i) /= (oi.j2+1);
+//      v2ij.col(i) /= (oi.j2+1);
    }
+   }
+//   for (auto& v : V2vec) Vij += v;
 
    if (Hbare.GetParticleRank()>=3)
    {
@@ -965,48 +1008,87 @@ Operator HartreeFock::TransformToHFBasis( Operator& OpHO)
    // Easy part:
    //Update the one-body part by multiplying by the matrix C(i,a) = <i|a>
    // where |i> is the original basis and |a> is the HF basis
-   OpHF.OneBody = C.t() * OpHO.OneBody * C;
-
+   if ( OpHF.legs%2== 0)
+   {
+     OpHF.OneBody = C.t() * OpHO.OneBody * C;
+   }
+   else
+   {
+     OpHF.OneBody = C.t() * OpHO.OneBody ;
+   }
 
    // Moderately difficult part:
    // Update the two-body part by multiplying by the matrix D(ij,ab) = <ij|ab>
    // for each channel J,p,Tz. Most of the effort here is in constructing D.
 
-   for ( auto& it : OpHO.TwoBody.MatEl )
+   if ( OpHF.legs%2== 0)
    {
-      int ch_bra = it.first[0];
-      int ch_ket = it.first[1];
-      TwoBodyChannel& tbc_bra = OpHF.GetModelSpace()->GetTwoBodyChannel(ch_bra);
-      TwoBodyChannel& tbc_ket = OpHF.GetModelSpace()->GetTwoBodyChannel(ch_ket);
-      int nbras = it.second.n_rows;
-      int nkets = it.second.n_cols;
-      arma::mat Dbra(nbras,nbras);
-      arma::mat Dket(nkets,nkets);
-      // loop over all possible original basis configurations <pq| in this J,p,Tz channel.
-      // and all possible HF configurations |p'q'> in this J,p,Tz channel
-      // bra is in the original basis, ket is in the HF basis
-      // i and j are the indices of the matrix D for this channel
-      for (int i=0; i<nkets; ++i)
-      {
-         Ket & ket_ho = tbc_ket.GetKet(i);
-         for (int j=0; j<nkets; ++j)
-         {
-            Ket & ket_hf = tbc_ket.GetKet(j);
-            Dket(i,j) = C(ket_ho.p,ket_hf.p) * C(ket_ho.q,ket_hf.q);
-            if (ket_ho.p!=ket_ho.q)
-            {
-               Dket(i,j) += C(ket_ho.q, ket_hf.p) * C(ket_ho.p, ket_hf.q) * ket_ho.Phase(tbc_ket.J);
-            }
-            if (ket_ho.p==ket_ho.q)    Dket(i,j) *= PhysConst::SQRT2;
-            if (ket_hf.p==ket_hf.q)    Dket(i,j) /= PhysConst::SQRT2;
-         }
-      }
-      if (ch_bra == ch_ket)
-      {
-        Dbra = Dket.t();
-      }
-      else
-      {
+     for ( auto& it : OpHO.TwoBody.MatEl )
+     {
+        int ch_bra = it.first[0];
+        int ch_ket = it.first[1];
+        TwoBodyChannel& tbc_bra = OpHF.GetModelSpace()->GetTwoBodyChannel(ch_bra);
+        TwoBodyChannel& tbc_ket = OpHF.GetModelSpace()->GetTwoBodyChannel(ch_ket);
+        int nbras = it.second.n_rows;
+        int nkets = it.second.n_cols;
+        arma::mat Dbra(nbras,nbras);
+        arma::mat Dket(nkets,nkets);
+        // loop over all possible original basis configurations <pq| in this J,p,Tz channel.
+        // and all possible HF configurations |p'q'> in this J,p,Tz channel
+        // bra is in the original basis, ket is in the HF basis
+        // i and j are the indices of the matrix D for this channel
+        for (int i=0; i<nkets; ++i)
+        {
+           Ket & ket_ho = tbc_ket.GetKet(i);
+           for (int j=0; j<nkets; ++j)
+           {
+              Ket & ket_hf = tbc_ket.GetKet(j);
+              Dket(i,j) = C(ket_ho.p,ket_hf.p) * C(ket_ho.q,ket_hf.q);
+              if (ket_ho.p!=ket_ho.q)
+              {
+                 Dket(i,j) += C(ket_ho.q, ket_hf.p) * C(ket_ho.p, ket_hf.q) * ket_ho.Phase(tbc_ket.J);
+              }
+              if (ket_ho.p==ket_ho.q)    Dket(i,j) *= PhysConst::SQRT2;
+              if (ket_hf.p==ket_hf.q)    Dket(i,j) /= PhysConst::SQRT2;
+           }
+        }
+        if (ch_bra == ch_ket)
+        {
+          Dbra = Dket.t();
+        }
+        else
+        {
+          for (int i=0; i<nbras; ++i)
+          {
+             Ket & bra_hf = tbc_bra.GetKet(i);
+             for (int j=0; j<nbras; ++j)
+             {
+                Ket & bra_ho = tbc_bra.GetKet(j);
+                Dbra(i,j) = C(bra_ho.p,bra_hf.p) * C(bra_ho.q,bra_hf.q);
+                if (bra_ho.p!=bra_ho.q)
+                {
+                   Dbra(i,j) += C(bra_ho.q, bra_hf.p) * C(bra_ho.p, bra_hf.q) * bra_ho.Phase(tbc_bra.J);
+                }
+                if (bra_ho.p==bra_ho.q)    Dbra(i,j) *= PhysConst::SQRT2;
+                if (bra_hf.p==bra_hf.q)    Dbra(i,j) /= PhysConst::SQRT2;
+             }
+          }
+        }
+        auto& IN  =  it.second;
+        auto& OUT =  OpHF.TwoBody.GetMatrix(ch_bra,ch_ket);
+        OUT  =    Dbra * IN * Dket;
+
+     }
+   }
+
+   else
+   {
+     for ( auto& it : OpHO.ThreeLeg.MatEl )
+     {
+        int ch_bra = it.first;
+        TwoBodyChannel& tbc_bra = OpHF.GetModelSpace()->GetTwoBodyChannel(ch_bra);
+        int nbras = it.second.n_rows;
+        arma::mat Dbra(nbras,nbras);
         for (int i=0; i<nbras; ++i)
         {
            Ket & bra_hf = tbc_bra.GetKet(i);
@@ -1022,11 +1104,10 @@ Operator HartreeFock::TransformToHFBasis( Operator& OpHO)
               if (bra_hf.p==bra_hf.q)    Dbra(i,j) /= PhysConst::SQRT2;
            }
         }
-      }
-      auto& IN  =  it.second;
-      auto& OUT =  OpHF.TwoBody.GetMatrix(ch_bra,ch_ket);
-      OUT  =    Dbra * IN * Dket;
-
+        auto& IN  =  it.second;
+        auto& OUT =  OpHF.ThreeLeg.GetMatrix(ch_bra);
+        OUT  =    Dbra * IN * C;
+     }
    }
 
    return OpHF;
@@ -1253,12 +1334,14 @@ Operator HartreeFock::GetOmega()
 
 void HartreeFock::PrintSPE()
 {
+  arma::mat F_hfbasis = C.t() * F * C;
 //  for (size_t i=0;i<modelspace->GetNumberOrbits();++i)
   for ( auto i : modelspace->all_orbits )
   {
     Orbit& oi = modelspace->GetOrbit(i);
     std::cout << std::fixed << std::setw(3) << oi.n << " " << std::setw(3) << oi.l << " "
-         << std::setw(3) << oi.j2 << " " << std::setw(3) << oi.tz2 << "   " << std::setw(10) << F(i,i) << std::endl;
+         << std::setw(3) << oi.j2 << " " << std::setw(3) << oi.tz2 << "   " << std::setw(10) << F_hfbasis(i,i) << std::endl;
+//         << std::setw(3) << oi.j2 << " " << std::setw(3) << oi.tz2 << "   " << std::setw(10) << F(i,i) << std::endl;
   }
 
 }
@@ -1266,6 +1349,7 @@ void HartreeFock::PrintSPE()
 
 void HartreeFock::PrintSPEandWF()
 {
+  arma::mat F_hfbasis = C.t() * F * C;
   std::cout << std::fixed << std::setw(3) << "i" << ": " << std::setw(3) << "n" << " " << std::setw(3) << "l" << " "
        << std::setw(3) << "2j" << " " << std::setw(3) << "2tz" << "   " << std::setw(12) << "SPE" << " " << std::setw(12) << "occ." << "   |   " << " overlaps" << std::endl;
 //  for (int i=0;i<modelspace->GetNumberOrbits();++i)
@@ -1273,7 +1357,8 @@ void HartreeFock::PrintSPEandWF()
   {
     Orbit& oi = modelspace->GetOrbit(i);
     std::cout << std::fixed << std::setw(3) << i << ": " << std::setw(3) << oi.n << " " << std::setw(3) << oi.l << " "
-         << std::setw(3) << oi.j2 << " " << std::setw(3) << oi.tz2 << "   " << std::setw(12) << std::setprecision(6) << F(i,i) << " " << std::setw(12) << oi.occ << "   | ";
+         << std::setw(3) << oi.j2 << " " << std::setw(3) << oi.tz2 << "   " << std::setw(12) << std::setprecision(6) << F_hfbasis(i,i) << " " << std::setw(12) << oi.occ << "   | ";
+//         << std::setw(3) << oi.j2 << " " << std::setw(3) << oi.tz2 << "   " << std::setw(12) << std::setprecision(6) << F(i,i) << " " << std::setw(12) << oi.occ << "   | ";
     for (int j : Hbare.OneBodyChannels.at({oi.l,oi.j2,oi.tz2}) )
     {
       std::cout << std::setw(9) << C(i,j) << "  ";

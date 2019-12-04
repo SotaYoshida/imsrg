@@ -4,6 +4,7 @@
 #include <armadillo>
 #include <random>
 #include <string>
+#include "imsrg_util.hh"
 
 
 uint64_t UnitTest::random_seed = 1;
@@ -205,7 +206,8 @@ Operator UnitTest::RandomDaggerOp(ModelSpace& modelspace, index_t Q)
    for (auto i : dag.OneBodyChannels.at({oQ.l,oQ.j2,oQ.tz2}) )
    {
      double random_me = distribution(generator);
-     dag.OneBody(i,Q)= random_me;
+     dag.OneBody(i,0)= random_me;
+//     dag.OneBody(i,Q)= random_me;
    }
 
    size_t nch = modelspace.GetNumberTwoBodyChannels();
@@ -439,12 +441,15 @@ void UnitTest::TestCommutators3(Operator& X, Operator& Y)
 //  Operator Y = RandomOp(*modelspace, 0, 0, 0, 3, +1);
 //  random_seed --;
 
+  X += RandomOp(*modelspace, 0, 0, 0, 2, -1);
+  Y += RandomOp(*modelspace, 0, 0, 0, 2, +1);
   bool all_good = true;
 
-  all_good &= Test_comm330ss( X, Y );
+//  all_good &= Test_comm330ss( X, Y );
 //  all_good &= Test_comm331ss( X, Y );
-  all_good &= Test_comm231ss( X, Y );
-  all_good &= Test_comm132ss( X, Y );
+//  all_good &= Test_comm231ss( X, Y );
+//  all_good &= Test_comm132ss( X, Y );
+  all_good &= Test_comm223ss( X, Y );
 
   if ( all_good )
   {
@@ -467,6 +472,67 @@ void UnitTest::TestDaggerCommutators(index_t Q)
   arma::arma_rng::set_seed( random_seed );
   Operator X = RandomOp(*modelspace, 0, 0, 0, 2, -1);
   Operator Y = RandomDaggerOp(*modelspace, Q);
+
+  bool all_good = true;
+
+  all_good &= Test_comm211sd( X, Y );
+  all_good &= Test_comm231sd( X, Y );
+  all_good &= Test_comm431sd( X, Y );
+  all_good &= Test_comm413sd( X, Y );
+  all_good &= Test_comm233sd( X, Y );
+  all_good &= Test_comm433_pp_hh_sd( X, Y );
+  all_good &= Test_comm433sd_ph( X, Y );
+
+  if ( all_good )
+  {
+    std::cout << " Done with " << __func__ << " and all is well" << std::endl;
+  }
+  else
+  {
+    std::cout << " Done with " << __func__ << " and at least one test failed" << std::endl;
+  }
+  X.profiler.timer[__func__] += omp_get_wtime() - t_start;
+}
+
+
+
+void UnitTest::TestDaggerCommutatorsAlln(index_t Q)
+{
+  double t_start = omp_get_wtime();
+  arma::arma_rng::set_seed( random_seed );
+  Operator X = RandomOp(*modelspace, 0, 0, 0, 2, -1);
+//  Operator Y = RandomDaggerOp(*modelspace, Q);
+
+  Operator Y = imsrg_util::DaggerAlln_Op(*modelspace, Q);
+  Operator Z = Commutator::Commutator(X, Commutator::Commutator(X,Y));
+  std::vector<Operator> Yn;
+  std::vector<Operator> Zn;
+  Orbit& oQ = X.modelspace->GetOrbit(Q);
+  for ( auto nQ : X.modelspace->OneBodyChannels.at({oQ.l,oQ.j2,oQ.tz2}) )
+  {
+    Yn.push_back( imsrg_util::Dagger_Op(*modelspace, nQ) );
+//    Yn.back().OneBody(nQ,nQ) = 0;
+//    Yn.back().OneBody(nQ,Q) = 1.0;
+//    Yn.back().OneBody(nQ,0) = 0;
+    Yn.back().OneBody(nQ,0) = 1.0;
+    Zn.push_back( Commutator::Commutator( X, Commutator::Commutator(X,Yn.back()) ) );
+  }
+  std::cout << "Y one body: "<< std::endl << Y.OneBody << std::endl;
+  std::cout << "Z one body: "<< std::endl << Z.OneBody << std::endl;
+  for ( size_t n=0; n< Yn.size(); n++)
+  {
+    std::cout << " Y " << n << std::endl << Yn[n].OneBody << std::endl;
+    std::cout << " Z " << n << std::endl << Zn[n].OneBody << std::endl;
+  }
+  Operator Zsum = Zn.front();
+  for (size_t n=1; n<Zn.size(); n++)   Zsum += Zn[n];
+  Operator Zdiff = Z - Zsum;
+  double Znorm = Zdiff.Norm();
+  std::cout << "Norms: " << Z.Norm() << "   vs  ";
+  for (auto z : Zn) std::cout << z.Norm() << " ";
+  std::cout << std::endl << "Norm of Zdiff = " << Znorm << std::endl;
+
+  
 
   bool all_good = true;
 
@@ -643,7 +709,8 @@ double UnitTest::GetMschemeMatrixElement_3b( const Operator& Op, int a, int ma, 
 double UnitTest::GetMschemeMatrixElement_1leg( const Operator& Op, int a, int ma )
 {
   
-  return GetMschemeMatrixElement_1b( Op, a, ma, Op.GetQSpaceOrbit(), ma) ;
+  return Op.OneBody(a,0) ;
+//  return GetMschemeMatrixElement_1b( Op, a, ma, Op.GetQSpaceOrbit(), ma) ;
 }
 
 
@@ -1867,6 +1934,174 @@ bool UnitTest::Test_comm132ss( const Operator& X, const Operator& Y )
 }
 
 
+//
+// M-scheme formula
+//
+// Z_ijklmn = (1-Pik-Pjk)(1-Plm-Pln) sum_a (X_ijla Y_akmn - Y_ijla X_akmn)
+//
+bool UnitTest::Test_comm223ss( const Operator& X, const Operator& Y )
+{
+  Operator Z_J( *(Y.modelspace), 0,0,0,3 );
+//  Operator Z_J( Y );
+  Z_J.SetHermitian();
+  Z_J.Erase();
+
+
+  Commutator::comm223ss( X, Y, Z_J);
+
+  if ( Z_J.IsHermitian() )
+     Z_J.Symmetrize();
+  else if (Z_J.IsAntiHermitian() )
+     Z_J.AntiSymmetrize();
+
+
+  double summed_error = 0;
+  double sum_m = 0;
+  double sum_J = 0;
+
+  for (auto i : X.modelspace->all_orbits )
+  {
+    Orbit& oi = X.modelspace->GetOrbit(i);
+    int mi = oi.j2;
+    for (auto j : X.modelspace->all_orbits )
+    {
+      if (j<i) continue;
+      Orbit& oj = X.modelspace->GetOrbit(j);
+      for (auto k : X.modelspace->all_orbits )
+      {
+        Orbit& ok = X.modelspace->GetOrbit(k);
+        if (k<j) continue;
+
+
+        for (auto l : X.modelspace->all_orbits )
+        {
+          if (l<i) continue;
+          Orbit& ol = X.modelspace->GetOrbit(l);
+          for ( auto m : X.modelspace->all_orbits )
+          {
+            if (m<l) continue;
+            Orbit& om = X.modelspace->GetOrbit(m);
+            for (auto n : X.modelspace->all_orbits )
+            {
+              if (n<m) continue;
+              Orbit& on = X.modelspace->GetOrbit(n);
+              if ( (oi.l+oj.l+ok.l+ol.l+om.l+on.l)%2 !=0 ) continue;
+              if ( (oi.tz2+oj.tz2+ok.tz2) != (ol.tz2+om.tz2+on.tz2) ) continue;
+
+              // loop over projections
+              for (int m_i=-oi.j2; m_i<=oi.j2; m_i+=2)
+              {
+               for (int m_j=-oj.j2; m_j<=oj.j2; m_j+=2)
+               {
+                for (int m_k=-ok.j2; m_k<=ok.j2; m_k+=2)
+                {
+                 for (int m_l=-ol.j2; m_l<=ol.j2; m_l+=2)
+                 {
+                  for (int m_m=-om.j2; m_m<=om.j2; m_m+=2)
+                  {
+                   for (int m_n=-on.j2; m_n<=on.j2; m_n+=2)
+                   {
+                     if ( (m_i+m_j+m_k) != (m_l+m_m+m_n) ) continue;
+                     double z_ijklmn = 0;
+                     for ( auto a : X.modelspace->all_orbits )
+                     {
+                       Orbit& oa = X.modelspace->GetOrbit(a);
+                       for ( int m_a=-oa.j2; m_a<=oa.j2; m_a++)
+                       {
+                         // "direct" term
+                         double x_ijla = GetMschemeMatrixElement_2b( X, i,m_i, j,m_j, l,m_l, a,m_a );
+                         double y_akmn = GetMschemeMatrixElement_2b( Y, a,m_a, k,m_k, m,m_m, n,m_n );
+                         double y_ijla = GetMschemeMatrixElement_2b( Y, i,m_i, j,m_j, l,m_l, a,m_a );
+                         double x_akmn = GetMschemeMatrixElement_2b( X, a,m_a, k,m_k, m,m_m, n,m_n );
+                         // Pik
+                         double x_kjla = GetMschemeMatrixElement_2b( X, k,m_k, j,m_j, l,m_l, a,m_a );
+                         double y_aimn = GetMschemeMatrixElement_2b( Y, a,m_a, i,m_i, m,m_m, n,m_n );
+                         double y_kjla = GetMschemeMatrixElement_2b( Y, k,m_k, j,m_j, l,m_l, a,m_a );
+                         double x_aimn = GetMschemeMatrixElement_2b( X, a,m_a, i,m_i, m,m_m, n,m_n );
+                         // Pjk
+                         double x_ikla = GetMschemeMatrixElement_2b( X, i,m_i, k,m_k, l,m_l, a,m_a );
+                         double y_ajmn = GetMschemeMatrixElement_2b( Y, a,m_a, j,m_j, m,m_m, n,m_n );
+                         double y_ikla = GetMschemeMatrixElement_2b( Y, i,m_i, k,m_k, l,m_l, a,m_a );
+                         double x_ajmn = GetMschemeMatrixElement_2b( X, a,m_a, j,m_j, m,m_m, n,m_n );
+                         // Plm
+                         double x_ijma = GetMschemeMatrixElement_2b( X, i,m_i, j,m_j, m,m_m, a,m_a );
+                         double y_akln = GetMschemeMatrixElement_2b( Y, a,m_a, k,m_k, l,m_l, n,m_n );
+                         double y_ijma = GetMschemeMatrixElement_2b( Y, i,m_i, j,m_j, m,m_m, a,m_a );
+                         double x_akln = GetMschemeMatrixElement_2b( X, a,m_a, k,m_k, l,m_l, n,m_n );
+                         // Pln
+                         double x_ijna = GetMschemeMatrixElement_2b( X, i,m_i, j,m_j, n,m_n, a,m_a );
+                         double y_akml = GetMschemeMatrixElement_2b( Y, a,m_a, k,m_k, m,m_m, l,m_l );
+                         double y_ijna = GetMschemeMatrixElement_2b( Y, i,m_i, j,m_j, n,m_n, a,m_a );
+                         double x_akml = GetMschemeMatrixElement_2b( X, a,m_a, k,m_k, m,m_m, l,m_l );
+                         // Pik Plm
+                         double x_kjma = GetMschemeMatrixElement_2b( X, k,m_k, j,m_j, m,m_m, a,m_a );
+                         double y_ailn = GetMschemeMatrixElement_2b( Y, a,m_a, i,m_i, l,m_l, n,m_n );
+                         double y_kjma = GetMschemeMatrixElement_2b( Y, k,m_k, j,m_j, m,m_m, a,m_a );
+                         double x_ailn = GetMschemeMatrixElement_2b( X, a,m_a, i,m_i, l,m_l, n,m_n );
+                         // Pik Pln
+                         double x_kjna = GetMschemeMatrixElement_2b( X, k,m_k, j,m_j, n,m_n, a,m_a );
+                         double y_aiml = GetMschemeMatrixElement_2b( Y, a,m_a, i,m_i, m,m_m, l,m_l );
+                         double y_kjna = GetMschemeMatrixElement_2b( Y, k,m_k, j,m_j, n,m_n, a,m_a );
+                         double x_aiml = GetMschemeMatrixElement_2b( X, a,m_a, i,m_i, m,m_m, l,m_l );
+                         // Pjk Plm
+                         double x_ikma = GetMschemeMatrixElement_2b( X, i,m_i, k,m_k, m,m_m, a,m_a );
+                         double y_ajln = GetMschemeMatrixElement_2b( Y, a,m_a, j,m_j, l,m_l, n,m_n );
+                         double y_ikma = GetMschemeMatrixElement_2b( Y, i,m_i, k,m_k, m,m_m, a,m_a );
+                         double x_ajln = GetMschemeMatrixElement_2b( X, a,m_a, j,m_j, l,m_l, n,m_n );
+                         // Pjk Pln
+                         double x_ikna = GetMschemeMatrixElement_2b( X, i,m_i, k,m_k, n,m_n, a,m_a );
+                         double y_ajml = GetMschemeMatrixElement_2b( Y, a,m_a, j,m_j, m,m_m, l,m_l );
+                         double y_ikna = GetMschemeMatrixElement_2b( Y, i,m_i, k,m_k, n,m_n, a,m_a );
+                         double x_ajml = GetMschemeMatrixElement_2b( X, a,m_a, j,m_j, m,m_m, l,m_l );
+                         z_ijklmn += x_ijla * y_akmn - y_ijla * x_akmn;
+                         z_ijklmn -= x_kjla * y_aimn - y_kjla * x_aimn;
+                         z_ijklmn -= x_ikla * y_ajmn - y_ikla * x_ajmn;
+                         z_ijklmn -= x_ijma * y_akln - y_ijma * x_akln;
+                         z_ijklmn -= x_ijna * y_akml - y_ijna * x_akml;
+                         z_ijklmn += x_kjma * y_ailn - y_kjma * x_ailn;
+                         z_ijklmn += x_kjna * y_aiml - y_kjna * x_aiml;
+                         z_ijklmn += x_ikma * y_ajln - y_ikma * x_ajln;
+                         z_ijklmn += x_ikna * y_ajml - y_ikna * x_ajml;
+                       }
+                     }
+                    
+                    double ZJ_ijklmn = GetMschemeMatrixElement_3b( Z_J, i,m_i, j,m_j, k,m_k, l,m_l, m,m_m, n,m_n );
+                    double err = z_ijklmn - ZJ_ijklmn;
+                    if (std::abs(err)>1e-6)
+                    {
+                      std::cout << "Trouble in " << __func__ << "  i,j,k,l,m,n = " << i << " " << j << " " << k << " " << l << " " << m << " " << n
+                                << " {m} = " << m_i << " " << m_j << " " << m_k << " " << m_l << " " << m_m << " " << m_n
+                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err << std::endl; 
+                    }
+                    summed_error += err*err;
+                    sum_m += z_ijklmn*z_ijklmn;
+                    sum_J += ZJ_ijklmn*ZJ_ijklmn;
+                   } // for m_n
+                  } // for m_m
+                 } // for m_l
+                } // for m_k
+               } // for m_j
+              } // for m_i
+              
+            } // for n
+          } // for m
+        } // for l
+      } // for k
+    } // for j
+  } // for i
+
+
+
+  bool passed = std::abs( summed_error ) <1e-6 ;
+  std::string passfail = passed ? "PASS " : "FAIL";
+//  if ( Z_J.TwoBodyNorm() < 1e-6 ) std::cout << "WARNING " << __func__ << "||Z_J 2b|| = 0. Trivial test?" << std::endl;
+  std::cout << "   " << __func__ <<   "  sum_m, sum_J = " << sum_m << " " << sum_J
+            << "    summed error = " << summed_error << "  => " << passfail << std::endl;
+  return passed;
+
+ 
+}
+
 
 //***************************************************************
 //// Now we move on to the scalar-dagger commutator expressions.
@@ -2532,3 +2767,9 @@ bool UnitTest::Test_comm433sd_ph( const Operator& X, const Operator& Yin )
   return passed;
 
 }
+
+
+
+
+
+

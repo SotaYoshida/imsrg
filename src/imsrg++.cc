@@ -100,6 +100,7 @@ int main(int argc, char** argv)
   bool store_3bme_pn = (parameters.s("store_3bme_pn")=="true");
 
   int eMax = parameters.i("emax");
+  int eMax_imsrg = parameters.i("emax_imsrg");
   int lmax = parameters.i("lmax"); // so far I only use this with atomic systems.
   int E3max = parameters.i("e3max");
   int lmax3 = parameters.i("lmax3");
@@ -625,6 +626,13 @@ int main(int argc, char** argv)
     return 0;
   }
 
+  ModelSpace ms_imsrg = ( reference=="default" ? ModelSpace(eMax_imsrg,valence_space) :
+      ModelSpace(eMax_imsrg,reference,valence_space) );
+  HNO = HNO.Truncate(ms_imsrg);
+  for (size_t i=0;i<ops.size(); ++i){
+    ops[i] = ops[i].Truncate(ms_imsrg);
+  }
+
 
   IMSRGSolver imsrgsolver(HNO);
   imsrgsolver.SetReadWrite(rw);
@@ -878,7 +886,7 @@ int main(int argc, char** argv)
           {
             if (valence_file_format == "tokyo")
             {
-              rw.WriteTensorTokyo(intfile+opnames[i]+"_2b.snt",ops[i]);
+              rw.WriteTensorTokyo(intfile+opnames[i]+".snt",ops[i]);
             }
             else
             {

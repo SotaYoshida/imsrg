@@ -772,7 +772,8 @@ Operator Operator::Truncate(ModelSpace& ms_new)
     arma::uvec ibra_old(nkets);
     for (int ibra=0;ibra<nkets;++ibra)
     {
-      ibra_old(ibra) = tbc.GetLocalIndex(tbc_new.GetKetIndex(ibra));
+      Ket& bra = tbc_new.GetKet(ibra);
+      ibra_old(ibra) = tbc.GetLocalIndex(bra.p, bra.q);
     }
     Mat_new = Mat.submat(ibra_old,ibra_old);
   }

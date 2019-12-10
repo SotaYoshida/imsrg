@@ -32,7 +32,7 @@ batch_mode=False
 if 'terminal' in argv[1:]: batch_mode=False
 
 ### Don't forget to change this. I don't want emails about your calculations...
-mail_address = 'sstroberg@triumf.ca'
+mail_address = ''
 
 ### This comes in handy if you want to loop over Z
 ELEM = ['n','H','He','Li','Be','B','C','N',
@@ -58,12 +58,12 @@ ARGS['file2e1max'] = '14 file2e2max=28 file2lmax=10'
 ARGS['file3e1max'] = '14 file3e2max=28 file3e3max=14'
 
 ### Name of a directory to write Omega operators so they don't need to be stored in memory. If not given, they'll just be stored in memory.
-#ARGS['scratch'] = 'SCRATCH'    
+#ARGS['scratch'] = 'SCRATCH'
 
 ### Generator for core decoupling, can be atan, white, imaginary-time.  (atan is default)
-#ARGS['core_generator'] = 'imaginary-time' 
+#ARGS['core_generator'] = 'imaginary-time'
 ### Generator for valence deoupling, can be shell-model, shell-model-atan, shell-model-npnh, shell-model-imaginary-time (shell-model-atan is default)
-#ARGS['valence_generator'] = 'shell-model-imaginary-time' 
+#ARGS['valence_generator'] = 'shell-model-imaginary-time'
 
 ### Solution method
 ARGS['method'] = 'magnus'
@@ -120,45 +120,20 @@ for Z in range(16,17):
    for hw in [13]:
 
      ARGS['emax'] = '%d'%e
+     ARGS['emax_imsrg'] = "%d"%e
      ARGS['e3max'] = '14'
 
      ARGS['2bme'] = 'input/chi2b_srg0625_eMax14_lMax10_hwHO0%d.me2j.gz'%(hw)
      ARGS['3bme'] = 'input/me3j/chi2b3b400cD-02cE0098_hwconv036_srg0625ho40J_eMax14_EMax14_hwHO0%d.me3j.gz'%(hw)
      ARGS['LECs'] = 'srg0625'
 
-#     ARGS['2bme'] = 'input/usdbpn.int'
-#     ARGS['3bme'] = 'none'
-#     ARGS['LECs'] = 'usdb'
-#     ARGS['fmt2'] = 'nushellx'
-#     ARGS['basis'] = 'oscillator'
-
-#     ARGS['2bme'] = '/work/hda21/hda215/ME_share/vnn_hw%d.00_kvnn10_lambda1.80_mesh_kmax_7.0_100_pc_R15.00_N15.dat_to_me2j.gz'%(hw)
-#     ARGS['3bme'] = '/work/hda21/hda215/ME_share/jsTNF_Nmax_16_J12max_8_hbarOmega_%d.00_Fit_cutoff_2.00_nexp_4_c1_1.00_c3_1.00_c4_1.00_cD_1.00_cE_1.00_2pi_0.00_2pi1pi_0.00_2picont_0.00_rings_0.00_J3max_9_new_E3_16_e_14_ant_EM1.8_2.0.h5_to_me3j.gz'%(hw)
-#     ARGS['2bme'] = '/itch/exch/me2j/chi2b_srg0625_eMax14_lMax10_hwHO0%d.me2j.gz'%(hw)
-#     ARGS['3bme'] = '/itch/exch/me3j/new/chi2b3b400cD-02cE0098_hwconv036_srg0625ho40J_eMax14_EMax14_hwHO0%d.me3j.gz'%(hw)
-#     ARGS['LECs'] = 'srg0625'
 
      ARGS['hw'] = '%d'%hw
      ARGS['A'] = '%d'%A
      ARGS['valence_space'] = reference
-#     ARGS['valence_space'] = '0hw-shell'
-#     ARGS['valence_space'] = 'Cr%d'%A
-#     ARGS['core_generator'] = 'imaginary-time'
-#     ARGS['valence_generator'] = 'shell-model-imaginary-time'
      ARGS['emax'] = '%d'%e
-#     ARGS['method'] = method
 
-     ARGS['Operators'] = ''    # Operators to consistenly transform, separated by commas.
-#     ARGS['Operators'] = 'Rp2'
-#     ARGS['Operators'] = 'Rp2,Rn2'
-#     ARGS['Operators'] = 'E2'
-#     ARGS['Operators'] = 'E2,M1'
-#     ARGS['Operators'] = 'E2,M1,GamowTeller'
-#     ARGS['Operators'] = 'M1p,M1n,Sigma_p,Sigma_n'
-#     ARGS['Operators'] = 'GamowTeller'
-
-
-
+     ARGS['Operators'] = 'Rp2'    # Operators to consistenly transform, separated by commas.
     ### Make an estimate of how much time to request. Only used for slurm at the moment.
      time_request = '24:00:00'
      if   e <  5 : time_request = '00:10:00'
@@ -166,7 +141,9 @@ for Z in range(16,17):
      elif e < 10 : time_request = '04:00:00'
      elif e < 12 : time_request = '12:00:00'
 
-     jobname  = '%s_%s_%s_%s_e%s_E%s_s%s_hw%s_A%s' %(ARGS['valence_space'], ARGS['LECs'],ARGS['method'],ARGS['reference'],ARGS['emax'],ARGS['e3max'],ARGS['smax'],ARGS['hw'],ARGS['A'])
+     jobname  = '%s_%s_%s_%s_e%s_eimsrg%s_E%s_s%s_hw%s_A%s' %(ARGS['valence_space'], \
+             ARGS['LECs'],ARGS['method'],ARGS['reference'],ARGS['emax'],\
+             ARGS['emax_imsrg'],ARGS['e3max'],ARGS['smax'],ARGS['hw'],ARGS['A'])
      logname = jobname + datetime.fromtimestamp(time()).strftime('_%y%m%d%H%M.log')
 
   ### Some optional parameters that we probably want in the output name if we're using them

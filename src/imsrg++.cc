@@ -486,11 +486,11 @@ int main(int argc, char** argv)
     double EMP2 = HNO.GetMP2_Energy();
     std::cout << "EMP2 = " << EMP2 << std::endl;
 //    double EMP3 = HNO.GetMP3_Energy();
-    std::array<double,3> Emp_3 = HNO.GetMP3_Energy();
-    double EMP3 = Emp_3[0]+Emp_3[1]+Emp_3[2];
-    std::cout << "E3_pp = " << Emp_3[0] << "  E3_hh = " << Emp_3[1] << " E3_ph = " << Emp_3[2] << "   EMP3 = " << EMP3 << std::endl;
+//    std::array<double,3> Emp_3 = HNO.GetMP3_Energy();
+//    double EMP3 = Emp_3[0]+Emp_3[1]+Emp_3[2];
+//    std::cout << "E3_pp = " << Emp_3[0] << "  E3_hh = " << Emp_3[1] << " E3_ph = " << Emp_3[2] << "   EMP3 = " << EMP3 << std::endl;
 //    cout << "EMP3 = " << EMP3 << endl;
-    std::cout << "To 3rd order, E = " << HNO.ZeroBody+EMP2+EMP3 << std::endl;
+//    std::cout << "To 3rd order, E = " << HNO.ZeroBody+EMP2+EMP3 << std::endl;
   }
 
 
@@ -625,7 +625,6 @@ int main(int argc, char** argv)
     HNO.PrintTimes();
     return 0;
   }
-
   ModelSpace ms_imsrg = ( reference=="default" ? ModelSpace(eMax_imsrg,valence_space) :
       ModelSpace(eMax_imsrg,reference,valence_space) );
   HNO = HNO.Truncate(ms_imsrg);

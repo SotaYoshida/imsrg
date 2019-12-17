@@ -28,6 +28,7 @@ void TwoBodyChannel::Initialize(int ch, ModelSpace *ms)
 
    NumberKets = 0;
    int nk = modelspace->GetNumberKets();
+   std::cout << "nk: " << nk << std::endl;
    KetMap.resize(nk,-1); // set all values to -1
    for (int i=0;i<nk;i++)
    {
@@ -77,18 +78,18 @@ void TwoBodyChannel::Initialize(int ch, ModelSpace *ms)
 }
 
 
-//int TwoBodyChannel::GetLocalIndex(int p, int q) const { return KetMap[modelspace->GetKetIndex(p,q)];}; 
+//int TwoBodyChannel::GetLocalIndex(int p, int q) const { return KetMap[modelspace->GetKetIndex(p,q)];};
 size_t TwoBodyChannel::GetLocalIndex(int p, int q) const
 {
  if (p<=q)
    return KetMap[modelspace->GetKetIndex(p,q)];
  else
    return KetMap[modelspace->GetKetIndex(q,p)] + NumberKets;
-} 
+}
 
 // get pointer to ket using local index
-const Ket & TwoBodyChannel::GetKet(int i) const { return modelspace->GetKet(KetList[i]);}; 
-Ket & TwoBodyChannel::GetKet(int i) { return modelspace->GetKet(KetList[i]);}; 
+const Ket & TwoBodyChannel::GetKet(int i) const { return modelspace->GetKet(KetList[i]);};
+Ket & TwoBodyChannel::GetKet(int i) { return modelspace->GetKet(KetList[i]);};
 
 
 //bool TwoBodyChannel::CheckChannel_ket(int p, int q) const

@@ -762,20 +762,32 @@ Operator Operator::Truncate(ModelSpace& ms_new)
   OpNew.OneBody = OneBody.submat(0,0,norb-1,norb-1);
   for (auto& itmat : OpNew.TwoBody.MatEl )
   {
-    int ch = itmat.first[0];
-    TwoBodyChannel& tbc_new = ms_new.GetTwoBodyChannel(ch);
-    int chold = modelspace->GetTwoBodyChannelIndex(tbc_new.J,tbc_new.parity,tbc_new.Tz);
-    TwoBodyChannel& tbc = modelspace->GetTwoBodyChannel(chold);
+    int chbra = itmat.first[0];
+    int chket = itmat.first[1];
+    TwoBodyChannel& tbc_bra = ms_new.GetTwoBodyChannel(chbra);
+    TwoBodyChannel& tbc_ket = ms_new.GetTwoBodyChannel(chket);
+    int choldbra = modelspace->GetTwoBodyChannelIndex(tbc_bra.J,tbc_bra.parity,tbc_bra.Tz);
+    int choldket = modelspace->GetTwoBodyChannelIndex(tbc_ket.J,tbc_ket.parity,tbc_ket.Tz);
+    TwoBodyChannel& tbc_braold = modelspace->GetTwoBodyChannel(choldbra);
+    TwoBodyChannel& tbc_ketold = modelspace->GetTwoBodyChannel(choldket);
     auto& Mat_new = itmat.second;
-    auto& Mat = TwoBody.GetMatrix(chold,chold);
-    int nkets = tbc_new.GetNumberKets();
-    arma::uvec ibra_old(nkets);
+    auto& Mat = TwoBody.GetMatrix(choldbra,choldket);
+    int nbras = tbc_bra.GetNumberKets();
+    int nkets = tbc_ket.GetNumberKets();
+    arma::uvec ibra_old(nbras);
+    arma::uvec iket_old(nkets);
+    for (int ibra=0;ibra<nbras;++ibra)
+    {
+      Ket& bra = tbc_bra.GetKet(ibra);
+      ibra_old(ibra) = tbc_braold.GetLocalIndex(bra.p, bra.q);
+    }
+
     for (int ibra=0;ibra<nkets;++ibra)
     {
-      Ket& bra = tbc_new.GetKet(ibra);
-      ibra_old(ibra) = tbc.GetLocalIndex(bra.p, bra.q);
+      Ket& bra = tbc_ket.GetKet(ibra);
+      iket_old(ibra) = tbc_ketold.GetLocalIndex(bra.p, bra.q);
     }
-    Mat_new = Mat.submat(ibra_old,ibra_old);
+    Mat_new = Mat.submat(ibra_old,iket_old);
   }
   return OpNew;
 }

@@ -201,8 +201,8 @@ ModelSpace::ModelSpace(ModelSpace&& ms)
 
 // orbit std::string representation is e.g. p0f7
 // Assumes that the core is hole states that aren't in the valence space.
-ModelSpace::ModelSpace(int emax, std::vector<std::string> hole_list, std::vector<std::string> valence_list)
-:  Emax(emax), E2max(2*emax), E3max(3*emax), Lmax(emax), Lmax2(emax), Lmax3(emax), OneBodyJmax(0), TwoBodyJmax(0), ThreeBodyJmax(0), EmaxUnocc(emax),  norbits(0), hbar_omega(20), target_mass(16),
+ModelSpace::ModelSpace(int emax, int e2max, int e3max, std::vector<std::string> hole_list, std::vector<std::string> valence_list)
+:  Emax(emax), E2max(e2max), E3max(e3max), Lmax(emax), Lmax2(emax), Lmax3(emax), OneBodyJmax(0), TwoBodyJmax(0), ThreeBodyJmax(0), EmaxUnocc(emax),  norbits(0), hbar_omega(20), target_mass(16),
      moshinsky_has_been_precalculated(false), scalar_transform_first_pass(true), tensor_transform_first_pass(40,true), single_species(false)
 {
    SetUpOrbits();
@@ -210,8 +210,8 @@ ModelSpace::ModelSpace(int emax, std::vector<std::string> hole_list, std::vector
 }
 
 // If we don't want the reference to be the core
-ModelSpace::ModelSpace(int emax, std::vector<std::string> hole_list, std::vector<std::string> core_list, std::vector<std::string> valence_list)
-: Emax(emax), E2max(2*emax), E3max(3*emax), Lmax(emax), Lmax2(emax), Lmax3(emax), OneBodyJmax(0), TwoBodyJmax(0), ThreeBodyJmax(0), EmaxUnocc(emax), norbits(0), hbar_omega(20), target_mass(16),
+ModelSpace::ModelSpace(int emax, int e2max, int e3max, std::vector<std::string> hole_list, std::vector<std::string> core_list, std::vector<std::string> valence_list)
+: Emax(emax), E2max(e2max), E3max(e3max), Lmax(emax), Lmax2(emax), Lmax3(emax), OneBodyJmax(0), TwoBodyJmax(0), ThreeBodyJmax(0), EmaxUnocc(emax), norbits(0), hbar_omega(20), target_mass(16),
      sixj_has_been_precalculated(false),moshinsky_has_been_precalculated(false), scalar_transform_first_pass(true), tensor_transform_first_pass(40,true),single_species(false)
 {
    SetUpOrbits();
@@ -219,16 +219,16 @@ ModelSpace::ModelSpace(int emax, std::vector<std::string> hole_list, std::vector
 }
 
 // Most conventient interface
-ModelSpace::ModelSpace(int emax, std::string reference, std::string valence)
-: Emax(emax), E2max(2*emax), E3max(3*emax), Lmax(emax), Lmax2(emax), Lmax3(emax), OneBodyJmax(0), TwoBodyJmax(0), ThreeBodyJmax(0), EmaxUnocc(emax), hbar_omega(20),
+ModelSpace::ModelSpace(int emax, int e2max, int e3max, std::string reference, std::string valence)
+: Emax(emax), E2max(e2max), E3max(e3max), Lmax(emax), Lmax2(emax), Lmax3(emax), OneBodyJmax(0), TwoBodyJmax(0), ThreeBodyJmax(0), EmaxUnocc(emax), hbar_omega(20),
      sixj_has_been_precalculated(false),moshinsky_has_been_precalculated(false), scalar_transform_first_pass(true), tensor_transform_first_pass(40,true),single_species(false)
 {
   SetUpOrbits();
   Init(emax,reference,valence);
 }
 
-ModelSpace::ModelSpace(int emax, std::string valence)
-: Emax(emax), E2max(2*emax), E3max(3*emax), Lmax(emax), Lmax2(emax), Lmax3(emax), OneBodyJmax(0), TwoBodyJmax(0), ThreeBodyJmax(0), EmaxUnocc(emax), hbar_omega(20),
+ModelSpace::ModelSpace(int emax, int e2max, int e3max, std::string valence)
+: Emax(emax), E2max(e2max), E3max(e3max), Lmax(emax), Lmax2(emax), Lmax3(emax), OneBodyJmax(0), TwoBodyJmax(0), ThreeBodyJmax(0), EmaxUnocc(emax), hbar_omega(20),
      sixj_has_been_precalculated(false),moshinsky_has_been_precalculated(false), scalar_transform_first_pass(true), tensor_transform_first_pass(40,true),single_species(false)
 {
   auto itval = ValenceSpaces.find(valence);
@@ -1009,63 +1009,70 @@ size_t ModelSpace::Index2(size_t p, size_t q) const
 
 void ModelSpace::SetupKets()
 {
-   Kets.resize(Index2(all_orbits.size()-1,all_orbits.size()-1)+1);
-   for (auto p : all_orbits )
+  for (auto p : all_orbits )
+  {
+    for (auto q : all_orbits )
+    {
+      if (q<p) continue;
+      Orbit & op = GetOrbit(p);
+      Orbit & oq = GetOrbit(q);
+      if( 2*op.n + op.l + 2*oq.n + oq.l > GetE2max() ) continue;
+      index_t index = Index2(p,q);
+      Kets[index] = Ket(op,oq);
+    }
+  }
+   std::cout << GetNumberKets() << std::endl;
+
+   for (auto p : all_orbits)
    {
-     for (auto q : all_orbits )
+     for (auto q : all_orbits)
      {
-        if (q<p) continue;
-        index_t index = Index2(p,q);
-        Kets[index] = Ket(GetOrbit(p),GetOrbit(q));
+       if (q<p) continue;
+       Orbit & op = GetOrbit(p);
+       Orbit & oq = GetOrbit(q);
+       if( 2*op.n + op.l + 2*oq.n + oq.l > GetE2max() ) continue;
+       index_t index = Index2(p,q);
+       Ket& ket = Kets[index];
+       int Tz = (ket.op->tz2 + ket.oq->tz2)/2;
+       int parity = (ket.op->l + ket.oq->l)%2;
+       //   The old way this was written led to undefined behavior, depending on when the structure was expanded.
+       //    MonopoleKets[Tz+1][parity][index] = MonopoleKets[Tz+1][parity].size()-1;
+       index_t size = MonopoleKets[Tz+1][parity].size();
+       MonopoleKets[Tz+1][parity][index] = size;
+       double occp = ket.op->occ;
+       double occq = ket.oq->occ;
+       int cvq_p = ket.op->cvq;
+       int cvq_q = ket.oq->cvq;
+       if (cvq_p+cvq_q==0)      KetIndex_cc.push_back(index); // 00
+       if (cvq_p+cvq_q==1)      KetIndex_vc.push_back(index); // 01
+       if (std::abs(cvq_p-cvq_q)==2) KetIndex_qc.push_back(index); // 02
+       if (cvq_p*cvq_q==1)      KetIndex_vv.push_back(index); // 11
+       if (cvq_p+cvq_q==3)      KetIndex_qv.push_back(index); // 12
+       if (cvq_p+cvq_q==4)      KetIndex_qq.push_back(index); // 22
+       if (occp<OCC_CUT and occq<OCC_CUT) KetIndex_pp.push_back(index);
+       if ( (occp>OCC_CUT) xor (occq>OCC_CUT) )
+       {
+         KetIndex_ph.push_back(index);
+         Ket_occ_ph.push_back(occp*occq);
+         Ket_unocc_ph.push_back((1-occp)*(1-occq));
+       }
+       if (occp>OCC_CUT and occq>OCC_CUT)
+       {
+         KetIndex_hh.push_back(index);
+         Ket_occ_hh.push_back(occp*occq);
+         Ket_unocc_hh.push_back((1-occp)*(1-occq));
+       }
      }
-   }
-    for (auto p : all_orbits)
-    {
-    for (auto q : all_orbits)
-    {
-     if (q<p) continue;
-    index_t index = Index2(p,q);
-    Ket& ket = Kets[index];
-    int Tz = (ket.op->tz2 + ket.oq->tz2)/2;
-    int parity = (ket.op->l + ket.oq->l)%2;
-//   The old way this was written led to undefined behavior, depending on when the structure was expanded.
-//    MonopoleKets[Tz+1][parity][index] = MonopoleKets[Tz+1][parity].size()-1;
-    index_t size = MonopoleKets[Tz+1][parity].size();
-    MonopoleKets[Tz+1][parity][index] = size;
-    double occp = ket.op->occ;
-    double occq = ket.oq->occ;
-    int cvq_p = ket.op->cvq;
-    int cvq_q = ket.oq->cvq;
-    if (cvq_p+cvq_q==0)      KetIndex_cc.push_back(index); // 00
-    if (cvq_p+cvq_q==1)      KetIndex_vc.push_back(index); // 01
-    if (std::abs(cvq_p-cvq_q)==2) KetIndex_qc.push_back(index); // 02
-    if (cvq_p*cvq_q==1)      KetIndex_vv.push_back(index); // 11
-    if (cvq_p+cvq_q==3)      KetIndex_qv.push_back(index); // 12
-    if (cvq_p+cvq_q==4)      KetIndex_qq.push_back(index); // 22
-    if (occp<OCC_CUT and occq<OCC_CUT) KetIndex_pp.push_back(index);
-    if ( (occp>OCC_CUT) xor (occq>OCC_CUT) )
-    {
-       KetIndex_ph.push_back(index);
-       Ket_occ_ph.push_back(occp*occq);
-       Ket_unocc_ph.push_back((1-occp)*(1-occq));
-    }
-    if (occp>OCC_CUT and occq>OCC_CUT)
-    {
-       KetIndex_hh.push_back(index);
-       Ket_occ_hh.push_back(occp*occq);
-       Ket_unocc_hh.push_back((1-occp)*(1-occq));
-    }
-   }
    }
 
    SortedTwoBodyChannels.resize(nTwoBodyChannels);
    SortedTwoBodyChannels_CC.resize(nTwoBodyChannels);
    for (int ch=0;ch<nTwoBodyChannels;++ch)
    {
-      TwoBodyChannels.emplace_back(TwoBodyChannel(ch,this));
-      TwoBodyChannels_CC.emplace_back(TwoBodyChannel_CC(ch,this));
-      SortedTwoBodyChannels[ch] = ch;
-      SortedTwoBodyChannels_CC[ch] = ch;
+     TwoBodyChannels.emplace_back(TwoBodyChannel(ch,this));
+     TwoBodyChannels_CC.emplace_back(TwoBodyChannel_CC(ch,this));
+     SortedTwoBodyChannels[ch] = ch;
+     SortedTwoBodyChannels_CC[ch] = ch;
    }
    // Hopefully this can help with load balancing.
    sort(SortedTwoBodyChannels.begin(),SortedTwoBodyChannels.end(),[this](int i, int j){ return TwoBodyChannels[i].GetNumberKets() > TwoBodyChannels[j].GetNumberKets(); }  );

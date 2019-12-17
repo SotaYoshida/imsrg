@@ -174,7 +174,7 @@ struct TwoBodyChannel
 
    virtual bool CheckChannel_ket(Orbit* op, Orbit* oq) const;  // check if |pq> participates in this channel
    bool CheckChannel_ket(Ket &ket) const {return CheckChannel_ket(ket.op,ket.oq);};  // check if |pq> participates in this channel
-   
+
 };
 
 
@@ -298,10 +298,10 @@ class ModelSpace
 //   std::set<std::array<int,3>> hole_quantum_numbers; // For checking if an orbit could mix with the hole orbits
    std::set<std::array<int,2>> hole_quantum_numbers; // For checking if an orbit could mix with the hole orbits
 
-   std::vector<index_t> KetIndex_pp; 
+   std::vector<index_t> KetIndex_pp;
    std::vector<index_t> KetIndex_ph;
    std::vector<index_t> KetIndex_hh;
-   std::vector<index_t> KetIndex_cc; 
+   std::vector<index_t> KetIndex_cc;
    std::vector<index_t> KetIndex_vc;
    std::vector<index_t> KetIndex_qc;
    std::vector<index_t> KetIndex_vv;
@@ -341,15 +341,15 @@ class ModelSpace
    ModelSpace();
    ModelSpace(const ModelSpace&); // copy constructor
    ModelSpace( ModelSpace&&); // move constructor
-   ModelSpace(int emax, std::vector<std::string> hole_list, std::vector<std::string> valence_list);
-   ModelSpace(int emax, std::vector<std::string> hole_list, std::vector<std::string> core_list, std::vector<std::string> valence_list);
-   ModelSpace(int emax, std::string reference, std::string valence);
-   ModelSpace(int emax, std::string reference);
+   ModelSpace(int emax, int e2max, int e3max, std::vector<std::string> hole_list, std::vector<std::string> valence_list);
+   ModelSpace(int emax, int e2max, int e3max, std::vector<std::string> hole_list, std::vector<std::string> core_list, std::vector<std::string> valence_list);
+   ModelSpace(int emax, int e2max, int e3max, std::string reference, std::string valence);
+   ModelSpace(int emax, int e2max, int e3max, std::string reference);
 
 
    // Overloaded operators
-   ModelSpace operator=(const ModelSpace&); 
-   ModelSpace operator=(ModelSpace&&); 
+   ModelSpace operator=(const ModelSpace&);
+   ModelSpace operator=(ModelSpace&&);
 
    // Methods
 
@@ -379,8 +379,8 @@ class ModelSpace
    void AddOrbit(Orbit orb);
    void AddOrbit(int n, int l, int j2, int tz2, double occ, int io);
    // Setter/Getters
-//   Orbit& GetOrbit(int i) {return (Orbit&) Orbits[i];}; 
-   Orbit& GetOrbit(int i); 
+//   Orbit& GetOrbit(int i) {return (Orbit&) Orbits[i];};
+   Orbit& GetOrbit(int i);
    Ket& GetKet(int i) const {return (Ket&) Kets[i];};
    Ket& GetKet(int p, int q) const {return (Ket&) Kets[Index2(p,q)];};
    Ket3& GetKet3(int i) const {return (Ket3&) Kets3[i];};
@@ -444,7 +444,7 @@ class ModelSpace
    int phase(int x) {return (x%2)==0 ? 1 : -1;};
 //   int phase(double x) {return phase(int(x));};
 
-   
+
    size_t GetThreeBodyChannelIndex( int twoJ, int parity, int twoTz );
 
 

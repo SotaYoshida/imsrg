@@ -100,9 +100,22 @@ int main(int argc, char** argv)
   bool store_3bme_pn = (parameters.s("store_3bme_pn")=="true");
 
   int eMax = parameters.i("emax");
+
+  int e2Max = parameters.i("e2max");
+  if(e2Max == -1) e2Max = 2*eMax;
+
   int eMax_imsrg = parameters.i("emax_imsrg");
+  if(eMax_imsrg == -1) eMax_imsrg = eMax;
+
+  int e2Max_imsrg = parameters.i("e2max_imsrg");
+  if(e2Max_imsrg == -1) e2Max_imsrg = 2*eMax_imsrg;
+
   int lmax = parameters.i("lmax"); // so far I only use this with atomic systems.
   int E3max = parameters.i("e3max");
+
+  int e3Max_imsrg = parameters.i("e3max_imsrg");
+  if(e3Max_imsrg == -1) e3Max_imsrg = E3max;
+
   int lmax3 = parameters.i("lmax3");
   int targetMass = parameters.i("A");
   int nsteps = parameters.i("nsteps");
@@ -218,7 +231,8 @@ int main(int argc, char** argv)
   }
 
 
-  ModelSpace modelspace = ( reference=="default" ? ModelSpace(eMax,valence_space) : ModelSpace(eMax,reference,valence_space) );
+  ModelSpace modelspace = ( reference=="default" ? ModelSpace(eMax,e2Max,E3max,valence_space) :
+      ModelSpace(eMax,e2Max,E3max,reference,valence_space) );
 
   modelspace.SetLmax(lmax);
 
@@ -625,8 +639,9 @@ int main(int argc, char** argv)
     HNO.PrintTimes();
     return 0;
   }
-  ModelSpace ms_imsrg = ( reference=="default" ? ModelSpace(eMax_imsrg,valence_space) :
-      ModelSpace(eMax_imsrg,reference,valence_space) );
+  ModelSpace ms_imsrg = ( reference=="default" ? ModelSpace(eMax_imsrg,e2Max_imsrg,e3Max_imsrg,valence_space) :
+      ModelSpace(eMax_imsrg,e2Max_imsrg,e3Max_imsrg,reference,valence_space) );
+  std::cout << ms_imsrg.GetEmax() << " "<< ms_imsrg.GetE2max() << std::endl;
   HNO = HNO.Truncate(ms_imsrg);
   for (size_t i=0;i<ops.size(); ++i){
     ops[i] = ops[i].Truncate(ms_imsrg);

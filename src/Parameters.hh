@@ -104,9 +104,12 @@ std::map<std::string,double> Parameters::double_par = {
 
 std::map<std::string,int> Parameters::int_par = {
   {"A",	-1},	// Aeff for kinetic energy. -1 means take A of reference
-  {"e3max",		12},
   {"emax",		6},
-  {"emax_imsrg",		6},
+  {"emax_imsrg",		-1},
+  {"e2max",		-1},
+  {"e2max_imsrg",		-1},
+  {"e3max",		6},
+  {"e3max_imsrg",		-1},
   {"lmax",              99999}, // lmax for the whole calculation
   {"lmax3",		-1}, // lmax for the 3body interaction
   {"nsteps",		-1},	// do the decoupling in 1 step or core-then-valence. -1 means default

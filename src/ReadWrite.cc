@@ -4626,7 +4626,7 @@ void ReadWrite::ReadTokyo(std::string filename, Operator& op)
 }
 
 // Read Tokyo format Ascii
-void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op)
+void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale)
 {
   std::string line;
   std::ifstream infile;
@@ -4640,6 +4640,8 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op)
   }
   ModelSpace * modelspace = op.GetModelSpace();
   std::unordered_map<int,int> orbits_remap;
+  double zeta = 1.0;
+  if( rescale ) zeta = ( PhysConst::M_ELECTRON*1000.0 * modelspace->GetHbarOmega() / PhysConst::HBARC );
 
   skip_comments(infile);
   int prtorb, ntnorb, pcore, ncore;
@@ -4681,7 +4683,7 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op)
     if( orbits_remap.find(j) == orbits_remap.end() ) continue;
     int io = orbits_remap.at(i);
     int jo = orbits_remap.at(j);
-    op.OneBody(io,jo) = t - Z * v;
+    op.OneBody(io,jo) = t * zeta*zeta - Z*v*zeta;
     if (op.IsHermitian())
       op.OneBody(jo,io) = op.OneBody(io,jo);
     else if (op.IsAntiHermitian())
@@ -4711,7 +4713,7 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op)
     int lo = orbits_remap.at(l);
     if ( (io==jo or ko==lo) and (jj%2)>0 ) continue;
     if (std::abs(tbme)<1e-6) continue;
-    op.TwoBody.SetTBME_J(jj,io,jo,ko,lo,tbme);
+    op.TwoBody.SetTBME_J(jj,io,jo,ko,lo,tbme*zeta);
     //std::cout << io << " " << jo << " " << ko << " " << lo << " " <<  jj << " " << tbme << std::endl;
   }
   infile.close();

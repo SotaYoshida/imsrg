@@ -42,6 +42,7 @@ namespace Atom
     std::string hunter_gatherer = parameters.s("hunter_gatherer");
     std::string relativistic_correction = parameters.s("relativistic_correction");
     bool use_NAT_occupations = (parameters.s("use_NAT_occupations")=="true") ? true : false;
+    bool me_scale = (parameters.s("me_scale")=="true") ? true : false;
     int eMax = parameters.i("emax");
     int lmax = parameters.i("lmax"); // so far I only use this with atomic systems.
     int file2e1max = parameters.i("file2e1max");
@@ -50,7 +51,8 @@ namespace Atom
     int targetMass = parameters.i("A");
     int nsteps = parameters.i("nsteps");
 
-    double hw = parameters.d("hw");
+    double zeta = parameters.d("hw");
+    double hw = zeta*zeta*PhysConst::HBARC*PhysConst::HBARC / (PhysConst::M_ELECTRON * 1000.0); // hw in eV
     double smax = parameters.d("smax");
     double ode_tolerance = parameters.d("ode_tolerance");
     double dsmax = parameters.d("dsmax");
@@ -133,6 +135,7 @@ namespace Atom
 
     ModelSpace modelspace;
     modelspace.SetLmax(lmax);
+    modelspace.SetHbarOmega(hw);
     modelspace.InitAtomicSpace(eMax, basis_type, reference, valence_space);
     if (nsteps < 0) nsteps = modelspace.valence.size()>0 ? 2 : 1;
     Operator Hbare = Operator(modelspace,0,0,0,2);
@@ -142,7 +145,7 @@ namespace Atom
     std::cout << "Reading interactions..." << std::endl;
     if (inputtbme != "none")
     {
-      if (fmt2 == "tokyo") rw.ReadTokyoAtomic(inputtbme,Hbare);
+      if (fmt2 == "tokyo") rw.ReadTokyoAtomic(inputtbme,Hbare,me_scale);
     }
 
     if (inputtbme == "none")

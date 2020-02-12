@@ -4641,7 +4641,8 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
   ModelSpace * modelspace = op.GetModelSpace();
   std::unordered_map<int,int> orbits_remap;
   double zeta = 1.0;
-  if( rescale ) zeta = ( PhysConst::M_ELECTRON*1000.0 * modelspace->GetHbarOmega() / PhysConst::HBARC );
+  double a0 = PhysConst::HBARC / (PhysConst::M_ELECTRON * 1.e6 * PhysConst::ALPHA_FS); // bohr radius in nm
+  if( rescale ) zeta = sqrt( PhysConst::M_ELECTRON*1.e6 * modelspace->GetHbarOmega() ) * a0 / PhysConst::HBARC;
 
   skip_comments(infile);
   int prtorb, ntnorb, pcore, ncore;

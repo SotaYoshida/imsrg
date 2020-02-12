@@ -52,7 +52,8 @@ namespace Atom
     int nsteps = parameters.i("nsteps");
 
     double zeta = parameters.d("hw");
-    double hw = zeta*zeta*PhysConst::HBARC*PhysConst::HBARC / (PhysConst::M_ELECTRON * 1000.0); // hw in eV
+    double a0 = PhysConst::HBARC / (PhysConst::M_ELECTRON * 1.e6 * PhysConst::ALPHA_FS); // bohr radius in nm
+    double hw = zeta*zeta*PhysConst::HBARC*PhysConst::HBARC / (PhysConst::M_ELECTRON * 1.e6*a0*a0); // hw in eV
     double smax = parameters.d("smax");
     double ode_tolerance = parameters.d("ode_tolerance");
     double dsmax = parameters.d("dsmax");

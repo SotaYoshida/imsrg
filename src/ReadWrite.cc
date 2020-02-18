@@ -4626,7 +4626,7 @@ void ReadWrite::ReadTokyo(std::string filename, Operator& op)
 }
 
 // Read Tokyo format Ascii
-void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale)
+void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale, std::string type)
 {
   std::string line;
   std::ifstream infile;
@@ -4678,13 +4678,19 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
   for(int n=0; n<num; n++)
   {
     int i, j;
-    double t, v, ovlp;
-    infile >> i >> j >> t >> v >> ovlp;
+    double t=0.0, v=0.0, p4=0.0, Darwin=0.0, LS=0.0, ovlp=0.0;
+    std::string line;
+    getline(infile, line);
+    std::istringstream stream(line);
+    if( type.find("Fine") != std::string::npos or type.find("Hyper") != std::string::npos ){
+      stream >> i >> j >> t >> v >> p4 >> Darwin >> LS; }
+    else { stream >> i >> j >> t >> v; }
     if( orbits_remap.find(i) == orbits_remap.end() ) continue;
     if( orbits_remap.find(j) == orbits_remap.end() ) continue;
     int io = orbits_remap.at(i);
     int jo = orbits_remap.at(j);
-    op.OneBody(io,jo) = t * zeta*zeta - Z*v*zeta;
+    op.OneBody(io,jo) = t*zeta*zeta - Z*v*zeta +
+      p4*zeta*zeta*zeta*zeta + (Darwin+LS)*zeta*zeta*zeta*Z;
     if (op.IsHermitian())
       op.OneBody(jo,io) = op.OneBody(io,jo);
     else if (op.IsAntiHermitian())

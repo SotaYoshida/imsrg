@@ -41,6 +41,7 @@ namespace Atom
     std::string freeze_occupations = parameters.s("freeze_occupations");
     std::string hunter_gatherer = parameters.s("hunter_gatherer");
     std::string relativistic_correction = parameters.s("relativistic_correction");
+    std::string HamType = parameters.s("LECs");
     bool use_NAT_occupations = (parameters.s("use_NAT_occupations")=="true") ? true : false;
     bool me_scale = (parameters.s("me_scale")=="true") ? true : false;
     int eMax = parameters.i("emax");
@@ -146,7 +147,7 @@ namespace Atom
     std::cout << "Reading interactions..." << std::endl;
     if (inputtbme != "none")
     {
-      if (fmt2 == "tokyo") rw.ReadTokyoAtomic(inputtbme,Hbare,me_scale);
+      if (fmt2 == "tokyo") rw.ReadTokyoAtomic(inputtbme,Hbare,me_scale,HamType);
     }
 
     if (inputtbme == "none")

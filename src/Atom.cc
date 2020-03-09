@@ -214,6 +214,25 @@ namespace Atom
       ops.emplace_back( op );
     }
 
+    for (size_t i=0;i<ops.size();++i)
+    {
+      // We don't transform a DaggerHF, because we want the a^dagger to already refer to the HF basis.
+      if ((basis == "HF") and (opnames[i].find("DaggerHF") == std::string::npos)  )
+      {
+        ops[i] = hf.TransformToHFBasis(ops[i]);
+      }
+      else if ((basis == "NAT") and (opnames[i].find("DaggerHF") == std::string::npos)  )
+      {
+        ops[i] = hf.TransformHOToNATBasis(ops[i]);
+      }
+      ops[i] = ops[i].DoNormalOrdering();
+      if (method == "MP3")
+      {
+        double dop = ops[i].MP1_Eval( HNO );
+        std::cout << "Operator 1st order correction  " << dop << "  ->  " << ops[i].ZeroBody + dop << std::endl;
+      }
+    }
+
     if (basis=="HF" or basis=="NAT")
     {
       std::cout << basis << " Single particle energies and wave functions:" << std::endl;

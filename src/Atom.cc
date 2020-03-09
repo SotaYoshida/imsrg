@@ -206,6 +206,14 @@ namespace Atom
       std::cout << "To 3rd order, E = " << HNO.ZeroBody+EMP2+EMP3 << std::endl;
     }
 
+    // Read FineKineCorr, FineDarwin, FineSpinOrbit
+    for (auto& opname : opnames)
+    {
+      Operator op = Operator(modelspace,0,0,0,2);
+      rw.ReadTokyoAtomic(inputtbme,op,me_scale,opname);
+      ops.emplace_back( op );
+    }
+
     if (basis=="HF" or basis=="NAT")
     {
       std::cout << basis << " Single particle energies and wave functions:" << std::endl;
@@ -421,7 +429,7 @@ namespace Atom
           if ( ((ops[i].GetJRank()+ops[i].GetTRank()+ops[i].GetParity())<1) and (ops[i].GetNumberLegs()%2==0) )
           {
             //rw.WriteNuShellX_op(ops[i],intfile+opnames[i]+".int");
-            rw.WriteTokyo(ops[i],intfile+opnames[i]+".snt", "op");
+            rw.WriteTokyo(ops[i],intfile+"_"+opnames[i]+".snt", "op");
           }
           else if ( ops[i].GetNumberLegs()%2==1) // odd number of legs -> this is a dagger operator
           {
@@ -432,7 +440,7 @@ namespace Atom
           {
             //rw.WriteTensorOneBody(intfile+opnames[i]+"_1b.op",ops[i],opnames[i]);
             //rw.WriteTensorTwoBody(intfile+opnames[i]+"_2b.op",ops[i],opnames[i]);
-            rw.WriteTensorTokyo(intfile+opnames[i]+"_2b.snt",ops[i]);
+            rw.WriteTensorTokyo(intfile+"_"+opnames[i]+".snt",ops[i]);
           }
         }
       }

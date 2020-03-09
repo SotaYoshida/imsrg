@@ -4682,15 +4682,17 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
     std::string line;
     getline(infile, line);
     std::istringstream stream(line);
-    if( type.find("Fine") != std::string::npos or type.find("Hyper") != std::string::npos ){
-      stream >> i >> j >> t >> v >> p4 >> Darwin >> LS; }
-    else { stream >> i >> j >> t >> v; }
+    if( type == "Coulomb") { stream >> i >> j >> t >> v; }
+    else { stream >> i >> j >> t >> v >> p4 >> Darwin >> LS; }
     if( orbits_remap.find(i) == orbits_remap.end() ) continue;
     if( orbits_remap.find(j) == orbits_remap.end() ) continue;
     int io = orbits_remap.at(i);
     int jo = orbits_remap.at(j);
     op.OneBody(io,jo) = t*zeta*zeta - Z*v*zeta +
       p4*zeta*zeta*zeta*zeta + (Darwin+LS)*zeta*zeta*zeta*Z;
+    if ( type=="FineKineCorr" ) { op.OneBody(io,jo) = p4*zeta*zeta*zeta*zeta; }
+    if ( type=="FineDarwin" ) { op.OneBody(io,jo) = Darwin*zeta*zeta*zeta*Z; }
+    if ( type=="FineSpinOrbit" ) { op.OneBody(io,jo) = LS*zeta*zeta*zeta*Z; }
     if (op.IsHermitian())
       op.OneBody(jo,io) = op.OneBody(io,jo);
     else if (op.IsAntiHermitian())
@@ -4719,7 +4721,6 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
     int ko = orbits_remap.at(k);
     int lo = orbits_remap.at(l);
     if ( (io==jo or ko==lo) and (jj%2)>0 ) continue;
-    if (std::abs(tbme)<1e-6) continue;
     op.TwoBody.SetTBME_J(jj,io,jo,ko,lo,tbme*zeta);
     //std::cout << io << " " << jo << " " << ko << " " << lo << " " <<  jj << " " << tbme << std::endl;
   }

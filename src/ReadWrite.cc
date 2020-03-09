@@ -4697,8 +4697,12 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
       op.OneBody(jo,io) = op.OneBody(io,jo);
     else if (op.IsAntiHermitian())
       op.OneBody(jo,io) = -op.OneBody(io,jo);
-    //std::cout << io << " " << jo << " " << t << " " << v  << std::endl;
+    //std::cout << io << " " << jo << " " << t << " " << v  << " " <<
+    //  p4 << " " << Darwin << " " << LS << std::endl;
   }
+  if( type=="FineKineCorr" ) return;
+  if( type=="FineDarwin" ) return;
+  if( type=="FineSpinOrbit" ) return;
 
   getline(infile, line);
   skip_comments(infile);
@@ -4731,11 +4735,12 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
 void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
 {
   std::ofstream intfile;
+  intfile.precision(10);
   intfile.open(filename, std::ofstream::out);
   ModelSpace * modelspace = op.GetModelSpace();
   int wint = 4; // width for printing integers
-  int wdouble = 12; // width for printing doubles
-  int pdouble = 6; // precision for printing doubles
+  int wdouble = 18; // width for printing doubles
+  int pdouble = 10; // precision for printing doubles
   std::vector<int> valence_protons(modelspace->valence.size());
   std::vector<int> valence_neutrons(modelspace->valence.size());
   auto it = set_intersection(modelspace->valence.begin(), modelspace->valence.end(), modelspace->proton_orbits.begin(), modelspace->proton_orbits.end(),valence_protons.begin());
@@ -4766,7 +4771,8 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
    intfile << "! input 3N: " << File3N.substr( File3N.find_last_of("/\\")+1 ) << std::endl;
    intfile << "! e1max: " << modelspace->GetEmax() << "  e2max: " << modelspace->GetE2max() << "   e3max: " << modelspace->GetE3max() << "   hw: " << modelspace->GetHbarOmega();
    intfile << "   Aref: " << Acore << "  Zref: " << Zcore << "  A_for_kinetic_energy: " << modelspace->GetTargetMass() << std::endl;
-   intfile << "! Zero body term: " << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << op.ZeroBody << std::endl;
+   //intfile << "! Zero body term: " << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << op.ZeroBody << std::endl;
+   intfile << "! Zero body term: " << std::setw(20) << std::scientific << op.ZeroBody << std::endl;
    intfile << "! " << std::endl;
    intfile << "! model space" << std::endl;
    intfile << std::setw(wint) << valence_protons.size() << std::setw(wint) << valence_neutrons.size()
@@ -4784,7 +4790,7 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
      for (auto b : modelspace->valence) {
        if(a < b) continue;
        double obme = op.OneBody(a,b);
-       if(std::abs(obme) < 1e-7) continue;
+       if(std::abs(obme) < 1e-16) continue;
        cnt_obme += 1;
      }
    }
@@ -4809,9 +4815,12 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
        int b_ind = orb2kshell[b];
        if(a < b) continue;
        double obme = op.OneBody(a,b);
-       if(std::abs(obme) < 1e-7) continue;
+       if(std::abs(obme) < 1e-16) continue;
+       //intfile << std::setw(wint) << a_ind << std::setw(wint) << b_ind
+       //    << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << obme
+       //    << std::endl;
        intfile << std::setw(wint) << a_ind << std::setw(wint) << b_ind
-           << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << obme
+           << std::setw(20) << std::scientific << obme
            << std::endl;
      }
    }
@@ -4851,10 +4860,14 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
            tbme += op.TwoBody.GetTBME_norm(ch,aa,bb,cc,dd);
            tbme /= 2;
          }
+         //intfile << std::setw(wint) << a_ind << std::setw(wint) << b_ind
+         //  << std::setw(wint) << c_ind << std::setw(wint) << d_ind
+         //  << std::setw(wint) << tbc.J << std::setw(wdouble)
+         //  << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << tbme
+         //  << std::endl;
          intfile << std::setw(wint) << a_ind << std::setw(wint) << b_ind
            << std::setw(wint) << c_ind << std::setw(wint) << d_ind
-           << std::setw(wint) << tbc.J << std::setw(wdouble)
-           << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << tbme
+           << std::setw(wint) << tbc.J << std::setw(20) << std::scientific << tbme
            << std::endl;
        }
      }

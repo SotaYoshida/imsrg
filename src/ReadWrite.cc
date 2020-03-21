@@ -2166,7 +2166,7 @@ void ReadWrite::ReadDarmstadt_2bodyRel( std::string filename, Operator& Op )
   int emax = Op.modelspace->Emax;
   infile.ignore(1024,'\n'); // skip header
   int n1,l1,n2,l2,S,J,T,Tz;
-  double v; 
+  double v;
   // channels are labeled by S,J,T,Tz
   std::unordered_map<size_t,arma::mat> Vrel;
   // allocate that bad boy
@@ -2245,7 +2245,7 @@ void ReadWrite::ReadDarmstadt_2bodyRel( std::string filename, Operator& Op )
           for (int Sab=0; Sab<=1; ++Sab)
           {
             if ( std::abs(Lab-Sab)>J or Lab+Sab<J) continue;
-     
+
             double njab = AngMom::NormNineJ(la,sa,ja, lb,sb,jb, Lab,Sab,J);
             if (njab == 0) continue;
             int Scd = Sab;
@@ -4288,7 +4288,7 @@ void ReadWrite::WriteValence3body( ThreeBodyMEpn& threeBME, std::string filename
       intfile << "!  " << it.first << "   " << oi.n << " " << oi.l << " " << oi.j2 << "/2" << " " << oi.tz2 << "/2" << std::endl;
    }
    intfile << "!" << std::endl;
-   intfile << "!" << std::setw(wint-1) << "a" << " " << std::setw(wint) << "b" << " " << std::setw(wint) <<"c" 
+   intfile << "!" << std::setw(wint-1) << "a" << " " << std::setw(wint) << "b" << " " << std::setw(wint) <<"c"
            << " " << std::setw(wint) << "d" << " " << std::setw(wint) << "e" << " " << std::setw(wint)
            << "f" << "   " << std::setw(wint)  << "Jab" << " " << std::setw(wint) << "Jde"
            << " " << std::setw(wint) << "2J" << "      "
@@ -5317,14 +5317,115 @@ void ReadWrite::skip_comments(std::ifstream& in)
   }
 }
 
+Operator ReadWrite::ReadOperator_Miyagi(std::string filename, ModelSpace& modelspace)
+{
+  std::ifstream infile( filename, std::ios_base::in | std::ios_base::binary );
+  boost::iostreams::filtering_istream zipstream;
+  zipstream.push(boost::iostreams::gzip_decompressor());
+  zipstream.push(infile);
 
+  std::string line;
+  getline(zipstream, line);
+  getline(zipstream, line);
+  int J=0, P=0, Z=1, emax=6, e2max=12;
+  std::istringstream tmp( line.c_str() );
+  tmp >> J >> P >> Z >> emax >> e2max;
+  //std::cout << J << " " << Z << " " << (1-P)/2 << std::endl;
+  Operator op = Operator(modelspace, J, Z, (1-P)/2, 2);
+  zipstream >> op.ZeroBody;
+  std::vector<int> orbits_remap;
 
+  std::vector<int> energy_vals;
+  std::vector<int> n_vals;
+  std::vector<int> l_vals;
+  std::vector<int> j_vals;
 
+  for (int e=0; e<=emax; ++e)
+  {
+    int lmin = e%2;
+    for (int l=lmin; l<=e; l+=2)
+    {
+      int n = (e-l)/2;
+      int twojMin = std::abs(2*l-1);
+      int twojMax = 2*l+1;
+      for (int twoj=twojMin; twoj<=twojMax; twoj+=2)
+      {
+         orbits_remap.push_back( modelspace.GetOrbitIndex(n,l,twoj,-1) );
+         energy_vals.push_back( 2*n+l);
+         n_vals.push_back(n);
+         l_vals.push_back(l);
+         j_vals.push_back(twoj);
+      }
+    }
+  }
+  int nljmax = orbits_remap.size()-1;
+  float obme_pp,obme_nn,obme_np,obme_pn;
+  for(int nlj1=0; nlj1<=nljmax; ++nlj1) {
+    int ip = modelspace.GetOrbitIndex( n_vals[nlj1], l_vals[nlj1], j_vals[nlj1], -1 );
+    int in = modelspace.GetOrbitIndex( n_vals[nlj1], l_vals[nlj1], j_vals[nlj1],  1 );
+    for(int nlj2=0; nlj2<=nljmax; ++nlj2) {
+      int jp = modelspace.GetOrbitIndex( n_vals[nlj2], l_vals[nlj2], j_vals[nlj2], -1 );
+      int jn = modelspace.GetOrbitIndex( n_vals[nlj2], l_vals[nlj2], j_vals[nlj2],  1 );
+      if( (l_vals[nlj1]+l_vals[nlj2]+op.parity)%2 == 1 ) continue;
+      if( not AngMom::Triangle( j_vals[nlj1], j_vals[nlj2], 2*op.rank_J ) ) continue;
+      zipstream >> obme_pp >> obme_nn >> obme_np >> obme_pn;
+      //std::cout << nlj1 << " " << nlj2 << " " << obme_pp << " " << obme_nn << " " << obme_np << " " << obme_pn  << std::endl;
+      if( energy_vals[nlj1] > modelspace.GetEmax() ) continue;
+      if( energy_vals[nlj2] > modelspace.GetEmax() ) continue;
+      op.OneBody(ip,jp) = obme_pp;
+      op.OneBody(in,jn) = obme_nn;
+      op.OneBody(in,jp) = obme_np;
+      op.OneBody(ip,jn) = obme_pn;
+    }
+  }
 
+  float me_pppp, me_pppn, me_ppnp, me_ppnn, me_pnpn;
+  float me_pnnp, me_pnnn, me_npnp, me_npnn, me_nnnn;
+  for(int nlj1=0; nlj1<=nljmax; ++nlj1) {
+    int ip = modelspace.GetOrbitIndex( n_vals[nlj1], l_vals[nlj1], j_vals[nlj1], -1 );
+    int in = modelspace.GetOrbitIndex( n_vals[nlj1], l_vals[nlj1], j_vals[nlj1],  1 );
+    for(int nlj2=0; nlj2<=nlj1; ++nlj2) {
+      int jp = modelspace.GetOrbitIndex( n_vals[nlj2], l_vals[nlj2], j_vals[nlj2], -1 );
+      int jn = modelspace.GetOrbitIndex( n_vals[nlj2], l_vals[nlj2], j_vals[nlj2],  1 );
 
+      for(int nlj3=0; nlj3<=nljmax; ++nlj3) {
+        int kp = modelspace.GetOrbitIndex( n_vals[nlj3], l_vals[nlj3], j_vals[nlj3], -1 );
+        int kn = modelspace.GetOrbitIndex( n_vals[nlj3], l_vals[nlj3], j_vals[nlj3],  1 );
+        for(int nlj4=0; nlj4<=nlj3; ++nlj4) {
+          int lp = modelspace.GetOrbitIndex( n_vals[nlj4], l_vals[nlj4], j_vals[nlj4], -1 );
+          int ln = modelspace.GetOrbitIndex( n_vals[nlj4], l_vals[nlj4], j_vals[nlj4],  1 );
+          if( ( l_vals[nlj1]+l_vals[nlj2]+l_vals[nlj3]+l_vals[nlj4]+op.parity )%2 == 1) continue;
+          for(int Jij=std::abs(j_vals[nlj1]-j_vals[nlj2])/2; Jij<=(j_vals[nlj1]+j_vals[nlj2])/2; ++Jij){
+            for(int Jkl=std::abs(j_vals[nlj3]-j_vals[nlj4])/2; Jkl<=(j_vals[nlj3]+j_vals[nlj4])/2; ++Jkl){
 
+              if( not AngMom::Triangle( Jij, Jkl, op.rank_J ) ) continue;
+              zipstream >> me_pppp >> me_pppn >> me_ppnp >> me_ppnn >> me_pnpn;
+              zipstream >> me_pnnp >> me_pnnn >> me_npnp >> me_npnn >> me_nnnn;
+              if( energy_vals[nlj1] > modelspace.GetEmax() ) continue;
+              if( energy_vals[nlj2] > modelspace.GetEmax() ) continue;
+              if( energy_vals[nlj3] > modelspace.GetEmax() ) continue;
+              if( energy_vals[nlj4] > modelspace.GetEmax() ) continue;
+              if( std::abs(me_pppp) > 1.e-10 ) op.TwoBody.SetTBME_J(Jij, Jkl, ip, jp, kp, lp, me_pppp);
+              if( std::abs(me_pppn) > 1.e-10 ) op.TwoBody.SetTBME_J(Jij, Jkl, ip, jp, kp, ln, me_pppn);
+              if( std::abs(me_ppnp) > 1.e-10 ) op.TwoBody.SetTBME_J(Jij, Jkl, ip, jp, kn, lp, me_ppnp);
+              if( std::abs(me_ppnn) > 1.e-10 ) op.TwoBody.SetTBME_J(Jij, Jkl, ip, jp, kn, ln, me_ppnn);
+              if( std::abs(me_pnpn) > 1.e-10 ) op.TwoBody.SetTBME_J(Jij, Jkl, ip, jn, kp, ln, me_pnpn);
 
+              if( std::abs(me_pnnp) > 1.e-10 ) op.TwoBody.SetTBME_J(Jij, Jkl, ip, jn, kn, lp, me_pnnp);
+              if( std::abs(me_pnnn) > 1.e-10 ) op.TwoBody.SetTBME_J(Jij, Jkl, ip, jn, kn, ln, me_pnnn);
+              if( std::abs(me_npnp) > 1.e-10 ) op.TwoBody.SetTBME_J(Jij, Jkl, in, jp, kn, lp, me_npnp);
+              if( std::abs(me_npnn) > 1.e-10 ) op.TwoBody.SetTBME_J(Jij, Jkl, in, jp, kn, ln, me_npnn);
+              if( std::abs(me_nnnn) > 1.e-10 ) op.TwoBody.SetTBME_J(Jij, Jkl, in, jn, kn, ln, me_nnnn);
 
+            }
+          }
 
+        }
+      }
+
+    }
+  }
+  return op;
+}
 
 

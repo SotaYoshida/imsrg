@@ -88,6 +88,7 @@ int main(int argc, char** argv)
   std::string valence_file_format = parameters.s("valence_file_format");
   std::string occ_file = parameters.s("occ_file");
   std::string physical_system = parameters.s("physical_system");
+  std::string operator_evolution = parameters.s("operator_evolution");
   bool use_brueckner_bch = parameters.s("use_brueckner_bch") == "true";
   bool nucleon_mass_correction = parameters.s("nucleon_mass_correction") == "true";
   bool relativistic_correction = parameters.s("relativistic_correction") == "true";
@@ -228,7 +229,7 @@ int main(int argc, char** argv)
 //  if (lmax!= 99999)
 //  {
 //    modelspace.ClearVectors();
-//    modelspace.Init(eMax, reference,valence_space);  
+//    modelspace.Init(eMax, reference,valence_space);
 //  }
 
   if (emax_unocc>0)
@@ -557,6 +558,15 @@ int main(int argc, char** argv)
   // the format should look like OpName^j_t_p_r^/path/to/file
   for (auto& tag : opsfromfile)
   {
+    if( tag.find("op.me2j.gz") != std::string::npos )
+    {
+      std::string tmp = tag.substr( tag.rfind("/", tag.length())+1, tag.length() );
+      std::string opname = tmp.substr( 0, tmp.find_first_of("."));
+      Operator op = rw.ReadOperator_Miyagi( tag, modelspace );
+      ops.push_back( op );
+      opnames.push_back( opname );
+      continue;
+    }
     std::istringstream ss(tag);
     std::string opname,qnumbers,fname;
     std::vector<int> qn(4);
@@ -586,24 +596,25 @@ int main(int argc, char** argv)
   }
 
 
-
-//  for (auto& op : ops)
-  for (size_t i=0;i<ops.size();++i)
-  {
-     // We don't transform a DaggerHF, because we want the a^dagger to already refer to the HF basis.
-    if ((basis == "HF") and (opnames[i].find("DaggerHF") == std::string::npos)  )
+  if( operator_evolution == "basis" or operator_evolution == "true"){
+    //  for (auto& op : ops)
+    for (size_t i=0;i<ops.size();++i)
     {
-      ops[i] = hf.TransformToHFBasis(ops[i]);
-    }
-    else if ((basis == "NAT") and (opnames[i].find("DaggerHF") == std::string::npos)  )
-    {
-      ops[i] = hf.TransformHOToNATBasis(ops[i]);
-    }
-    ops[i] = ops[i].DoNormalOrdering();
-    if (method == "MP3")
-    {
-      double dop = ops[i].MP1_Eval( HNO );
-      std::cout << "Operator 1st order correction  " << dop << "  ->  " << ops[i].ZeroBody + dop << std::endl;
+      // We don't transform a DaggerHF, because we want the a^dagger to already refer to the HF basis.
+      if ((basis == "HF") and (opnames[i].find("DaggerHF") == std::string::npos)  )
+      {
+        ops[i] = hf.TransformToHFBasis(ops[i]);
+      }
+      else if ((basis == "NAT") and (opnames[i].find("DaggerHF") == std::string::npos)  )
+      {
+        ops[i] = hf.TransformHOToNATBasis(ops[i]);
+      }
+      ops[i] = ops[i].DoNormalOrdering();
+      if (method == "MP3")
+      {
+        double dop = ops[i].MP1_Eval( HNO );
+        std::cout << "Operator 1st order correction  " << dop << "  ->  " << ops[i].ZeroBody + dop << std::endl;
+      }
     }
   }
 
@@ -734,7 +745,8 @@ int main(int argc, char** argv)
 
   if (method == "flow" or method == "flow_RK4" )
   {
-    for (auto& op : ops )  imsrgsolver.AddOperator( op );
+    if( operator_evolution == "true" ){
+    for (auto& op : ops )  imsrgsolver.AddOperator( op );}
   }
 
   imsrgsolver.SetGenerator(core_generator);
@@ -809,24 +821,28 @@ int main(int argc, char** argv)
   // Transform all the operators
   if (method == "magnus")
   {
-    if (ops.size()>0) std::cout << "transforming operators" << std::endl;
-    for (size_t i=0;i<ops.size();++i)
-    {
-      std::cout << opnames[i] << " " << std::endl;
-      ops[i] = imsrgsolver.Transform(ops[i]);
-      std::cout << " (" << ops[i].ZeroBody << " ) " << std::endl;
-//      rw.WriteOperatorHuman(ops[i],intfile+opnames[i]+"_step2.op");
+    if (operator_evolution == "true"){
+      if (ops.size()>0) std::cout << "transforming operators" << std::endl;
+      for (size_t i=0;i<ops.size();++i)
+      {
+        std::cout << opnames[i] << " " << std::endl;
+        ops[i] = imsrgsolver.Transform(ops[i]);
+        std::cout << " (" << ops[i].ZeroBody << " ) " << std::endl;
+        //      rw.WriteOperatorHuman(ops[i],intfile+opnames[i]+"_step2.op");
+      }
+      std::cout << std::endl;
+      // increase smax in case we need to do additional steps
+      smax *= 1.5;
+      imsrgsolver.SetSmax(smax);
     }
-    std::cout << std::endl;
-    // increase smax in case we need to do additional steps
-    smax *= 1.5;
-    imsrgsolver.SetSmax(smax);
   }
   if (method == "flow" or method == "flow_RK4" )
   {
-    for (size_t i=0;i<ops.size();++i)
-    {
-      ops[i] = imsrgsolver.GetOperator(i+1);  // the zero-th operator is the Hamiltonian
+    if (operator_evolution == "true"){
+      for (size_t i=0;i<ops.size();++i)
+      {
+        ops[i] = imsrgsolver.GetOperator(i+1);  // the zero-th operator is the Hamiltonian
+      }
     }
   }
 
@@ -881,16 +897,18 @@ int main(int argc, char** argv)
 //    imsrgsolver.SetEtaCriterion(1e-4);
 //    imsrgsolver.Solve();
     // Change operators to the new basis, then apply the rest of the transformation
-    std::cout << "Final transformation on the operators..." << std::endl;
-    int iop = 0;
-    for (auto& op : ops)
-    {
-      std::cout << opnames[iop++] << std::endl;
-      op = op.UndoNormalOrdering();
-      op.SetModelSpace(ms2);
-      op = op.DoNormalOrdering();
-      // transform using the remaining omegas
-      op = imsrgsolver.Transform_Partial(op,nOmega);
+    if (operator_evolution == "true"){
+      std::cout << "Final transformation on the operators..." << std::endl;
+      int iop = 0;
+      for (auto& op : ops)
+      {
+        std::cout << opnames[iop++] << std::endl;
+        op = op.UndoNormalOrdering();
+        op.SetModelSpace(ms2);
+        op = op.DoNormalOrdering();
+        // transform using the remaining omegas
+        op = imsrgsolver.Transform_Partial(op,nOmega);
+      }
     }
   }
 
@@ -919,17 +937,20 @@ int main(int argc, char** argv)
 
     if (method == "magnus" or method=="flow_RK4")
     {
+       std::string evol = "";
+       if( operator_evolution == "false" ) evol = "_unevolved";
+       if( operator_evolution == "basis" ) evol = "_" + basis;
        for (index_t i=0;i<ops.size();++i)
        {
           if ( ((ops[i].GetJRank()+ops[i].GetTRank()+ops[i].GetParity())<1) and (ops[i].GetNumberLegs()%2==0) )
           {
             if (valence_file_format == "tokyo")
             {
-              rw.WriteTokyo(ops[i],intfile+opnames[i]+".snt", "op");
+              rw.WriteTokyo(ops[i],intfile+opnames[i]+evol+".snt", "op");
             }
             else
             {
-              rw.WriteNuShellX_op(ops[i],intfile+opnames[i]+".int");
+              rw.WriteNuShellX_op(ops[i],intfile+opnames[i]+evol+".int");
             }
           }
           else if ( ops[i].GetNumberLegs()%2==1) // odd number of legs -> this is a dagger operator
@@ -941,12 +962,12 @@ int main(int argc, char** argv)
           {
             if (valence_file_format == "tokyo")
             {
-              rw.WriteTensorTokyo(intfile+opnames[i]+"_2b.snt",ops[i]);
+              rw.WriteTensorTokyo(intfile+"_"+opnames[i]+evol+".snt",ops[i]);
             }
             else
             {
-              rw.WriteTensorOneBody(intfile+opnames[i]+"_1b.op",ops[i],opnames[i]);
-              rw.WriteTensorTwoBody(intfile+opnames[i]+"_2b.op",ops[i],opnames[i]);
+              rw.WriteTensorOneBody(intfile+opnames[i]+evol+"_1b.op",ops[i],opnames[i]);
+              rw.WriteTensorTwoBody(intfile+opnames[i]+evol+"_2b.op",ops[i],opnames[i]);
             }
           }
        }

@@ -353,7 +353,7 @@ void ThreeBodyMENO2B::ReadFile()
 {
   double t_start;
 //  long long unsigned int n_elms = CountME(); // this can be moved to after the stream.bin block
-  size_t n_elms = CountME(); 
+  size_t n_elms = CountME();
   if(FileName.find("stream.bin") != std::string::npos){
     t_start = omp_get_wtime();
     std::ifstream infile(FileName, std::ios::binary);
@@ -428,7 +428,8 @@ long long unsigned int ThreeBodyMENO2B::CountME()
         if(e1 + e3 > E2max_file) continue;
         if(e1 + e2 + e3 > E3max_file) continue;
 
-        for (int i4=0; i4 < Norbs; i4++) {
+        //for (int i4=0; i4 < Norbs; i4++) {
+        for (int i4=0; i4 <= i1; i4++) {
           OrbitIsospin & o4 = iOrbits[i4];
           int j4 = o4.j;
           int l4 = o4.l;
@@ -537,7 +538,8 @@ void ThreeBodyMENO2B::ReadBinaryStream( std::vector<ThreeBME_type> & v, size_t n
         if(e1 + e3 > E2max_file) continue;
         if(e1 + e2 + e3 > E3max_file) continue;
 
-        for (int i4=0; i4 < Norbs; i4++) {
+        //for (int i4=0; i4 < Norbs; i4++) {
+        for (int i4=0; i4 <= i1; i4++) {
           OrbitIsospin & o4 = iOrbits[i4];
           int j4 = o4.j;
           int l4 = o4.l;
@@ -571,9 +573,9 @@ void ThreeBodyMENO2B::ReadBinaryStream( std::vector<ThreeBME_type> & v, size_t n
               int JT_block_size = (Jmax+1-Jmin) * 5; // 5 comes from the 5 possible isospin combinations 001 011 101 111 113
 
 //              std::cout << "   thread, orbit_counter:  " << this_thread << "  " << orbit_counter << std::endl;
-              
-//              if (orbit_counter % 2 != this_thread) 
-              if (orbit_counter % num_threads != this_thread) 
+
+//              if (orbit_counter % 2 != this_thread)
+              if (orbit_counter % num_threads != this_thread)
              {
                counter += JT_block_size;
                continue;
@@ -703,7 +705,8 @@ void ThreeBodyMENO2B::ReadStream(T & infile, size_t n_elms)
         if(e1 + e3 > E2max_file) continue;
         if(e1 + e2 + e3 > E3max_file) continue;
 
-        for (int i4=0; i4 < Norbs; i4++) {
+        //for (int i4=0; i4 < Norbs; i4++) {
+        for (int i4=0; i4 <= i1; i4++) {
           OrbitIsospin & o4 = iOrbits[i4];
           int j4 = o4.j;
           int l4 = o4.l;

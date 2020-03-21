@@ -119,7 +119,7 @@ double TwoBodyME::GetTBME(int ch_bra, int ch_ket, int a, int b, int c, int d) co
    return norm * GetTBME_norm(ch_bra,ch_ket,a,b,c,d);
 }
 
-/// This returns the normalized matrix element 
+/// This returns the normalized matrix element
 double TwoBodyME::GetTBME_norm(int ch_bra, int ch_ket, int a, int b, int c, int d) const
 {
    TwoBodyChannel& tbc_bra =  modelspace->GetTwoBodyChannel(ch_bra);
@@ -512,7 +512,7 @@ double TwoBodyME::GetTBMEmonopole(int a, int b, int c, int d) const
 
    int jmin = std::abs(oa.j2 - ob.j2)/2;
    int jmax = (oa.j2 + ob.j2)/2;
-   
+
    for (int J=jmin;J<=jmax;++J)
    {
 
@@ -538,7 +538,7 @@ double TwoBodyME::GetTBMEmonopole_norm(int a, int b, int c, int d) const
 
    int jmin = std::abs(oa.j2 - ob.j2)/2;
    int jmax = (oa.j2 + ob.j2)/2;
-   
+
    for (int J=jmin;J<=jmax;++J)
    {
 

@@ -143,6 +143,7 @@ double TwoBodyME::GetTBME_norm(int ch_bra, int ch_ket, int a, int b, int c, int 
 
 void TwoBodyME::SetTBME(int ch_bra, int ch_ket, int a, int b, int c, int d, double tbme)
 {
+   if( ch_bra > ch_ket ) return;
    TwoBodyChannel& tbc_bra =  modelspace->GetTwoBodyChannel(ch_bra);
    TwoBodyChannel& tbc_ket =  modelspace->GetTwoBodyChannel(ch_ket);
    int bra_ind = tbc_bra.GetLocalIndex(std::min(a,b),std::max(a,b));

@@ -13,7 +13,7 @@ INCLUDE   = -I./armadillo
 FLAGS     = -O3 -march=native -std=c++11 -fopenmp -fPIC
 #LIBS = -lopenblas -lgsl -lz
 LIBS = -lblas -lgsl -lz
-DEBUG=on
+#DEBUG=on
 
 # I assume we're running on linux
 OS = LINUX

@@ -5401,6 +5401,9 @@ Operator ReadWrite::ReadOperator_Miyagi(std::string filename, ModelSpace& models
               if( not AngMom::Triangle( Jij, Jkl, op.rank_J ) ) continue;
               zipstream >> me_pppp >> me_pppn >> me_ppnp >> me_ppnn >> me_pnpn;
               zipstream >> me_pnnp >> me_pnnn >> me_npnp >> me_npnn >> me_nnnn;
+              //std::cout << nlj1 << " " << nlj2 << " " << nlj3 << " " << nlj4 << " " << Jij << " " << Jkl << " " <<
+              //  me_pppp << " " << me_pppn << " " << me_ppnp << " " << me_ppnn << " " << me_pnpn << " " <<
+              //  me_pnnp << " " << me_pnnn << " " << me_npnp << " " << me_npnn << " " << me_nnnn << std::endl;
               if( energy_vals[nlj1] > modelspace.GetEmax() ) continue;
               if( energy_vals[nlj2] > modelspace.GetEmax() ) continue;
               if( energy_vals[nlj3] > modelspace.GetEmax() ) continue;

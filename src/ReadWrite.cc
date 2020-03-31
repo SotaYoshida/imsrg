@@ -5387,6 +5387,7 @@ Operator ReadWrite::ReadOperator_Miyagi(std::string filename, ModelSpace& models
     for(int nlj2=0; nlj2<=nlj1; ++nlj2) {
       int jp = modelspace.GetOrbitIndex( n_vals[nlj2], l_vals[nlj2], j_vals[nlj2], -1 );
       int jn = modelspace.GetOrbitIndex( n_vals[nlj2], l_vals[nlj2], j_vals[nlj2],  1 );
+      if( energy_vals[nlj1] + energy_vals[nlj2] > e2max ) continue;
 
       for(int nlj3=0; nlj3<=nljmax; ++nlj3) {
         int kp = modelspace.GetOrbitIndex( n_vals[nlj3], l_vals[nlj3], j_vals[nlj3], -1 );
@@ -5394,6 +5395,7 @@ Operator ReadWrite::ReadOperator_Miyagi(std::string filename, ModelSpace& models
         for(int nlj4=0; nlj4<=nlj3; ++nlj4) {
           int lp = modelspace.GetOrbitIndex( n_vals[nlj4], l_vals[nlj4], j_vals[nlj4], -1 );
           int ln = modelspace.GetOrbitIndex( n_vals[nlj4], l_vals[nlj4], j_vals[nlj4],  1 );
+          if( energy_vals[nlj3] + energy_vals[nlj4] > e2max ) continue;
           if( ( l_vals[nlj1]+l_vals[nlj2]+l_vals[nlj3]+l_vals[nlj4]+op.parity )%2 == 1) continue;
           for(int Jij=std::abs(j_vals[nlj1]-j_vals[nlj2])/2; Jij<=(j_vals[nlj1]+j_vals[nlj2])/2; ++Jij){
             for(int Jkl=std::abs(j_vals[nlj3]-j_vals[nlj4])/2; Jkl<=(j_vals[nlj3]+j_vals[nlj4])/2; ++Jkl){

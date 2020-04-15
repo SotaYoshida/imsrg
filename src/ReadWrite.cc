@@ -4960,8 +4960,8 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
   intfile.open(filename, std::ofstream::out);
   ModelSpace * modelspace = op.GetModelSpace();
   int wint = 4; // width for printing integers
-  int wdouble = 12; // width for printing doubles
-  int pdouble = 6; // precision for printing doubles
+  int wdouble = 18; // width for printing doubles
+  int pdouble = 8; // precision for printing doubles
   std::vector<int> valence_protons(modelspace->valence.size());
   std::vector<int> valence_neutrons(modelspace->valence.size());
   auto it = set_intersection(modelspace->valence.begin(), modelspace->valence.end(), modelspace->proton_orbits.begin(), modelspace->proton_orbits.end(),valence_protons.begin());
@@ -4992,7 +4992,7 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
    intfile << "! input 3N: " << File3N.substr( File3N.find_last_of("/\\")+1 ) << std::endl;
    intfile << "! e1max: " << modelspace->GetEmax() << "  e2max: " << modelspace->GetE2max() << "   e3max: " << modelspace->GetE3max() << "   hw: " << modelspace->GetHbarOmega();
    intfile << "   Aref: " << Acore << "  Zref: " << Zcore << "  A_for_kinetic_energy: " << modelspace->GetTargetMass() << std::endl;
-   intfile << "! Zero body term: " << op.ZeroBody << std::endl;
+   intfile << "! Zero body term: " << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << op.ZeroBody << std::endl;
    intfile << "! " << std::endl;
    intfile << "! model space" << std::endl;
    intfile << std::setw(wint) << valence_protons.size() << std::setw(wint) << valence_neutrons.size()
@@ -5191,8 +5191,8 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
   outfile.open(filename, std::ofstream::out);
   ModelSpace * modelspace = op.GetModelSpace();
   int wint = 4; // width for printing integers
-  int wdouble = 12; // width for printing doubles
-  int pdouble = 6; // precision for printing doubles
+  int wdouble = 18; // width for printing doubles
+  int pdouble = 8; // precision for printing doubles
   std::vector<int> valence_protons(modelspace->valence.size());
   std::vector<int> valence_neutrons(modelspace->valence.size());
   auto it = set_intersection(modelspace->valence.begin(), modelspace->valence.end(), modelspace->proton_orbits.begin(), modelspace->proton_orbits.end(),valence_protons.begin());
@@ -5320,17 +5320,26 @@ void ReadWrite::skip_comments(std::ifstream& in)
 Operator ReadWrite::ReadOperator_Miyagi(std::string filename, ModelSpace& modelspace)
 {
   std::ifstream infile( filename, std::ios_base::in | std::ios_base::binary );
+  if ( !infile.good() )
+  {
+    std::cerr << "************************************" << std::endl
+      << "**    Trouble reading file  !!!   **" << filename << std::endl
+      << "************************************" << std::endl;
+    goodstate = false;
+    exit(0);
+  }
   boost::iostreams::filtering_istream zipstream;
   zipstream.push(boost::iostreams::gzip_decompressor());
   zipstream.push(infile);
 
   std::string line;
+  //std::cout << filename << std::endl;
   getline(zipstream, line);
   getline(zipstream, line);
-  int J=0, P=0, Z=1, emax=6, e2max=12;
+  int J=0, P=0, Z=0, emax=6, e2max=12;
   std::istringstream tmp( line.c_str() );
   tmp >> J >> P >> Z >> emax >> e2max;
-  //std::cout << J << " " << Z << " " << (1-P)/2 << std::endl;
+  //std::cout << J << " " << Z << " " << (1-P)/2 << " " << emax << " " << e2max << std::endl;
   Operator op = Operator(modelspace, J, Z, (1-P)/2, 2);
   zipstream >> op.ZeroBody;
   std::vector<int> orbits_remap;

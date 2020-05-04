@@ -51,6 +51,7 @@ namespace Atom
     int file2lmax = parameters.i("file2lmax");
     int targetMass = parameters.i("A");
     int nsteps = parameters.i("nsteps");
+    int atomicZ = parameters.i("atomicZ");
 
     double zeta = parameters.d("hw");
     double a0 = PhysConst::HBARC / (PhysConst::M_ELECTRON * 1.e6 * PhysConst::ALPHA_FS); // bohr radius in nm
@@ -147,7 +148,7 @@ namespace Atom
     std::cout << "Reading interactions..." << std::endl;
     if (inputtbme != "none")
     {
-      if (fmt2 == "tokyo") rw.ReadTokyoAtomic(inputtbme,Hbare,me_scale,HamType);
+      if (fmt2 == "tokyo") rw.ReadTokyoAtomic(inputtbme,Hbare,me_scale,atomicZ,HamType);
     }
 
     if (inputtbme == "none")
@@ -210,7 +211,7 @@ namespace Atom
     for (auto& opname : opnames)
     {
       Operator op = Operator(modelspace,0,0,0,2);
-      rw.ReadTokyoAtomic(inputtbme,op,me_scale,opname);
+      rw.ReadTokyoAtomic(inputtbme,op,me_scale,atomicZ,opname);
       ops.emplace_back( op );
     }
 

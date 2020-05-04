@@ -386,6 +386,8 @@ class ModelSpace
    std::map<index_t,double> GetAtomicOrbitals(int N);
    void GetZNelefromString(std::string str, int& Z, int& Nele);
    void SetUpAtomicOrbits();
+   void ParseCommaSeparatedValenceSpaceAtom(std::string, std::set<index_t>&, std::set<index_t>&);
+   std::vector<index_t> AtomicString2Index( std::vector<std::string> );
 
    void SetupKets();
    void Setup3bKets();

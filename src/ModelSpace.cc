@@ -1837,7 +1837,7 @@ void ModelSpace::InitAtomicSpace(int emax, std::string basis, std::string refere
     Get0hwAtomicSpace(Aref, core_list, valence_list);
   }
   else if(valence.find(",")!=std::string::npos) {
-    std::cout << "Valence-space other than 0hw-shell is not implemented yet" << std::endl;;
+    ParseCommaSeparatedValenceSpaceAtom(valence,core_list,valence_list);
   }
   else {
     int N_core;
@@ -1872,21 +1872,17 @@ void ModelSpace::InitAtomicSpace(int emax, std::map<index_t,double> hole_list, s
   }
   norbits = all_orbits.size();
   double atmp=0;
-  double ztmp=0;
   for (auto& h : hole_list)
   {
     Orbit& oh = GetOrbit(h.first);
     atmp += (oh.j2+1.)*oh.occ;
-    if (oh.tz2 < 0) ztmp += (oh.j2+1.)*oh.occ;
   }
   Aref = round(atmp);
-  Zref = round(ztmp);
-  if (std::abs(Aref-atmp)>1e-5 or std::abs(Zref-ztmp)>1e-5)
+  if (std::abs(Aref-atmp)>1e-5 )
   {
-    std::cout << std::endl << "!!!! WARNING  " << __func__ << " recomputed A,Z and got " << atmp << " " << ztmp << std::endl;
+    std::cout << std::endl << "!!!! WARNING  " << __func__ << " recomputed N_e and got " << atmp << std::endl;
   }
   Aref = round(atmp);
-  Zref = round(ztmp);
 
   std::cout << "core list: ";
   for (auto& c : core_list) std::cout << c << " ";
@@ -1898,7 +1894,7 @@ void ModelSpace::InitAtomicSpace(int emax, std::map<index_t,double> hole_list, s
   for (auto& h : hole_list) std::cout << h.first << " ( " << h.second << " ) ";
   std::cout << std::endl;
   SetTargetMass(Aref);
-  SetTargetZ(Aref);
+  SetTargetZ(Zref);
 
   // Make sure no orbits are both core and valence
   for (auto& c : core_list)
@@ -2018,4 +2014,41 @@ void ModelSpace::SetUpAtomicOrbits( )
      }
    }
    norbits = all_orbits.size();
+}
+
+// Parse a std::string containing a comma-separated list of core + valence orbits
+// eg, the usual atomic notation "He2,2s1,2p1,2p3".
+void ModelSpace::ParseCommaSeparatedValenceSpaceAtom(std::string valence, std::set<index_t>& core_list, std::set<index_t>& valence_list)
+{
+  std::istringstream ss(valence);
+  std::string orbit_str,core_str;
+  getline(ss, core_str, ',');
+
+  int Ac,Zc;
+  GetZNelefromString(core_str,Zc,Ac);
+  for (auto& it_core : GetAtomicOrbitals(Ac) )
+  {
+    core_list.insert(it_core.first);
+  }
+
+  while(getline(ss, orbit_str, ','))
+  {
+    valence_list.insert( AtomicString2Index({orbit_str})[0]);
+  }
+}
+
+std::vector<index_t> ModelSpace::AtomicString2Index( std::vector<std::string> vs )
+{
+  std::vector<index_t> vi;
+  std::vector<char> l_list = {'s','p','d','f','g','h','i','j','k','l','m','n','o'};
+
+  for ( auto& s : vs )
+  {
+    int n,l,j2;
+    std::istringstream( s.substr(0,1) ) >> n;
+    l = find(l_list.begin(),l_list.end(), s[1]) - l_list.begin();
+    std::istringstream( s.substr(2,s.size()) ) >> j2;
+    vi.push_back( Index1(n-l-1,l,j2,-1) );
+  }
+  return vi;
 }

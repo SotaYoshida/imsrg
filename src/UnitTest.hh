@@ -34,7 +34,7 @@ class UnitTest
   void Test3BodyAntisymmetry(Operator& Y);
   void Test3BodyHermiticity(Operator& Y);
 
-  void Test3BodySetGet(Operator& Y);
+//  void Test3BodySetGet(Operator& Y);
 
   // test strategy: Fill two random operators, calculate a specific commutator term
   // using the J-coupled expression, and in m-scheme (where the formula is simpler)
@@ -83,6 +83,8 @@ class UnitTest
   bool Test_comm433_pp_hh_sd( const Operator& X, const Operator& Y   );
   bool Test_comm433sd_ph(     const Operator& X, const Operator& Y   );
 
+
+  bool SanityCheck();
 
 };
 

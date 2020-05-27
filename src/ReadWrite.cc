@@ -709,7 +709,7 @@ void ReadWrite::Read_Darmstadt_3body( std::string filename, Operator& Hbare, int
 
   double start_time = omp_get_wtime();
   std::string extension = filename.substr( filename.find_last_of("."));
-  File3N = filename;
+//  File3N = filename;
   Aref = Hbare.GetModelSpace()->GetAref();
   Zref = Hbare.GetModelSpace()->GetZref();
 
@@ -788,7 +788,7 @@ void ReadWrite::Read_Darmstadt_3body( std::string filename, Operator& Hbare, int
 
 
 
-/// Read TBME's from a file formatted by the Darmstadt group.
+/// Read TBMEs from a file formatted by the Darmstadt group.
 /// The file contains just the matrix elements, and the corresponding quantum numbers
 /// are inferred. This means that the model space of the file must also be specified.
 /// emax refers to the maximum single-particle oscillator shell. Emax refers to the
@@ -1168,7 +1168,8 @@ void ReadWrite::ReadBareTBME_Darmstadt_from_stream( T& infile, Operator& Hbare, 
 /// Read me3j format three-body matrix elements. Pass in E1max, E2max, E3max for the file, so that it can be properly interpreted.
 /// The modelspace truncation doesn't need to coincide with the file truncation. For example, you could have an emax=10 modelspace
 /// and read from an emax=14 file, and the matrix elements with emax>10 would be ignored.
-size_t ReadWrite::Count_Darmstadt_3body_to_read( Operator& Hbare, int E1max, int E2max, int E3max, std::vector<int>& orbits_remap, std::vector<size_t>& nread_list)
+//size_t ReadWrite::Count_Darmstadt_3body_to_read( Operator& Hbare, int E1max, int E2max, int E3max, std::vector<int>& orbits_remap, std::vector<size_t>& nread_list)
+size_t ReadWrite::Count_Darmstadt_3body_to_read( Operator& Hbare, int E1max_in, int E2max_in, int E3max_in, std::vector<int>& orbits_remap, std::vector<size_t>& nread_list)
 {
   double t_start = omp_get_wtime();
 //  if ( !infile.good() )
@@ -1192,7 +1193,24 @@ size_t ReadWrite::Count_Darmstadt_3body_to_read( Operator& Hbare, int E1max, int
   int e2max = modelspace->GetE2max(); // not used yet
   int e3max = modelspace->GetE3max();
 //  int lmax3 = modelspace->GetLmax3();
+  int E1max = E1max_in;
+  int E2max = E2max_in;
+  int E3max = E3max_in;
+//  if (Hbare.GetTRank()>0)
+//  {
+//    E1max = 2;
+//    E2max = 4;
+//    E3max = 2;
+//  }
   std::cout << "Reading 3body file. emax limits for file: " << E1max << " " << E2max << " " << E3max << "  for modelspace: " << e1max << " " << e2max << " " << e3max << std::endl;
+
+//  int iso_dim = Hbare.ThreeBody.ISOSPIN_BLOCK_DIMENSION;
+  int iso_dim = Hbare.ThreeBody.isospin3BME.ISOSPIN_BLOCK_DIMENSION;
+//  int iso_dim = 5;
+//  if (Hbare.GetTRank()==1) iso_dim=9;
+//  else if (Hbare.GetTRank()==2) iso_dim==5;
+//  else if (Hbare.GetTRank()==3) iso_dim==1;
+//  std::cout << " Isospin block dimension = " << iso_dim << std::endl;
 
 //  std::vector<int> orbits_remap(0);
   orbits_remap.clear();
@@ -1318,7 +1336,7 @@ size_t ReadWrite::Count_Darmstadt_3body_to_read( Operator& Hbare, int E1max, int
 
                 // read all the ME for this range of J,T into block
                 if (twoJCMin>twoJCMax) continue;
-                size_t blocksize = ((twoJCMax-twoJCMin)/2+1)*5;
+                size_t blocksize = ((twoJCMax-twoJCMin)/2+1) * iso_dim;
                 nread += blocksize;
 
 
@@ -1338,10 +1356,14 @@ size_t ReadWrite::Count_Darmstadt_3body_to_read( Operator& Hbare, int E1max, int
 }
 
 template <class T>
-void ReadWrite::Read_Darmstadt_3body_from_stream( T& infile, Operator& Hbare, int E1max, int E2max, int E3max)
+void ReadWrite::Read_Darmstadt_3body_from_stream( T& infile, Operator& Hbare, int E1max_in, int E2max_in, int E3max_in)
 {
 
   double t_start = omp_get_wtime();
+  int E1max = E1max_in;
+  int E2max = E2max_in;
+  int E3max = E3max_in;
+
   if ( !infile.good() )
   {
      std::cerr << "************************************" << std::endl
@@ -1350,10 +1372,11 @@ void ReadWrite::Read_Darmstadt_3body_from_stream( T& infile, Operator& Hbare, in
      goodstate = false;
      return;
   }
+//  std::cout << "input operator has particle rank = " << Hbare.GetParticleRank() << std::endl;
   if (Hbare.particle_rank < 3)
   {
     std::cerr << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! << " << std::endl;
-    std::cerr << " Oops. Looks like we're trying to read 3body matrix elements to a " << Hbare.particle_rank << "-body operator. For shame..." << std::endl;
+    std::cerr << " Line " << __LINE__ <<  " Oops. Looks like we're trying to read 3body matrix elements to a " << Hbare.particle_rank << "-body operator. For shame..." << std::endl;
     std::cerr << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! << " << std::endl;
     goodstate = false;
     return;
@@ -1361,6 +1384,31 @@ void ReadWrite::Read_Darmstadt_3body_from_stream( T& infile, Operator& Hbare, in
   ModelSpace * modelspace = Hbare.GetModelSpace();
   std::vector<int> orbits_remap;
   std::vector<size_t> nread_list;
+
+  // If it's me3j, read the header, and if it's Takayuki's format, read the other header to get Emax info
+  if (format3N == "me3j")
+  {
+    char line[LINESIZE];
+    infile.getline(line,LINESIZE);  // read the header
+    //if ( Hbare.GetTRank() > 0 ) // It's not a Hamiltonian at all! It's a beta decay operator (probably).
+    //{
+    //   float opJ,opP,opT,efil,e2fil,e3fil,lmaxfil;
+//  //     int opJ,opP,opT,efil,e2fil,e3fil,lmaxfil;
+    //   infile >> opJ >> opP >> opT >> efil >> e2fil >> e3fil >> lmaxfil; // There's an extra header line with useful information.
+    //   E1max = int(efil);
+    //   E2max = int(e2fil);
+    //   E3max = int(e3fil);
+    //   if ( (int(opJ) != Hbare.GetJRank())  or  (int(opT) != Hbare.GetTRank())  or  ((1-int(opP))/2 != Hbare.GetParity()) )
+    //   {
+    //     std::cout << "!!!!!!  DANGER!! The header for this 3-body file says JpT = " << opJ << " " << opP << " " << opT << "  and that doesn't match the operator, which has " << Hbare.GetJRank() << " " << Hbare.GetParity() << " " << Hbare.GetTRank()  << std::endl;
+    //    std::exit(EXIT_FAILURE);
+    //   }
+    //}
+  }
+
+
+
+
   size_t nread = Count_Darmstadt_3body_to_read( Hbare, E1max, E2max, E3max, orbits_remap, nread_list);
 
 
@@ -1371,14 +1419,21 @@ void ReadWrite::Read_Darmstadt_3body_from_stream( T& infile, Operator& Hbare, in
 //  #define BUFFSIZE3N 1024*1000
   if (format3N == "me3j")
   {
-    char line[LINESIZE];
-    infile.getline(line,LINESIZE);  // read the header
-//    char buff[BUFFSIZE3N];
-//    size_t read_so_far = 0;
-//    while (read_so_far < nread and infile.good())
+//    char line[LINESIZE];
+//    infile.getline(line,LINESIZE);  // read the header
+//    if ( Hbare.GetTRank() > 0 ) // It's not a Hamiltonian at all! It's a beta decay operator (probably).
 //    {
-//      infile.read(buff, BUFFSIZE3N);
-//   //.... other stuff...
+//       float opJ,opP,opT,efil,e2fil,e3fil,lmaxfil;
+////       int opJ,opP,opT,efil,e2fil,e3fil,lmaxfil;
+//       infile >> opJ >> opP >> opT >> efil >> e2fil >> e3fil >> lmaxfil; // There's an extra header line with useful information.
+//       E1max = int(efil);
+//       E2max = int(e2fil);
+//       E3max = int(e3fil);
+//       if ( (int(opJ) != Hbare.GetJRank())  or  (int(opT) != Hbare.GetTRank())  or  ((1-int(opP))/2 != Hbare.GetParity()) )
+//       {
+//         std::cout << "!!!!!!  DANGER!! The header for this 3-body file says JpT = " << opJ << " " << opP << " " << opT << "  and that doesn't match the operator, which has " << Hbare.GetJRank() << " " << Hbare.GetParity() << " " << Hbare.GetTRank()  << std::endl;
+//        std::exit(EXIT_FAILURE);
+//       }
 //    }
     for (size_t i=0;i<nread;++i) infile >> ThreeBME[i];
   }
@@ -1418,25 +1473,17 @@ void ReadWrite::Store_Darmstadt_3body( const std::vector<float>& ThreeBME, const
   int e3max = modelspace->GetE3max();
   int lmax3 = modelspace->GetLmax3();
   int lmax = modelspace->GetLmax();
-//  std::cout << "Reading 3body file. emax limits for file: " << E1max << " " << E2max << " " << E3max << "  for modelspace: " << e1max << " " << e2max << " " << e3max << std::endl;
+  int iso_dim = Hbare.ThreeBody.isospin3BME.ISOSPIN_BLOCK_DIMENSION;
+  // if opT=0,  then we can have (tab Tabc, tde, Tdef) = (0,1,0,1), (0,1,1,1), (1,1,0,1), (1,1,1,1), (1,3,1,3) => 5
+  // if opT=1,  then we can have (tab Tabc, tde, Tdef) = (0,1,0,1), (0,1,1,1), (0,1,1,3), (1,1,0,1), (1,1,1,1), (1,1,1,3), (1,3,1,3), (1,3,1,1), (1,3,1,3) => 9
+  // if opT=2,  then we can have (tab Tabc, tde, Tdef) = (0,1,1,3),  (1,1,1,3), (1,3,1,3), (1,3,1,1), (1,3,1,3) => 5
+  // if opT=3,  then we can have (tab Tabc, tde, Tderf = (1,3,1,3) => 1
+//  if (Hbare.GetTRank()==1) iso_dim=9;
+//  else if (Hbare.GetTRank()==2) iso_dim=5;
+//  else if (Hbare.GetTRank()==3) iso_dim=1;
 
-//  std::vector<int> orbits_remap(0);
-//  int lmax = E1max; // haven't yet implemented the lmax truncation for 3body. Should be easy.
-//
-//  for (int e=0; e<=std::min(E1max,e1max); ++e)
-//  {
-//    int lmin = e%2;
-//    for (int l=lmin; l<=std::min(e,lmax); l+=2)
-//    {
-//      int n = (e-l)/2;
-//      int twojMin = std::abs(2*l-1);
-//      int twojMax = 2*l+1;
-//      for (int twoj=twojMin; twoj<=twojMax; twoj+=2)
-//      {
-//         orbits_remap.push_back( modelspace->GetOrbitIndex(n,l,twoj,-1) );
-//      }
-//    }
-//  }
+  std::cout << __func__ << "  begin storing. file limits = " << E1max << " " << E2max << " " << E3max  << std::endl;
+
   int nljmax = orbits_remap.size();
 
 
@@ -1444,23 +1491,13 @@ void ReadWrite::Store_Darmstadt_3body( const std::vector<float>& ThreeBME, const
   // begin giant nested loops
   size_t nkept = 0;
   modelspace->PreCalculateSixJ(); // Get all the sixJ so we don't have to worry about threading issues
-  // combine the first two loops into one to better utilize more threads
-//  #pragma omp parallel for schedule(dynamic,1) reduction(+ : nkept)
-//  for (int index12=0; index12< nljmax*(nljmax+1)/2; ++index12)
-//  {
   #pragma omp parallel for schedule(dynamic,1) reduction(+ : nkept)
   for(int nlj1=0; nlj1<nljmax; ++nlj1)
   {
-//    int nlj1 = int( (sqrt(8*index12+1)-1)/2);
-//    int nlj2 = index12 - nlj1*(nlj1+1)/2;
-//    size_t nread = nread_list[index12];
     size_t nread = nread_list[nlj1];
     int a =  orbits_remap[nlj1];
     Orbit & oa = modelspace->GetOrbit(a);
     int ea = 2*oa.n + oa.l;
-//    if (ea > E1max) break;
-//    if (ea > e1max) break;
-//    if (ea > e3max) break;
     if (ea > E1max) continue;
     if (ea > e1max) continue;
     if (ea > e3max) continue;
@@ -1484,13 +1521,14 @@ void ReadWrite::Store_Darmstadt_3body( const std::vector<float>& ThreeBME, const
         int JabMax  = (oa.j2 + ob.j2)/2;
         int JabMin  = std::abs(oa.j2 - ob.j2)/2;
 
-        int twoJCMindownbra;
-        if (std::abs(oa.j2 - ob.j2) >oc.j2)
-           twoJCMindownbra = std::abs(oa.j2 - ob.j2)-oc.j2;
-        else if (oc.j2 < (oa.j2+ob.j2) )
-           twoJCMindownbra = 1;
-        else
-           twoJCMindownbra = oc.j2 - oa.j2 - ob.j2;
+        int twoJCMindownbra = std::max( std::abs(oa.j2-ob.j2)-oc.j2,   std::max( oc.j2-oa.j2-ob.j2 , 1 ) );
+//        int twoJCMindownbra;
+//        if (std::abs(oa.j2 - ob.j2) >oc.j2)
+//           twoJCMindownbra = std::abs(oa.j2 - ob.j2)-oc.j2;
+//        else if (oc.j2 < (oa.j2+ob.j2) )
+//           twoJCMindownbra = 1;
+//        else
+//           twoJCMindownbra = oc.j2 - oa.j2 - ob.j2;
         int twoJCMaxupbra = oa.j2 + ob.j2 + oc.j2;
 
 
@@ -1521,13 +1559,15 @@ void ReadWrite::Store_Darmstadt_3body( const std::vector<float>& ThreeBME, const
               int JJabMax = (od.j2 + oe.j2)/2;
               int JJabMin = std::abs(od.j2 - oe.j2)/2;
 
-              int twoJCMindownket;
-              if ( std::abs(od.j2 - oe.j2) > of.j2 )
-                 twoJCMindownket = std::abs(od.j2 - oe.j2) - of.j2;
-              else if ( of.j2 < (od.j2+oe.j2) )
-                 twoJCMindownket = 1;
-              else
-                 twoJCMindownket = of.j2 - od.j2 - oe.j2;
+              int twoJCMindownket = std::max( std::abs(od.j2-oe.j2)-of.j2,   std::max( of.j2-od.j2-oe.j2 , 1 ) );
+//              int twoJCMindownket;
+//              if ( std::abs(od.j2 - oe.j2) > of.j2 )
+//                 twoJCMindownket = std::abs(od.j2 - oe.j2) - of.j2;
+//              else twoJCMindownket = std::max( of.j2-od.j2-oe.j2 ,  1);
+//              else if ( of.j2 < (od.j2+oe.j2) )
+//                 twoJCMindownket = 1;
+//              else
+//                 twoJCMindownket = of.j2 - od.j2 - oe.j2;
 
               int twoJCMaxupket = od.j2 + oe.j2 + of.j2;
 
@@ -1546,24 +1586,40 @@ void ReadWrite::Store_Darmstadt_3body( const std::vector<float>& ThreeBME, const
 
                 // read all the ME for this range of J,T into block
                 if (twoJCMin>twoJCMax) continue;
-                size_t blocksize = ((twoJCMax-twoJCMin)/2+1)*5;
+//                size_t blocksize = ((twoJCMax-twoJCMin)/2+1)*5;
+                size_t blocksize = ((twoJCMax-twoJCMin)/2+1) * iso_dim ;
 
 //                 std::array<double,5> isospin_5plet = {0,0,0,0,0};
-                for(int JTind = 0; JTind <= (twoJCMax-twoJCMin)+1; JTind++)
+                for ( int twoJC=twoJCMin; twoJC<=twoJCMax; twoJC+=2 )
+//                for(int JTind = 0; JTind <= (twoJCMax-twoJCMin)+1; JTind++)
                 {
-                 int twoJC = twoJCMin + (JTind/2)*2;
-                 int twoT = 1+(JTind%2)*2;
+//                 int twoJC = twoJCMin + (JTind/2)*2;
+//                 int twoT = 1+(JTind%2)*2;
+                 // now we loop through (tab,ttab,twoT) = (0,0,1), (0,1,1), (1,0,1), (1,1,1), (1,1,3)
 //                 if (twoT==1) isospin_5plet = {0,0,0,0,0};
+                 size_t Tcounter = 0;
                  for(int tab = 0; tab <= 1; tab++) // the total isospin loop can be replaced by i+=5
                  {
                   for(int ttab = 0; ttab <= 1; ttab++)
                   {
                    //summation bounds
-                   if ( twoT > std::min( 2*tab+1, 2*ttab+1) ) continue;
+//                   if ( twoT > std::min( 2*tab+1, 2*ttab+1) ) continue;
 //                   int twoTMin = 1; // twoTMin can just be used as 1
+//                   int twoTTMin = 1; // twoTMin can just be used as 1
 //                   int twoTMax = std::min( 2*tab +1, 2*ttab +1);
+//                   int twoTMax  = 2*tab +1;
+//                   int twoTTMax =  2*ttab +1;
+                   for (int twoT=1; twoT<=2*tab+1; twoT+=2)
+                   {
+                    for (int twoTT=1; twoTT<=2*ttab+1; twoTT+=2)
+                    {
+                      if ( ( std::abs(twoT-twoTT)>2*Hbare.GetTRank() ) or ( (twoT+twoTT) < 2*Hbare.GetTRank() ) ) continue;
 
-                    size_t index_ab = 5*(twoJC-twoJCMin)/2+2*tab+ttab+(twoT-1)/2;
+//                    size_t index_ab =  iso_dim*(twoJC-twoJCMin)/2+2*tab+ttab+(twoT-1)/2;
+                      size_t index_ab =  iso_dim*(twoJC-twoJCMin)/2 + Tcounter;
+                      Tcounter++;
+
+
                     if (nread+index_ab >=ThreeBME.size())
                     {
                       std::cout << "OH NO!!! trying to access element " << nread << "+" << index_ab << " = " << nread+index_ab << "  which is >= "<< ThreeBME.size() << std::endl;
@@ -1574,7 +1630,6 @@ void ReadWrite::Store_Darmstadt_3body( const std::vector<float>& ThreeBME, const
                     if (oa.l>lmax3 or ob.l>lmax3 or oc.l>lmax3 or od.l>lmax3 or oe.l>lmax3 or of.l>lmax3) V=0;
                     if (oa.l>lmax or ob.l>lmax or oc.l>lmax or od.l>lmax or oe.l>lmax or of.l>lmax) V=0;
 
-//                    if (a==99999 or b==99999 or c==99999 or d==99999 or e==99999 or f==99999) continue;
                     if (a==ModelSpace::NOT_AN_ORBIT or b==ModelSpace::NOT_AN_ORBIT or c==ModelSpace::NOT_AN_ORBIT
                      or d==ModelSpace::NOT_AN_ORBIT or e==ModelSpace::NOT_AN_ORBIT or f==ModelSpace::NOT_AN_ORBIT) continue;
 
@@ -1582,7 +1637,8 @@ void ReadWrite::Store_Darmstadt_3body( const std::vector<float>& ThreeBME, const
                     if ( ( a==b and (tab+Jab)%2==0 )
                       or ( d==e and (ttab+JJab)%2==0 )
                       or ( a==b and a==c and twoT==3 and oa.j2<3 )
-                      or ( d==e and d==f and twoT==3 and od.j2<3 )) autozero = true;
+                      or ( d==e and d==f and twoTT==3 and od.j2<3 )) autozero = true;
+
 
                     if(ea<=e1max and eb<=e1max and ec<=e1max and ed<=e1max and ee<=e1max and ef<=e1max
                           and (ea+eb+ec<=e3max) and (ed+ee+ef<=e3max) )
@@ -1592,39 +1648,22 @@ void ReadWrite::Store_Darmstadt_3body( const std::vector<float>& ThreeBME, const
                       {
                         if (not autozero )
                         {
-//                            std::cout << a << " " << b << " " << c << " " << d << " " << e << " " << f << " " << Jab << " " << JJab << " " << twoJC << " " << tab << " " << ttab << " " << twoT << " " << V << std::endl;
-//                            if (a==4 and b==0 and c==0 and d==4 and e==0 and f==0)
-//                            {
-//                               std::cout << std::endl << __func__ << "  setting Jab,Jde,J " << Jab << " " <<JJab << " " << twoJC << "  tab tde T  " << tab << " " << ttab << " " << twoT << "    V = " << V << std::endl;
-//                            }
-//                               if ( a==2 and b==4 and c==4 and d==2 and e==0 and f==0 and tab==1 and ttab==1 and twoT==3 and JJab==1 and twoJC==3)
-//                               {
-////                                 std::cout << "t t T = " << tab << " " << ttab << " " << twoT << "   V = " << V << std::endl;
-//                                 std::cout << "found one Jab = " << Jab << "   V = " << V << std::endl;
-//                               }
-                            Hbare.ThreeBody.SetME(Jab,JJab,twoJC,tab,ttab,twoT,a,b,c,d,e,f, V);
-                         //     isospin_5plet[ 2*tab+ttab+(twoT-1)/2 ] = V;
-//                              std::cout << "5plet index " << 2*tab +ttab + (twoT-1)/2 << "  with " << tab << " " << ttab << " " << twoT << std::endl;
+//                            Hbare.ThreeBody.SetME(Jab,JJab,twoJC,tab,ttab,twoT,a,b,c,d,e,f, V);
+                            Hbare.ThreeBody.SetME(Jab,JJab,twoJC,tab,ttab,twoT,twoTT,a,b,c,d,e,f, V);
                         }
                         else if (autozero)
                         {
-                            printf(" <--------- AAAHHHH!!!!!! Reading 3body file. <%d %d %d  %d %d |V| %d %d %d  %d %d>_(%d %d) should be zero but its %f.  nread = %lu index_ab = %lu\n",a,b,c,Jab,tab,d,e,f,JJab,ttab,twoJC,twoT,V,nread,index_ab);
-//                              std::cout << " <-------- AAAAHHHH!!!!!!!! Reading 3body file and this should be zero, but it's " << V << std::endl;
-//                            std::cout << a << " " << b << " " << c << " " << d << " " << e << " " << f << " " << Jab << " " << JJab << " " << twoJC << " " << tab << " " << ttab << " " << twoT << " " << V << std::endl;
-//                            std::cout << "nread = " << nread << "  index_ab = " << index_ab << std::endl;
-                              goodstate = false;
+                            printf(" <--------- AAAHHHH!!!!!! Reading 3body file. <%d %d %d  %d %d  %d |V| %d %d %d  %d %d  %d>_(%d) should be zero but its %f.  nread = %lu index_ab = %lu\n",a,b,c,Jab,tab,twoT,d,e,f,JJab,ttab,twoTT,twoJC,V,nread,index_ab);
+//                            printf(" <--------- AAAHHHH!!!!!! Reading 3body file. <%d %d %d  %d %d |V| %d %d %d  %d %d>_(%d %d) should be zero but its %f.  nread = %lu index_ab = %lu\n",a,b,c,Jab,tab,d,e,f,JJab,ttab,twoJC,twoT,V,nread,index_ab);
+                            goodstate = false;
                         }
                       }
                     }
 
+                    }//twoTT
+                   }//twoT
                   }//ttab
                  }//tab
-//                 std::cout << "Calling SetME_isospin5" << std::endl;
-//                 if (twoT==3)
-//                 {
-//                   std::cout << "---------- ReadWrite  call SetME_isospin5, Jab Jde twoJ = " << Jab << " " << JJab << " " << twoJC << " -----------" << std::endl;
-//                   Hbare.ThreeBody.SetME_isospin5(Jab,JJab,twoJC,a,b,c,d,e,f,isospin_5plet);
-//                 }
                 }//twoJ
                 nread += blocksize;
                }//JJab
@@ -1882,7 +1921,7 @@ void ReadWrite::Read3bodyHDF5( std::string filename,Operator& op )
        }
 
        me *= 0.5; // According to Heiko, this shouldn't be here. But comparing matrix elements with Petr's interaction suggests otherwise.
-       me *= modelspace->phase(oa.n+ob.n+oc.n+od.n+oe.n+of.n); // shamelessly copying Heiko. I don't understand this.
+       me *= modelspace->phase(oa.n+ob.n+oc.n+od.n+oe.n+of.n); // shamelessly copying Heiko. Presumably a different HO convention is used.
 
        op.ThreeBody.SetME(J12,JJ12,twoJ,T12,TT12,twoT,a,b,c,d,e,f, me);
        if (a==d and b==e and c==f and ( J12!=JJ12 ) )
@@ -5321,7 +5360,9 @@ void ReadWrite::skip_comments(std::ifstream& in)
   }
 }
 
-Operator ReadWrite::ReadOperator_Miyagi(std::string filename, ModelSpace& modelspace)
+/// Method added by Takayuki Miyagi.
+///
+Operator ReadWrite::ReadOperator2b_Miyagi(std::string filename, ModelSpace& modelspace)
 {
   std::ifstream infile( filename, std::ios_base::in | std::ios_base::binary );
   if ( !infile.good() )

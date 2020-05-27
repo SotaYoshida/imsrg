@@ -36,6 +36,12 @@ ifeq ($(DEBUG),on)
  FLAGS     = -march=native -std=c++11 -fopenmp -fPIC -g
 endif
 
+#WITHHALF = 1
+
+#ifeq (1,$(WITHHALF))
+  INCLUDE += -I./half/include
+#  FLAGS += -DWITHHALF=1
+#endif
 
 WARNFLAGS = -Wall -Wno-comment -Wno-deprecated-declarations -Wno-missing-braces
 FLAGS    += $(WARNFLAGS)
@@ -147,7 +153,7 @@ all: $(ALL)
 OBJ = ModelSpace.o TwoBodyME.o ThreeBodyME.o Operator.o  ReadWrite.o\
       HartreeFock.o imsrg_util.o Generator.o IMSRGSolver.o AngMom.o\
       IMSRGProfiler.o Commutator.o HFMBPT.o\
-      DarkMatterNREFT.o Jacobi3BME.o UnitTest.o \
+      M0nu.o DarkMatterNREFT.o Jacobi3BME.o UnitTest.o \
       TwoBodyChannel.o ThreeBodyChannel.o \
       ThreeBodyMEpn.o ThreeLegME.o ThreeBodyMENO2B.o \
       boost_src/gzip.o boost_src/zlib.o

@@ -71,6 +71,7 @@ int main(int argc, char** argv)
   std::string inputtbme = parameters.s("2bme");
   std::string input3bme = parameters.s("3bme");
   std::string input3bme_type = parameters.s("3bme_type");
+  std::string no2b_precision = parameters.s("no2b_precision");
   std::string reference = parameters.s("reference");
   std::string valence_space = parameters.s("valence_space");
   std::string custom_valence_space = parameters.s("custom_valence_space");
@@ -82,6 +83,7 @@ int main(int argc, char** argv)
   std::string valence_generator = parameters.s("valence_generator");
   std::string fmt2 = parameters.s("fmt2");
   std::string fmt3 = parameters.s("fmt3");
+  std::string input_op_fmt = parameters.s("input_op_fmt");
   std::string denominator_delta_orbit = parameters.s("denominator_delta_orbit");
   std::string LECs = parameters.s("LECs");
   std::string scratch = parameters.s("scratch");
@@ -400,11 +402,13 @@ int main(int argc, char** argv)
     }
     if(input3bme_type == "no2b"){
       double t_start = omp_get_wtime();
-      rw.File3N = input3bme;
-      Hbare.ThreeBodyNO2B.Allocate(modelspace, file3e1max, file3e2max, file3e3max, file3e1max, input3bme);
+//      Hbare.ThreeBodyNO2B.Allocate(modelspace, file3e1max, file3e2max, file3e3max, file3e1max, input3bme);
+      if ( no2b_precision == "half")  Hbare.ThreeBodyNO2B.SetHalfPrecision();
+      Hbare.ThreeBodyNO2B.Allocate(modelspace, file3e1max, file3e2max, file3e3max, file3e1max);
       Hbare.profiler.timer["ThreeBodyNO2B::Allocate"] += omp_get_wtime() - t_start;
       t_start = omp_get_wtime();
-      Hbare.ThreeBodyNO2B.ReadFile();
+//      Hbare.ThreeBodyNO2B.ReadFile();
+      Hbare.ThreeBodyNO2B.ReadFile( input3bme );
       Hbare.profiler.timer["ThreeBodyNO2B::ReadFile"] += omp_get_wtime() - t_start;
       std::cout << "done reading 3N" << std::endl;
     }
@@ -568,25 +572,27 @@ int main(int argc, char** argv)
   }
 
 
-  // the format should look like OpName^j_t_p_r^/path/to/file
+  // the format should look like OpName^j_t_p_r^/path/to/2bfile
+  // the format should look like OpName^j_t_p_r^/path/to/2bfile^/path/to/3bfile  if particle rank of Op is 2-body, then 3bfile is not needed.
   for (auto& tag : opsfromfile)
   {
     if( tag.find("op.me2j.gz") != std::string::npos )
     {
       std::string tmp = tag.substr( tag.rfind("/", tag.length())+1, tag.length() );
       std::string opname = tmp.substr( 0, tmp.find_first_of("."));
-      Operator op = rw.ReadOperator_Miyagi( tag, modelspace );
+      Operator op = rw.ReadOperator2b_Miyagi( tag, modelspace );
       ops.push_back( op );
       opnames.push_back( opname );
       continue;
     }
     std::istringstream ss(tag);
-    std::string opname,qnumbers,fname;
+    std::string opname,qnumbers,f2name,f3name="";
     std::vector<int> qn(4);
 
     getline(ss,opname,'^');
     getline(ss,qnumbers,'^');
-    getline(ss,fname,'^');
+    getline(ss,f2name,'^');
+    if ( not ss.eof() )  getline(ss,f3name,'^');
     ss.str(qnumbers);
     ss.clear();
     for (int i=0;i<4;i++)
@@ -601,9 +607,25 @@ int main(int argc, char** argv)
     t = qn[1];
     p = qn[2];
     r = qn[3];
-//    std::cout << "Parsed tag. opname = " << opname << "  qnumbers = " << qnumbers << "  " << j << " " << t << " " << p << " " << r << "   file = " << fname << std::endl;
+//    std::cout << "Parsed tag. opname = " << opname << "  qnumbers = " << qnumbers << "  " << j << " " << t << " " << p << " " << r << "   file2 = " << f2name
+//              << "    file3 = " << f3name << std::endl;
     Operator op(modelspace,j,t,p,r);
-    rw.Read2bCurrent_Navratil( fname, op );
+//    std::cout << "Reading operator " << opname << "  in " << input_op_fmt << "  format from files " << f2name << "  ,  " << f3name << std::endl;
+//    std::cout << "Operator has particle rank " << op.GetParticleRank() << std::endl;
+    if ( input_op_fmt == "navratil" )
+    {
+      rw.Read2bCurrent_Navratil( f2name, op );
+    }
+    else if ( input_op_fmt == "miyagi" )
+    {
+      if (f2name != "")
+      {
+          Operator optmp = rw.ReadOperator2b_Miyagi( f2name, modelspace );
+          op.OneBody = optmp.OneBody;
+          op.TwoBody = optmp.TwoBody;
+      }
+      if ( r>2 and f3name != "")  rw.Read_Darmstadt_3body( f3name, op,  file3e1max,file3e2max,file3e3max);
+    }
     ops.push_back( op );
     opnames.push_back( opname );
   }

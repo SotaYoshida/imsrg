@@ -71,7 +71,7 @@ ModelSpace::ModelSpace(const ModelSpace& ms)
    Ket3IndexLookup(ms.Ket3IndexLookup), ThreeBodyChannelLookup(ms.ThreeBodyChannelLookup),
    PandyaLookup(ms.PandyaLookup), OrbitLookup(ms.OrbitLookup),
    holes( ms.holes), particles( ms.particles),
-   core(ms.core), valence(ms.valence), qspace( ms.qspace), 
+   core(ms.core), valence(ms.valence), qspace( ms.qspace),
    proton_orbits( ms.proton_orbits),neutron_orbits( ms.neutron_orbits), all_orbits(ms.all_orbits),
    KetIndex_pp( ms.KetIndex_pp), KetIndex_ph( ms.KetIndex_ph), KetIndex_hh( ms.KetIndex_hh),
    KetIndex_cc( ms.KetIndex_cc),
@@ -105,7 +105,7 @@ ModelSpace::ModelSpace(ModelSpace&& ms)
    Ket3IndexLookup(std::move(ms.Ket3IndexLookup)), ThreeBodyChannelLookup(std::move(ThreeBodyChannelLookup)),
    PandyaLookup(std::move(ms.PandyaLookup)), OrbitLookup(ms.OrbitLookup),
    holes( std::move(ms.holes)), particles( std::move(ms.particles)),
-   core(std::move(ms.core)), valence(std::move(ms.valence)),  qspace( std::move(ms.qspace)),  
+   core(std::move(ms.core)), valence(std::move(ms.valence)),  qspace( std::move(ms.qspace)),
    proton_orbits( std::move(ms.proton_orbits)), neutron_orbits( std::move(ms.neutron_orbits)), all_orbits( std::move(ms.all_orbits)),
    KetIndex_pp( std::move(ms.KetIndex_pp)), KetIndex_ph( std::move(ms.KetIndex_ph)), KetIndex_hh( std::move(ms.KetIndex_hh)),
    KetIndex_cc( ms.KetIndex_cc),
@@ -264,7 +264,7 @@ void ModelSpace::Init(int emax, std::map<std::array<int,4>,double> hole_list, st
   {
     auto itval = ValenceSpaces.find(valence);
     std::string core_str;
-  
+
     if ( itval != ValenceSpaces.end() ) // we've got a valence space
     {
        core_str = itval->second[0];
@@ -279,7 +279,7 @@ void ModelSpace::Init(int emax, std::map<std::array<int,4>,double> hole_list, st
     {
        core_str = valence;
     }
-  
+
     GetAZfromString(core_str,Ac,Zc);
     for (auto& it_core : GetOrbitsAZ(Ac,Zc) ) core_list.insert(it_core.first);
 //    for (auto& it_core : GetOrbitsAZ(Ac,Zc) ) core_list.push_back(it_core.first);
@@ -292,7 +292,7 @@ void ModelSpace::Init(int emax, std::map<std::array<int,4>,double> hole_list, st
 //  target_Z = Zref;
 //  Init(emax,hole_list,core_list,valence_list);
   Init(hole_list,core_list,valence_list);  // call Init version 0  ( map, set, set )
-  
+
 }
 
 
@@ -341,8 +341,8 @@ void ModelSpace::Init_occ_from_file(int emax, std::string valence, std::string o
 //  while( infile >> orb >> occ )
   while( infile >> n >> l >> j2 >> tz >> occ )
   {
-//    if ( hole_list.find(orb) != hole_list.end() and  std::abs( hole_list[orb] -occ) > 1e-6) 
-    if ( hole_list.find({n,l,j2,tz}) != hole_list.end() and  std::abs( hole_list[{n,l,j2,tz}] -occ) > 1e-6) 
+//    if ( hole_list.find(orb) != hole_list.end() and  std::abs( hole_list[orb] -occ) > 1e-6)
+    if ( hole_list.find({n,l,j2,tz}) != hole_list.end() and  std::abs( hole_list[{n,l,j2,tz}] -occ) > 1e-6)
     {
         std::cout << "Warning: in file " << occ_file << ", redefinition of occupation of orbit "
              << n << " " << l << " " << j2 << " " << tz << "  " << hole_list[{n,l,j2,tz}] << " => " << occ << std::endl;
@@ -391,12 +391,18 @@ void ModelSpace::Init( std::map<std::array<int,4>,double> hole_list, std::set<st
 //   std::cout << std::endl;
 
    // Make sure no orbits are both core and valence
+   std::set<std::array<int,4>> core_list_tmp;
    for (auto& c : core_list)
    {
      if ( find(valence_list.begin(), valence_list.end(), c) != valence_list.end() )
-       std::cout << "!!!!!!!!!!!!! ModelSpace::Init : Conflicting definition. Orbit (" << c[0] << " " << c[1] << " " << c[2] << " " << c[3] << ") is in core and valence spaces." << std::endl;
+       std::cout << "!!!!!!!!!!!!! ModelSpace::Init : Conflicting definition. Orbit (" << c[0] << " " << c[1] << " " << c[2] << " " << c[3] << ") is in core and valence spaces, removed from core list." << std::endl;
+
+     // Added by T. Miyagi, to do Ni92 core
+     else core_list_tmp.insert(c);
+
 //       std::cout << "!!!!!!!!!!!!! ModelSpace::Init : Conflicting definition. Orbit " << c << " is in core and valence spaces." << std::endl;
    }
+   core_list = core_list_tmp;
 
    std::vector<int> IsospinList = {-1, 1};
    if (single_species) IsospinList.pop_back(); // just use tz = -1 in this case
@@ -833,10 +839,12 @@ void ModelSpace::SetReference(std::set<index_t> new_reference)
   std::map<std::array<int,4>,double> hlist ;
   std::set<std::array<int,4>> clist ;
   std::set<std::array<int,4>> vlist ;
+  std::cout <<  "New reference: " << std::endl;
   for ( auto h : new_reference )
   {
     Orbit& oh = GetOrbit(h);
     hlist[ {oh.n, oh.l, oh.j2, oh.tz2}]  = 1.0;
+    std::cout <<  "Orbit (" << oh.n << " " << oh.l << " " << oh.j2 << " " << oh.tz2 << ")" << std::endl;
   }
   for ( auto c : core )
   {
@@ -1015,7 +1023,7 @@ Orbit& ModelSpace::GetOrbit(int i)
 {
   if (i==NOT_AN_ORBIT) return NULL_ORBIT;
   return (Orbit&) Orbits[i];
-} 
+}
 
 void ModelSpace::AddOrbit(Orbit orb)
 {
@@ -1050,7 +1058,7 @@ void ModelSpace::AddOrbit(int n, int l, int j2, int tz2, double occ, int cvq)
       if (single_species) nTwoBodyChannels = 2*(TwoBodyJmax+1);
    }
 
-   for ( auto orbitlist : {&particles,&holes,&core,&valence,&qspace,&proton_orbits,&neutron_orbits,&all_orbits}  ) orbitlist->erase(ind); // 
+   for ( auto orbitlist : {&particles,&holes,&core,&valence,&qspace,&proton_orbits,&neutron_orbits,&all_orbits}  ) orbitlist->erase(ind); //
 
    if ( occ < OCC_CUT) particles.insert(ind);
    else holes.insert(ind);
@@ -1095,7 +1103,7 @@ void ModelSpace::FindEFermi()
   }
   if (particle_e_min[-1]==1e6) particle_e_min[-1]=e_fermi[-1];
   if (particle_e_min[+1]==1e6) particle_e_min[+1]=e_fermi[+1];
-  // If the last level is completely filled, then we defined the fermi surface to 
+  // If the last level is completely filled, then we defined the fermi surface to
   // be half way between the highest filled orbit and the lowest unfilled orbit
 //  std::cout << "before adjusting, " << e_fermi[-1] << " " << particle_e_min[-1] << "    " << e_fermi[+1] << " " << particle_e_min[+1] << std::endl;
 //  std::cout << " and occmax = " << occmax[-1] << " " << occmax[+1] << std::endl;
@@ -1153,7 +1161,7 @@ void ModelSpace::UnpackTwoBodyChannelIndex( size_t ch, int& j, int& p, int& tz)
 }
 
 
-size_t ModelSpace::Index1(int n, int l, int j2, int tz2) const 
+size_t ModelSpace::Index1(int n, int l, int j2, int tz2) const
 {
   auto iter = OrbitLookup.find( Index1_hash(n,l,j2,tz2) ) ;
   if ( iter == OrbitLookup.end() ) return NOT_AN_ORBIT;
@@ -1175,7 +1183,7 @@ size_t ModelSpace::Index1_hash(int n, int l, int j2, int tz2) const
 }
 
 
-size_t ModelSpace::Index2(size_t p, size_t q) const 
+size_t ModelSpace::Index2(size_t p, size_t q) const
 {
   if ( single_species )
   {
@@ -1270,7 +1278,7 @@ void ModelSpace::Setup3bKets()
 {
 //  Kets3.resize(0);
   Kets3.clear();
-  Ket3IndexLookup.clear(); 
+  Ket3IndexLookup.clear();
   ThreeBodyChannels.clear();
   ThreeBodyChannelLookup.clear();
 
@@ -1307,7 +1315,7 @@ void ModelSpace::Setup3bKets()
 //          int twoJ_max = 2*Jpq + oR.j2;
 //          for (int twoJ=twoJ_min; twoJ_max; twoJ+=2) channels_found.insert({twoJ,parity,twoTz});
         }
-        
+
       }
     }
   }
@@ -1337,7 +1345,7 @@ void ModelSpace::Setup3bKets()
   }
   nThreeBodyChannels = ThreeBodyChannels.size();
 
-  
+
 
 }
 
@@ -1347,8 +1355,8 @@ void ModelSpace::Setup3bKets()
 size_t ModelSpace::Ket3IndexHash(size_t p, size_t q, size_t r, size_t Jpq)
 {
   size_t hash = ( p << 24 )
-              + ( q << 16 ) 
-              + ( r << 8 ) 
+              + ( q << 16 )
+              + ( r << 8 )
               + Jpq;
   return hash;
 }
@@ -1468,15 +1476,15 @@ void ModelSpace::SetEmaxUnocc(int e)
 
 void ModelSpace::ClearVectors()
 {
-   holes.clear();         
-   particles.clear();     
-   core.clear();          
-   valence.clear();       
-   qspace.clear();        
-   proton_orbits.clear();  
+   holes.clear();
+   particles.clear();
+   core.clear();
+   valence.clear();
+   qspace.clear();
+   proton_orbits.clear();
    neutron_orbits.clear();
    all_orbits.clear();
-   
+
    KetIndex_pp.clear();
    KetIndex_ph.clear();
    KetIndex_hh.clear();
@@ -1610,13 +1618,13 @@ double ModelSpace::GetSixJ(double j1, double j2, double j3, double J1, double J2
 
 
 
-/// Loop over all the 6j symbols that we expect to encounter, and 
+/// Loop over all the 6j symbols that we expect to encounter, and
 /// store them in a hash table.
 /// Calculate all symbols
 /// \f[ \begin{Bmatrix}  ja & jb & J1
 ///                      jc & jd & J2 \end{Bmatrix}
 /// \f]
-/// and 
+/// and
 /// \f[ \begin{Bmatrix}  J1 & J2 & J3
 ///                      ja & jb & jc \end{Bmatrix}
 /// \f]
@@ -1651,7 +1659,7 @@ void ModelSpace::PreCalculateSixJ()
        for (int J2=J2_min; J2<=J2_max; J2+=2)
        {
          uint64_t key = SixJHash(0.5*j2a,0.5*j2b,0.5*J1,0.5*j2c,0.5*j2d,0.5*J2);
-         if ( SixJList.count(key) == 0 ) 
+         if ( SixJList.count(key) == 0 )
          {
            KEYS.push_back(key);
            SixJList[key] = 0.; // Make sure eveything's in there to avoid a rehash in the parallel loop
@@ -1675,7 +1683,7 @@ void ModelSpace::PreCalculateSixJ()
        for (int J3=J3_min; J3<=J3_max; J3+=2)
        {
          uint64_t key = SixJHash(0.5*J1,0.5*J2,0.5*J3,0.5*j2a,0.5*j2b,0.5*j2c);
-         if ( SixJList.count(key) == 0 ) 
+         if ( SixJList.count(key) == 0 )
          {
            KEYS.push_back(key);
            SixJList[key] = 0.; // Make sure eveything's in there to avoid a rehash in the parallel loop
@@ -1697,7 +1705,7 @@ void ModelSpace::PreCalculateSixJ()
   }
   sixj_has_been_precalculated = true;
   std::cout << "done calculating sixJs (" << KEYS.size() << " of them)" << std::endl;
-  std::cout << "Hash table has " << SixJList.bucket_count() << " buckets and a load factor " << SixJList.load_factor() 
+  std::cout << "Hash table has " << SixJList.bucket_count() << " buckets and a load factor " << SixJList.load_factor()
        << "  estimated storage ~ " << ((SixJList.bucket_count()+SixJList.size()) * (sizeof(size_t)+sizeof(void*))) / (1024.*1024.*1024.) << " GB" << std::endl;
   profiler.timer["PreCalculateSixJ"] += omp_get_wtime() - t_start;
 }
@@ -1722,7 +1730,7 @@ void ModelSpace::PreCalculateMoshinsky()
     for (int Lam=0; Lam<=E2max-2*N-2*n; ++Lam)
     {
 //     int lam_max = std::min( 2*Lmax, (N==n ? std::min(Lam,E2max-2*N-2*n-Lam) : E2max-2*N-2*n-Lam)) ; // Here Lmax is the max L of the s.p. basis
-     int lam_max = N==n ? std::min(Lam,E2max-2*N-2*n-Lam) : E2max-2*N-2*n-Lam ; 
+     int lam_max = N==n ? std::min(Lam,E2max-2*N-2*n-Lam) : E2max-2*N-2*n-Lam ;
      for (int lam=0; lam<=lam_max; ++lam)
      {
       int e2 = 2*N+Lam + 2*n+lam;
@@ -1768,7 +1776,7 @@ void ModelSpace::PreCalculateMoshinsky()
 
   moshinsky_has_been_precalculated = true;
   std::cout << "done calculating moshinsky (" << KEYS.size() << " elements)" << std::endl;
-  std::cout << "Hash table has " << MoshList.bucket_count() << " buckets and a load factor " << MoshList.load_factor() 
+  std::cout << "Hash table has " << MoshList.bucket_count() << " buckets and a load factor " << MoshList.load_factor()
             << "  estimated storage ~ " << ((MoshList.bucket_count()+MoshList.size()) * (sizeof(size_t)+sizeof(void*))) / (1024.*1024.*1024.) << " GB" << std::endl;
   profiler.timer["PreCalculateMoshinsky"] += omp_get_wtime() - t_start;
 }
@@ -1921,7 +1929,7 @@ std::map<std::array<size_t,2>,std::array<std::vector<size_t>,2>>& ModelSpace::Ge
 // this is used in the 222ph commutators to avoid calculating things that won't be used.
 void ModelSpace::CalculatePandyaLookup(int rank_J, int rank_T, int parity)
 {
-   if (PandyaLookup.find({rank_J, rank_T, parity})!=PandyaLookup.end()) return; 
+   if (PandyaLookup.find({rank_J, rank_T, parity})!=PandyaLookup.end()) return;
 //   std::cout << "CalculatePandyaLookup( " << rank_J << ", " << rank_T << ", " << parity << ") " << std::endl;
    double t_start = omp_get_wtime();
 //   PandyaLookup[{rank_J,rank_T,parity}] = std::map<std::array<int,2>,std::vector<std::array<int,2>>>();
@@ -1936,11 +1944,11 @@ void ModelSpace::CalculatePandyaLookup(int rank_J, int rank_T, int parity)
      for (size_t ch_ket_cc = ch_bra_cc; ch_ket_cc<ntbc_cc; ++ch_ket_cc)
      {
 //       lookup[{ch_bra_cc,ch_ket_cc}] = std::vector<std::array<int,2>>();
-//       lookup[{ch_bra_cc,ch_ket_cc}] = std::array<std::vector<int>,2>(); 
-       lookup[{ch_bra_cc,ch_ket_cc}] = std::array<std::vector<size_t>,2>(); 
-//       lookup[{ch_bra_cc,ch_ket_cc}] = { <std::vector<int>(), std::vector<int>() }; 
-       lookup.at({ch_bra_cc,ch_ket_cc})[0].reserve(ntbc_cc)  ; 
-       lookup.at({ch_bra_cc,ch_ket_cc})[1].reserve(ntbc_cc)  ; 
+//       lookup[{ch_bra_cc,ch_ket_cc}] = std::array<std::vector<int>,2>();
+       lookup[{ch_bra_cc,ch_ket_cc}] = std::array<std::vector<size_t>,2>();
+//       lookup[{ch_bra_cc,ch_ket_cc}] = { <std::vector<int>(), std::vector<int>() };
+       lookup.at({ch_bra_cc,ch_ket_cc})[0].reserve(ntbc_cc)  ;
+       lookup.at({ch_bra_cc,ch_ket_cc})[1].reserve(ntbc_cc)  ;
      }
    }
 

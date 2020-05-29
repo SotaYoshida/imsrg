@@ -576,15 +576,15 @@ int main(int argc, char** argv)
   // the format should look like OpName^j_t_p_r^/path/to/2bfile^/path/to/3bfile  if particle rank of Op is 2-body, then 3bfile is not needed.
   for (auto& tag : opsfromfile)
   {
-    if( tag.find("op.me2j.gz") != std::string::npos )
-    {
-      std::string tmp = tag.substr( tag.rfind("/", tag.length())+1, tag.length() );
-      std::string opname = tmp.substr( 0, tmp.find_first_of("."));
-      Operator op = rw.ReadOperator2b_Miyagi( tag, modelspace );
-      ops.push_back( op );
-      opnames.push_back( opname );
-      continue;
-    }
+    //if( tag.find("op.me2j.gz") != std::string::npos )
+    //{
+    //  std::string tmp = tag.substr( tag.rfind("/", tag.length())+1, tag.length() );
+    //  std::string opname = tmp.substr( 0, tmp.find_first_of("."));
+    //  Operator op = rw.ReadOperator2b_Miyagi( tag, modelspace );
+    //  ops.push_back( op );
+    //  opnames.push_back( opname );
+    //  continue;
+    //}
     std::istringstream ss(tag);
     std::string opname,qnumbers,f2name,f3name="";
     std::vector<int> qn(4);
@@ -631,25 +631,26 @@ int main(int argc, char** argv)
   }
 
 
-  if( operator_evolution == "basis" or operator_evolution == "true"){
-    //  for (auto& op : ops)
-    for (size_t i=0;i<ops.size();++i)
+//  for (auto& op : ops)
+  for (size_t i=0;i<ops.size();++i)
+  {
+    //    std::cout << "Before transforming  " << opnames[i] << " has 3b norm " << ops[i].ThreeBodyNorm() << std::endl;
+    // We don't transform a DaggerHF, because we want the a^dagger to already refer to the HF basis.
+    if ((basis == "HF") and (opnames[i].find("DaggerHF") == std::string::npos)  )
     {
-      // We don't transform a DaggerHF, because we want the a^dagger to already refer to the HF basis.
-      if ((basis == "HF") and (opnames[i].find("DaggerHF") == std::string::npos)  )
-      {
-        ops[i] = hf.TransformToHFBasis(ops[i]);
-      }
-      else if ((basis == "NAT") and (opnames[i].find("DaggerHF") == std::string::npos)  )
-      {
-        ops[i] = hf.TransformHOToNATBasis(ops[i]);
-      }
-      ops[i] = ops[i].DoNormalOrdering();
-      if (method == "MP3")
-      {
-        double dop = ops[i].MP1_Eval( HNO );
-        std::cout << "Operator 1st order correction  " << dop << "  ->  " << ops[i].ZeroBody + dop << std::endl;
-      }
+      ops[i] = hf.TransformToHFBasis(ops[i]);
+    }
+    else if ((basis == "NAT") and (opnames[i].find("DaggerHF") == std::string::npos)  )
+    {
+      ops[i] = hf.TransformHOToNATBasis(ops[i]);
+    }
+    //    std::cout << "After transforming  " << opnames[i] << " has 3b norm " << ops[i].ThreeBodyNorm() << std::endl;
+    ops[i] = ops[i].DoNormalOrdering();
+    //    std::cout << "Before normal ordering  " << opnames[i] << " has 3b norm " << ops[i].ThreeBodyNorm() << std::endl;
+    if (method == "MP3")
+    {
+      double dop = ops[i].MP1_Eval( HNO );
+      std::cout << "Operator 1st order correction  " << dop << "  ->  " << ops[i].ZeroBody + dop << std::endl;
     }
   }
 

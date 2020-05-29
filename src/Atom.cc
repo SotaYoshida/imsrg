@@ -148,7 +148,8 @@ namespace Atom
     std::cout << "Reading interactions..." << std::endl;
     if (inputtbme != "none")
     {
-      if (fmt2 == "tokyo") rw.ReadTokyoAtomic(inputtbme,Hbare,me_scale,atomicZ,HamType);
+      if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".snt") rw.ReadTokyoAtomic(inputtbme,Hbare,me_scale,atomicZ,HamType);
+      if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".gz") rw.ReadMiyagiAtomicGzip(inputtbme,Hbare,me_scale,atomicZ,HamType);
     }
 
     if (inputtbme == "none")

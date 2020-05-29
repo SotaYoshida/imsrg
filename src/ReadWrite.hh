@@ -109,6 +109,9 @@ class ReadWrite
    void ReadTokyo(std::string, Operator&, std::string);
    void ReadTokyo(std::string, Operator&);
    void ReadTokyoAtomic(std::string, Operator&, bool, int, std::string);
+   void ReadMiyagiAtomicGzip(std::string, Operator&, bool, int, std::string);
+   Operator ReadAtomicOpTokyo(std::string, ModelSpace&, double, double);
+   Operator ReadAtomicOpGzip(std::string, ModelSpace&, double, double);
    void WriteTokyo(Operator&, std::string, std::string);
    void WriteTokyoFull(Operator&, std::string); // only for Hamiltonian
    void WriteTensorTokyo(std::string, Operator&);

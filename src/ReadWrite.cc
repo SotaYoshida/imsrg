@@ -4698,6 +4698,7 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
       op.OneBody(jo,io) = -op.OneBody(io,jo);
     //std::cout << io << " " << jo << " " << t << " " << v  << " " <<
     //  p4 << " " << Darwin << " " << LS << std::endl;
+      std::cout << io << " " << jo << " " << op.OneBody(io,jo) << std::endl;
   }
   if( type=="FineKineCorr" ) return;
   if( type=="FineDarwin" ) return;
@@ -4733,6 +4734,334 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
   }
   infile.close();
 }
+
+// Read Operator snt format Ascii
+Operator ReadWrite::ReadAtomicOpTokyo(std::string filename, ModelSpace& ms, double scale_power1, double scale_power2)
+{
+  std::string line;
+  std::ifstream infile;
+  infile.open(filename);
+  if (!infile.good() )
+  {
+    std::cerr << "************************************" << std::endl
+          << "**    Trouble reading file  !!!   **" << filename << std::endl
+          << "************************************" << std::endl;
+    exit(0);
+  }
+  std::unordered_map<int,int> orbits_remap;
+  double a0 = PhysConst::HBARC / (PhysConst::M_ELECTRON * 1.e6 * PhysConst::ALPHA_FS); // bohr radius in nm
+  double zeta = sqrt( PhysConst::M_ELECTRON*1.e6 * ms.GetHbarOmega() ) * a0 / PhysConst::HBARC;
+  double fact1 = pow( zeta, scale_power1 );
+  double fact2 = pow( zeta, scale_power2 );
+
+  skip_comments(infile);
+  int Jrank, Prank;
+  infile >> Jrank >> Prank;
+  skip_comments(infile);
+  int prtorb, ntnorb, pcore, ncore;
+  infile >> prtorb >> ntnorb >> pcore >> ncore;
+  //std::cout << prtorb << " " << ntnorb << " " << pcore << " " << ncore << std::endl;
+  Operator op = Operator(ms, Jrank, 0, (1-Prank)/2, 2);
+
+  getline(infile, line);
+  skip_comments(infile);
+  int num=prtorb+ntnorb;
+  int norb = ms.GetNumberOrbits();
+  for(int i=0; i<num; i++)
+  {
+    int iorb, n, l, j, e, tz;
+    infile >> iorb >> n >> l >> j >> e >> tz;
+    int io = ms.GetOrbitIndex(n,l,j,tz);
+    if(io >= norb) continue;
+    orbits_remap[iorb] = io;
+    //std::cout << io << " " << iorb << " " << n << " " << l << " " << j << " " << tz << std::endl;
+  }
+
+  //getline(infile, line);
+  //skip_comments(infile);
+  // double zerobody;
+  // infile >> zerobody;
+  // op.ZeroBody = zerobody;
+  getline(infile, line);
+  skip_comments(infile);
+
+  infile >> num;
+  getline(infile, line);
+  skip_comments(infile);
+  for(int n=0; n<num; n++)
+  {
+    int i, j;
+    double me;
+    std::string line;
+    getline(infile, line);
+    std::istringstream stream(line);
+    stream >> me;
+    if( orbits_remap.find(i) == orbits_remap.end() ) continue;
+    if( orbits_remap.find(j) == orbits_remap.end() ) continue;
+    int io = orbits_remap.at(i);
+    int jo = orbits_remap.at(j);
+    op.OneBody(io,jo) = me*fact1;
+    if (op.IsHermitian())
+      op.OneBody(jo,io) = op.OneBody(io,jo);
+    else if (op.IsAntiHermitian())
+      op.OneBody(jo,io) = -op.OneBody(io,jo);
+  }
+
+  getline(infile, line);
+  skip_comments(infile);
+  infile >> num;
+
+  getline(infile, line);
+  skip_comments(infile);
+  for(int n=0; n<num; n++)
+  {
+    int i, j, k, l, Jij, Jkl;
+    double me;
+    infile >> i >> j >> k >> l >> Jij >> Jkl >> me;
+    if( orbits_remap.find(i) == orbits_remap.end() ) continue;
+    if( orbits_remap.find(j) == orbits_remap.end() ) continue;
+    if( orbits_remap.find(k) == orbits_remap.end() ) continue;
+    if( orbits_remap.find(l) == orbits_remap.end() ) continue;
+    int io = orbits_remap.at(i);
+    int jo = orbits_remap.at(j);
+    int ko = orbits_remap.at(k);
+    int lo = orbits_remap.at(l);
+    if ( io==jo and (Jij%2)>0 ) continue;
+    if ( ko==lo and (Jkl%2)>0 ) continue;
+    op.TwoBody.SetTBME_J(Jij,Jkl,io,jo,ko,lo,me*fact2);
+  }
+  infile.close();
+  return op;
+}
+
+// Read gzip
+void ReadWrite::ReadMiyagiAtomicGzip(std::string filename, Operator& op, bool rescale, int atomicZ, std::string type)
+{
+  ModelSpace * modelspace = op.GetModelSpace();
+  std::ifstream infile( filename, std::ios_base::in | std::ios_base::binary );
+  if ( !infile.good() )
+  {
+    std::cerr << "************************************" << std::endl
+      << "**    Trouble reading file  !!!   **" << filename << std::endl
+      << "************************************" << std::endl;
+    goodstate = false;
+    exit(0);
+  }
+  boost::iostreams::filtering_istream zipstream;
+  zipstream.push(boost::iostreams::gzip_decompressor());
+  zipstream.push(infile);
+
+  std::string line;
+  //std::cout << filename << std::endl;
+  getline(zipstream, line);
+  getline(zipstream, line);
+  int emax=6, e2max=12, lmax=6;
+  std::istringstream tmp( line.c_str() );
+  tmp >> emax >> e2max >> lmax;
+
+  std::vector<int> orbits_remap;
+  std::vector<int> energy_vals;
+  std::vector<int> n_vals;
+  std::vector<int> l_vals;
+  std::vector<int> j_vals;
+
+  for (int e=0; e<=emax; ++e)
+  {
+    for (int l=0; l<=std::min(lmax,e); ++l)
+    {
+      int n = e-l;
+      int twojMin = std::abs(2*l-1);
+      int twojMax = 2*l+1;
+      for (int twoj=twojMin; twoj<=twojMax; twoj+=2)
+      {
+        orbits_remap.push_back( modelspace->GetOrbitIndex(n,l,twoj,-1) );
+        energy_vals.push_back( n+l);
+        n_vals.push_back(n);
+        l_vals.push_back(l);
+        j_vals.push_back(twoj);
+      }
+    }
+  }
+
+  double zeta = 1.0;
+  double a0 = PhysConst::HBARC / (PhysConst::M_ELECTRON * 1.e6 * PhysConst::ALPHA_FS); // bohr radius in nm
+  if( rescale ) zeta = sqrt( PhysConst::M_ELECTRON*1.e6 * modelspace->GetHbarOmega() ) * a0 / PhysConst::HBARC;
+
+  double t=0.0, v=0.0, p4=0.0, Darwin=0.0, LS=0.0, ovlp=0.0;
+  int nljmax = orbits_remap.size()-1;
+  for(int nlj1=0; nlj1<=nljmax; ++nlj1) {
+    for(int nlj2=0; nlj2<=nlj1; ++nlj2) {
+      if( l_vals[nlj1] != l_vals[nlj2] ) continue;
+      if( j_vals[nlj1] != j_vals[nlj2] ) continue;
+      zipstream >> t >> v >> p4 >> Darwin >> LS >> ovlp;
+      if( energy_vals[nlj1] > modelspace->GetEmax() ) continue;
+      if( energy_vals[nlj2] > modelspace->GetEmax() ) continue;
+      int i = orbits_remap.at(nlj1);
+      int j = orbits_remap.at(nlj2);
+      op.OneBody(i,j) = t*zeta*zeta - atomicZ*v*zeta +
+        p4*zeta*zeta*zeta*zeta + (Darwin+LS)*zeta*zeta*zeta*atomicZ;
+      if ( type=="FineKineCorr" ) { op.OneBody(i,j) = p4*zeta*zeta*zeta*zeta; }
+      if ( type=="FineDarwin" ) { op.OneBody(i,j) = Darwin*zeta*zeta*zeta*atomicZ; }
+      if ( type=="FineSpinOrbit" ) { op.OneBody(i,j) = LS*zeta*zeta*zeta*atomicZ; }
+      if (op.IsHermitian())
+        op.OneBody(j,i) = op.OneBody(i,j);
+      else if (op.IsAntiHermitian())
+        op.OneBody(j,i) = -op.OneBody(i,j);
+    }
+  }
+
+  if( type=="FineKineCorr" ) return;
+  if( type=="FineDarwin" ) return;
+  if( type=="FineSpinOrbit" ) return;
+
+  for(int nlj1=0; nlj1<=nljmax; ++nlj1) {
+    if( energy_vals[nlj1] > modelspace->GetEmax() ) break;
+    for(int nlj2=0; nlj2<=nlj1; ++nlj2) {
+      if( energy_vals[nlj1] + energy_vals[nlj2] > e2max ) continue;
+
+      for(int nlj3=0; nlj3<=nlj1; ++nlj3) {
+        for(int nlj4=0; nlj4<=nlj3; ++nlj4) {
+          if( energy_vals[nlj3] + energy_vals[nlj4] > e2max ) continue;
+
+          if( ( l_vals[nlj1]+l_vals[nlj2]+l_vals[nlj3]+l_vals[nlj4] )%2 == 1) continue;
+
+          int Jmin = std::max( std::abs(j_vals[nlj1]-j_vals[nlj2]), std::abs(j_vals[nlj3]-j_vals[nlj4]) )/2;
+          int Jmax = std::min(         (j_vals[nlj1]+j_vals[nlj2]),         (j_vals[nlj3]+j_vals[nlj4]) )/2;
+          for(int J=Jmin; J<=Jmax; ++J){
+            double Coul, Darwin, SpinContact, SpinOrbit, OrbitOrbit, SpinDipole;
+            zipstream >> Coul >> Darwin >> SpinContact >> SpinOrbit >> OrbitOrbit >> SpinDipole;
+            if( nlj1==nlj2 and J%2==1) continue;
+            if( nlj3==nlj4 and J%2==1) continue;
+            if( energy_vals[nlj1] > modelspace->GetEmax() ) continue;
+            if( energy_vals[nlj2] > modelspace->GetEmax() ) continue;
+            if( energy_vals[nlj3] > modelspace->GetEmax() ) continue;
+            if( energy_vals[nlj4] > modelspace->GetEmax() ) continue;
+            int i = orbits_remap.at(nlj1);
+            int j = orbits_remap.at(nlj2);
+            int k = orbits_remap.at(nlj3);
+            int l = orbits_remap.at(nlj4);
+            double me = 0.0;
+            me = Coul*zeta;
+            if( type=="Breit" ) me += (Darwin+SpinContact+SpinOrbit+OrbitOrbit+SpinDipole)*zeta*zeta*zeta;
+            op.TwoBody.SetTBME_J(J,i,j,k,l,me);
+          }
+        }
+      }
+    }
+  }
+  infile.close();
+}
+
+// Read gzip
+Operator ReadWrite::ReadAtomicOpGzip(std::string filename, ModelSpace& ms, double scale_power1, double scale_power2)
+{
+  double a0 = PhysConst::HBARC / (PhysConst::M_ELECTRON * 1.e6 * PhysConst::ALPHA_FS); // bohr radius in nm
+  double zeta = sqrt( PhysConst::M_ELECTRON*1.e6 * ms.GetHbarOmega() ) * a0 / PhysConst::HBARC;
+  double fact1 = pow( zeta, scale_power1 );
+  double fact2 = pow( zeta, scale_power2 );
+
+  std::ifstream infile( filename, std::ios_base::in | std::ios_base::binary );
+  if ( !infile.good() )
+  {
+    std::cerr << "************************************" << std::endl
+      << "**    Trouble reading file  !!!   **" << filename << std::endl
+      << "************************************" << std::endl;
+    goodstate = false;
+    exit(0);
+  }
+  boost::iostreams::filtering_istream zipstream;
+  zipstream.push(boost::iostreams::gzip_decompressor());
+  zipstream.push(infile);
+
+  std::string line;
+  //std::cout << filename << std::endl;
+  getline(zipstream, line);
+  getline(zipstream, line);
+  int Jrank=0, Prank=0, emax=6, e2max=12, lmax=6;
+  std::istringstream tmp( line.c_str() );
+  tmp >> Jrank >> Prank >> emax >> e2max >> lmax;
+  Operator op = Operator(ms, Jrank, 0, (1-Prank)/2, 2);
+
+  std::vector<int> orbits_remap;
+  std::vector<int> energy_vals;
+  std::vector<int> n_vals;
+  std::vector<int> l_vals;
+  std::vector<int> j_vals;
+
+  for (int e=0; e<=emax; ++e)
+  {
+    for (int l=0; l<=std::min(lmax,e); ++l)
+    {
+      int n = e-l;
+      int twojMin = std::abs(2*l-1);
+      int twojMax = 2*l+1;
+      for (int twoj=twojMin; twoj<=twojMax; twoj+=2)
+      {
+        orbits_remap.push_back( ms.GetOrbitIndex(n,l,twoj,-1) );
+        energy_vals.push_back( n+l);
+        n_vals.push_back(n);
+        l_vals.push_back(l);
+        j_vals.push_back(twoj);
+      }
+    }
+  }
+
+  int nljmax = orbits_remap.size()-1;
+  for(int nlj1=0; nlj1<=nljmax; ++nlj1) {
+    for(int nlj2=0; nlj2<=nlj1; ++nlj2) {
+      double me;
+      zipstream >> me;
+      if( energy_vals[nlj1] > ms.GetEmax() ) continue;
+      if( energy_vals[nlj2] > ms.GetEmax() ) continue;
+      int i = orbits_remap.at(nlj1);
+      int j = orbits_remap.at(nlj2);
+      op.OneBody(i,j) = me * fact1;
+      if (op.IsHermitian())
+        op.OneBody(j,i) = op.OneBody(i,j);
+      else if (op.IsAntiHermitian())
+        op.OneBody(j,i) = -op.OneBody(i,j);
+    }
+  }
+
+  for(int nlj1=0; nlj1<=nljmax; ++nlj1) {
+    if( energy_vals[nlj1] > ms.GetEmax() ) break;
+    for(int nlj2=0; nlj2<=nlj1; ++nlj2) {
+      if( energy_vals[nlj1] + energy_vals[nlj2] > e2max ) continue;
+
+      for(int nlj3=0; nlj3<=nlj1; ++nlj3) {
+        for(int nlj4=0; nlj4<=nlj3; ++nlj4) {
+          if( energy_vals[nlj3] + energy_vals[nlj4] > e2max ) continue;
+
+          if( ( l_vals[nlj1]+l_vals[nlj2]+l_vals[nlj3]+l_vals[nlj4] )%2 == 1) continue;
+          for( int Jij=std::abs(j_vals[nlj1]-j_vals[nlj2])/2; Jij<= (j_vals[nlj1]+j_vals[nlj2])/2; ++Jij){
+            for( int Jkl=std::abs(j_vals[nlj3]-j_vals[nlj4])/2; Jkl<= (j_vals[nlj3]+j_vals[nlj4])/2; ++Jkl){
+              if( std::abs(Jij-Jkl) > Jrank) continue;
+              if(         (Jij+Jkl) < Jrank) continue;
+              double me;
+              zipstream >> me;
+              if( nlj1==nlj2 and Jij%2==1) continue;
+              if( nlj3==nlj4 and Jkl%2==1) continue;
+              if( energy_vals[nlj1] > ms.GetEmax() ) continue;
+              if( energy_vals[nlj2] > ms.GetEmax() ) continue;
+              if( energy_vals[nlj3] > ms.GetEmax() ) continue;
+              if( energy_vals[nlj4] > ms.GetEmax() ) continue;
+              int i = orbits_remap.at(nlj1);
+              int j = orbits_remap.at(nlj2);
+              int k = orbits_remap.at(nlj3);
+              int l = orbits_remap.at(nlj4);
+              op.TwoBody.SetTBME_J(Jij,Jkl,i,j,k,l,me*fact2);
+            }
+          }
+
+        }
+      }
+
+    }
+  }
+  infile.close();
+  return op;
+}
+
 
 // Tokyo format (Kshell format, snt file)
 void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)

@@ -322,6 +322,7 @@ Operator HFMBPT::GetNormalOrderedHNAT()
 
   int nchan = HartreeFock::modelspace->GetNumberTwoBodyChannels();
   int norb = HartreeFock::modelspace->GetNumberOrbits();
+
   for (int ch=0; ch<nchan; ++ch)
   {
     TwoBodyChannel& tbc = HartreeFock::modelspace->GetTwoBodyChannel(ch);

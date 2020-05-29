@@ -1716,6 +1716,7 @@ void ModelSpace::PreCalculateSixJ()
 void ModelSpace::PreCalculateMoshinsky()
 {
   if (moshinsky_has_been_precalculated) return;
+  AngMom::FillFactorialLists(170); // beyond 170, we get inf anyway...
   double t_start = omp_get_wtime();
   std::cout <<"Calculating moshinsky with Lmax = " << Lmax << std::endl;
 

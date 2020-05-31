@@ -216,6 +216,49 @@ namespace Atom
       ops.emplace_back( op );
     }
 
+    // the format should look like OpName^j_p_r^/path/to/file
+    for (auto& tag : opsfromfile)
+    {
+      std::istringstream ss(tag);
+      std::string opname,qnumbers,fname;
+      std::vector<int> qn(3);
+
+      getline(ss,opname,'^');
+      getline(ss,qnumbers,'^');
+      getline(ss,fname,'^');
+      ss.str(qnumbers);
+      ss.clear();
+      for (int i=0;i<3;i++)
+      {
+        std::string tmp;
+        getline(ss,tmp,'_');
+        std::istringstream(tmp) >> qn[i];
+      }
+
+      int j,p,r;
+      j = qn[0];
+      p = qn[1];
+      r = qn[2];
+      //    std::cout << "Parsed tag. opname = " << opname << "  qnumbers = " << qnumbers << "  " << j << " " << t << " " << p << " " << r << "   file = " << fname << std::endl;
+      Operator op(modelspace,j,0,p,r);
+      if( fname.substr( fname.find_last_of(".")) == ".gz" ){
+        if( opname=="MassShift" ) op = rw.ReadAtomicOpGzip( fname, modelspace, 2.0, 2.0 );
+        if( opname=="FieldShift" ) {
+          op = rw.ReadAtomicOpGzip( fname, modelspace, 3.0, 0.0 );
+          op *= atomicZ;
+        }
+      }
+      else if( fname.substr( fname.find_last_of(".")) == ".snt" ) {
+        if( opname=="MassShift" ) op = rw.ReadAtomicOpTokyo( fname, modelspace, 2.0, 2.0 );
+        if( opname=="FieldShift" ) {
+          op = rw.ReadAtomicOpTokyo( fname, modelspace, 3.0, 0.0 );
+          op *= atomicZ;
+        }
+      }
+      ops.push_back( op );
+      opnames.push_back( opname );
+    }
+
     for (size_t i=0;i<ops.size();++i)
     {
       // We don't transform a DaggerHF, because we want the a^dagger to already refer to the HF basis.

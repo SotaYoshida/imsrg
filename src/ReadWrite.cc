@@ -4568,7 +4568,6 @@ void ReadWrite::ReadTokyo(std::string filename, Operator& op)
     int io = modelspace->GetOrbitIndex(n, l, j, tz);
     if(io >= norb) continue;
     orbits_remap[iorb] = io;
-    //cout << io << " " << iorb << " " << n << " " << l << " " << j << " " << tz << endl;
   }
   getline(infile, line);
 
@@ -4656,7 +4655,7 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
   for(int i=0; i<num; i++)
   {
     int iorb, n, l, j, e, tz;
-    infile >> iorb >> n >> l >> j >> e >> tz;
+    infile >> iorb >> n >> l >> j >> tz >> e;
     int io = modelspace->GetOrbitIndex(n,l,j,tz);
     if(io >= norb) continue;
     orbits_remap[iorb] = io;
@@ -4698,7 +4697,7 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
       op.OneBody(jo,io) = -op.OneBody(io,jo);
     //std::cout << io << " " << jo << " " << t << " " << v  << " " <<
     //  p4 << " " << Darwin << " " << LS << std::endl;
-      std::cout << io << " " << jo << " " << op.OneBody(io,jo) << std::endl;
+    //std::cout << io << " " << jo << " " << op.OneBody(io,jo) << std::endl;
   }
   if( type=="FineKineCorr" ) return;
   if( type=="FineDarwin" ) return;
@@ -4756,12 +4755,12 @@ Operator ReadWrite::ReadAtomicOpTokyo(std::string filename, ModelSpace& ms, doub
 
   skip_comments(infile);
   int Jrank, Prank;
-  infile >> Jrank >> Prank;
+  //infile >> Jrank >> Prank;
   skip_comments(infile);
   int prtorb, ntnorb, pcore, ncore;
   infile >> prtorb >> ntnorb >> pcore >> ncore;
   //std::cout << prtorb << " " << ntnorb << " " << pcore << " " << ncore << std::endl;
-  Operator op = Operator(ms, Jrank, 0, (1-Prank)/2, 2);
+  Operator op = Operator(ms, 0, 0, 0, 2);
 
   getline(infile, line);
   skip_comments(infile);
@@ -4770,7 +4769,7 @@ Operator ReadWrite::ReadAtomicOpTokyo(std::string filename, ModelSpace& ms, doub
   for(int i=0; i<num; i++)
   {
     int iorb, n, l, j, e, tz;
-    infile >> iorb >> n >> l >> j >> e >> tz;
+    infile >> iorb >> n >> l >> j >> tz >> e;
     int io = ms.GetOrbitIndex(n,l,j,tz);
     if(io >= norb) continue;
     orbits_remap[iorb] = io;
@@ -4795,11 +4794,13 @@ Operator ReadWrite::ReadAtomicOpTokyo(std::string filename, ModelSpace& ms, doub
     std::string line;
     getline(infile, line);
     std::istringstream stream(line);
-    stream >> me;
+    stream >> i >> j >> me;
     if( orbits_remap.find(i) == orbits_remap.end() ) continue;
     if( orbits_remap.find(j) == orbits_remap.end() ) continue;
     int io = orbits_remap.at(i);
     int jo = orbits_remap.at(j);
+    //std::cout << i << " " << j << " " << me << std::endl;
+    //std::cout << io << " " << jo << " " << me << std::endl;
     op.OneBody(io,jo) = me*fact1;
     if (op.IsHermitian())
       op.OneBody(jo,io) = op.OneBody(io,jo);
@@ -4811,13 +4812,14 @@ Operator ReadWrite::ReadAtomicOpTokyo(std::string filename, ModelSpace& ms, doub
   skip_comments(infile);
   infile >> num;
 
+  // Only scalar
   getline(infile, line);
   skip_comments(infile);
   for(int n=0; n<num; n++)
   {
-    int i, j, k, l, Jij, Jkl;
+    int i, j, k, l, J;
     double me;
-    infile >> i >> j >> k >> l >> Jij >> Jkl >> me;
+    infile >> i >> j >> k >> l >> J >> me;
     if( orbits_remap.find(i) == orbits_remap.end() ) continue;
     if( orbits_remap.find(j) == orbits_remap.end() ) continue;
     if( orbits_remap.find(k) == orbits_remap.end() ) continue;
@@ -4826,9 +4828,11 @@ Operator ReadWrite::ReadAtomicOpTokyo(std::string filename, ModelSpace& ms, doub
     int jo = orbits_remap.at(j);
     int ko = orbits_remap.at(k);
     int lo = orbits_remap.at(l);
-    if ( io==jo and (Jij%2)>0 ) continue;
-    if ( ko==lo and (Jkl%2)>0 ) continue;
-    op.TwoBody.SetTBME_J(Jij,Jkl,io,jo,ko,lo,me*fact2);
+    if ( io==jo and (J%2)>0 ) continue;
+    if ( ko==lo and (J%2)>0 ) continue;
+    //std::cout << i << " " << j << " " << k << " " << l << " " << J << " " << me << std::endl;
+    //std::cout << io << " " << jo << " " << ko << " " << lo << " " << J << " " << me << std::endl;
+    op.TwoBody.SetTBME_J(J,io,jo,ko,lo,me*fact2);
   }
   infile.close();
   return op;

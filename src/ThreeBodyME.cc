@@ -45,7 +45,8 @@ ThreeBodyME::ThreeBodyME(ModelSpace* ms, int e3max, int rJ, int rT, int p)
 
 ThreeBodyME::ThreeBodyME(const ThreeBodyME& Tbme)
 : modelspace(Tbme.modelspace),
-   storage_mode(Tbme.storage_mode), E3max(Tbme.E3max), emax(Tbme.emax), herm(Tbme.herm),
+//   storage_mode(Tbme.storage_mode), E3max(Tbme.E3max), emax(Tbme.emax), herm(Tbme.herm),
+    E3max(Tbme.E3max), emax(Tbme.emax), herm(Tbme.herm),
    rank_J(Tbme.rank_J), rank_T(Tbme.rank_T), parity(Tbme.parity), threebody_storage( Tbme.threebody_storage->Clone())
 {
 }
@@ -260,14 +261,15 @@ void ThreeBodyME::TransformToPN()
     int twoJ = Tbc_bra.twoJ;
     size_t nbras = Tbc_bra.GetNumber3bKets();
     size_t nkets = Tbc_ket.GetNumber3bKets();
-//    std::cout << "  nbras,nkets = " << nbras << " " << nkets << std::endl;
     for (size_t ibra=0; ibra<nbras; ibra++)
     {
 //      std::cout << "   ibra = " << ibra << std::endl;
       Ket3& bra = Tbc_bra.GetKet(ibra);
-      size_t iketmax = (ch_bra==ch_ket) ? ibra : nkets-1;
+//      size_t iketmax = (ch_bra==ch_ket) ? ibra : nkets-1;
+      size_t iketmin = (ch_bra==ch_ket) ? ibra : 0;
+//      std::cout << "   ibra = " << ibra << "  iketmax = " << iketmax << std::endl;
 //      for (size_t iket=0; iket<=ibra; iket++)
-      for (size_t iket=0; iket<=iketmax; iket++)
+      for (size_t iket=iketmin; iket<nkets; iket++)
       {
 //        std::cout << "   iket = " << iket << std::endl;
         if ( (ch_bra==ch_ket) and (ibra==iket) and (herm==-1) ) continue;
@@ -292,7 +294,7 @@ void ThreeBodyME::TransformToPN()
   threebody_storage = TBS_pn;
 //  std::cout << "DONE ASSIGNING" << std::endl;
 
-  storage_mode = pn;
+//  storage_mode = pn;
 }
 
 
@@ -311,7 +313,7 @@ void ThreeBodyME::SwitchToPN_and_discard()
   threebody_storage->Allocate();
 //  threebody_storage = TBS_pn ;
 //  threebody_storage = std::shared_ptr<ThreeBodyStorage_pn>( TBS_pn );
-  storage_mode = pn;
+//  storage_mode = pn;
   IMSRGProfiler::timer[__func__] += omp_get_wtime() - t_start;
 }
 
@@ -338,10 +340,9 @@ void ThreeBodyME::SetMode(std::string mode)
 //    std::exit(EXIT_FAILURE);
   }
   threebody_storage->Allocate();
-  storage_mode = pn;
+//  storage_mode = pn;
   IMSRGProfiler::timer[__func__] += omp_get_wtime() - t_start;
 }
-
 
 size_t ThreeBodyME::GetKetIndex_withRecoupling( int Jab_in, int twoJ, size_t a_in, size_t b_in, size_t c_in, std::vector<size_t>& iket , std::vector<double>& recouple) const
 {

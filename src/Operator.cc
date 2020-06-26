@@ -503,7 +503,7 @@ Operator Operator::DoNormalOrdering3(int sign) const
    for ( auto& itmat : opNO3.TwoBody.MatEl )
    {
       ch_bra_list.push_back( itmat.first[0] );
-      ch_ket_list.push_back( itmat.first[0] );
+      ch_ket_list.push_back( itmat.first[1] );
    }
    int niter = ch_bra_list.size();
 //   for ( auto& itmat : opNO3.TwoBody.MatEl )
@@ -552,6 +552,10 @@ Operator Operator::DoNormalOrdering3(int sign) const
 
             }
             Gamma(ibra,iket) /= (2*tbc_bra.J+1)* sqrt((1+bra.delta_pq())*(1+ket.delta_pq()));
+            if (  opNO3.GetTRank()!=0 or opNO3.GetParity()!=0 )
+            {
+              Gamma(ibra,iket) *= sqrt(2*tbc_bra.J+1); // reduced matrix element
+            }
          }
       }
    }

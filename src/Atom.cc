@@ -445,7 +445,6 @@ namespace Atom
       int nOmega = imsrgsolver.GetOmegaSize() + imsrgsolver.GetNOmegaWritten();
       std::cout << "Undoing NO wrt A=" << modelspace.GetAref() << " Z=" << modelspace.GetZref() << std::endl;
       HNO = HNO.UndoNormalOrdering();
-
       ms2.SetReference(ms2.core); // change the reference
       HNO.SetModelSpace(ms2);
 

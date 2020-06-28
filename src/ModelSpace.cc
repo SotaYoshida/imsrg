@@ -1831,6 +1831,7 @@ void ModelSpace::InitAtomicSpace(int emax, std::string basis, std::string refere
   if(basis == "HO" or basis == "ho") { SetUpOrbits(); }
   else if(basis == "AO" or basis == "ao") { SetUpAtomicOrbits(); }
   GetZNelefromString(reference, Zref, Aref);
+  Zref = Aref;
   std::map<index_t,double> hole_list = GetAtomicOrbitals(Aref);
   std::set<index_t> valence_list, core_list;
   if (valence == "0hw-shell") {
@@ -1877,12 +1878,12 @@ void ModelSpace::InitAtomicSpace(int emax, std::map<index_t,double> hole_list, s
     Orbit& oh = GetOrbit(h.first);
     atmp += (oh.j2+1.)*oh.occ;
   }
+  //if (std::abs(Aref-atmp)>1e-5 )
+  //{
+  //  std::cout << std::endl << "!!!! WARNING  " << __func__ << " recomputed N_e and got " << atmp << std::endl;
+  //}
   Aref = round(atmp);
-  if (std::abs(Aref-atmp)>1e-5 )
-  {
-    std::cout << std::endl << "!!!! WARNING  " << __func__ << " recomputed N_e and got " << atmp << std::endl;
-  }
-  Aref = round(atmp);
+  Zref = Aref;
 
   std::cout << "core list: ";
   for (auto& c : core_list) std::cout << c << " ";

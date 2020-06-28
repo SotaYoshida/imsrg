@@ -4854,7 +4854,6 @@ void ReadWrite::ReadMiyagiAtomicGzip(std::string filename, Operator& op, bool re
   boost::iostreams::filtering_istream zipstream;
   zipstream.push(boost::iostreams::gzip_decompressor());
   zipstream.push(infile);
-
   std::string line;
   //std::cout << filename << std::endl;
   getline(zipstream, line);
@@ -4898,6 +4897,8 @@ void ReadWrite::ReadMiyagiAtomicGzip(std::string filename, Operator& op, bool re
       if( l_vals[nlj1] != l_vals[nlj2] ) continue;
       if( j_vals[nlj1] != j_vals[nlj2] ) continue;
       zipstream >> t >> v >> p4 >> Darwin >> LS >> ovlp;
+      if( l_vals[nlj1] > modelspace->GetLmax() ) continue;
+      if( l_vals[nlj2] > modelspace->GetLmax() ) continue;
       if( energy_vals[nlj1] > modelspace->GetEmax() ) continue;
       if( energy_vals[nlj2] > modelspace->GetEmax() ) continue;
       int i = orbits_remap.at(nlj1);
@@ -4936,6 +4937,10 @@ void ReadWrite::ReadMiyagiAtomicGzip(std::string filename, Operator& op, bool re
             zipstream >> Coul >> Darwin >> SpinContact >> SpinOrbit >> OrbitOrbit >> SpinDipole;
             if( nlj1==nlj2 and J%2==1) continue;
             if( nlj3==nlj4 and J%2==1) continue;
+            if( l_vals[nlj1] > modelspace->GetLmax() ) continue;
+            if( l_vals[nlj2] > modelspace->GetLmax() ) continue;
+            if( l_vals[nlj3] > modelspace->GetLmax() ) continue;
+            if( l_vals[nlj4] > modelspace->GetLmax() ) continue;
             if( energy_vals[nlj1] > modelspace->GetEmax() ) continue;
             if( energy_vals[nlj2] > modelspace->GetEmax() ) continue;
             if( energy_vals[nlj3] > modelspace->GetEmax() ) continue;

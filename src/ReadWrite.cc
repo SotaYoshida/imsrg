@@ -4691,6 +4691,8 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
     if ( type=="FineKineCorr" ) { op.OneBody(io,jo) = p4*zeta*zeta*zeta*zeta; }
     if ( type=="FineDarwin" ) { op.OneBody(io,jo) = Darwin*zeta*zeta*zeta*atomicZ; }
     if ( type=="FineSpinOrbit" ) { op.OneBody(io,jo) = LS*zeta*zeta*zeta*atomicZ; }
+    if ( type=="Kinetic" ) { op.OneBody(i,j) = t*zeta*zeta; }
+    if ( type=="Coulomb" ) { op.OneBody(i,j) = -atomicZ*v*zeta; }
     if (op.IsHermitian())
       op.OneBody(jo,io) = op.OneBody(io,jo);
     else if (op.IsAntiHermitian())
@@ -4702,6 +4704,7 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
   if( type=="FineKineCorr" ) return;
   if( type=="FineDarwin" ) return;
   if( type=="FineSpinOrbit" ) return;
+  if( type=="Kinetic" ) return;
 
   getline(infile, line);
   skip_comments(infile);
@@ -4908,6 +4911,8 @@ void ReadWrite::ReadMiyagiAtomicGzip(std::string filename, Operator& op, bool re
       if ( type=="FineKineCorr" ) { op.OneBody(i,j) = p4*zeta*zeta*zeta*zeta; }
       if ( type=="FineDarwin" ) { op.OneBody(i,j) = Darwin*zeta*zeta*zeta*atomicZ; }
       if ( type=="FineSpinOrbit" ) { op.OneBody(i,j) = LS*zeta*zeta*zeta*atomicZ; }
+      if ( type=="Kinetic" ) { op.OneBody(i,j) = t*zeta*zeta; }
+      if ( type=="Coulomb" ) { op.OneBody(i,j) = -atomicZ*v*zeta; }
       if (op.IsHermitian())
         op.OneBody(j,i) = op.OneBody(i,j);
       else if (op.IsAntiHermitian())
@@ -4918,6 +4923,7 @@ void ReadWrite::ReadMiyagiAtomicGzip(std::string filename, Operator& op, bool re
   if( type=="FineKineCorr" ) return;
   if( type=="FineDarwin" ) return;
   if( type=="FineSpinOrbit" ) return;
+  if( type=="Kinetic" ) return;
 
   for(int nlj1=0; nlj1<=nljmax; ++nlj1) {
     if( energy_vals[nlj1] > modelspace->GetEmax() ) break;

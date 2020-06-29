@@ -44,6 +44,7 @@ namespace Atom
     std::string HamType = parameters.s("LECs");
     bool use_NAT_occupations = (parameters.s("use_NAT_occupations")=="true") ? true : false;
     bool me_scale = (parameters.s("me_scale")=="true") ? true : false;
+    bool find_best_zeta = (parameters.s("find_best_zeta")=="true") ? true : false;
     int eMax = parameters.i("emax");
     int lmax = parameters.i("lmax"); // so far I only use this with atomic systems.
     int file2e1max = parameters.i("file2e1max");
@@ -161,6 +162,62 @@ namespace Atom
       Hbare += imsrg_util::VCoulomb_Op(modelspace, lmax) * sqrt((M_ELECTRON*1e6)/M_NUCLEON ) ;  // convert oscillator length from fm with nucleon mass to nm with electon mass (in eV).
       Hbare += imsrg_util::KineticEnergy_Op(modelspace); // Don't need to rescale this, because it's related to the oscillator frequency, which we input.
       Hbare /= PhysConst::HARTREE; // Convert to Hartree
+    }
+
+    // find best zeta
+    if( me_scale and find_best_zeta ){
+
+      Operator T = Operator(modelspace,0,0,0,2);
+      Operator V = Operator(modelspace,0,0,0,2);
+      if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".snt") rw.ReadTokyoAtomic(     inputtbme,T,false,atomicZ,"Kinetic");
+      if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".gz")  rw.ReadMiyagiAtomicGzip(inputtbme,T,false,atomicZ,"Kinetic");
+      if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".snt") rw.ReadTokyoAtomic(     inputtbme,V,false,atomicZ,"Coulomb");
+      if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".gz")  rw.ReadMiyagiAtomicGzip(inputtbme,V,false,atomicZ,"Coulomb");
+      // labmda function get Ehf
+      auto fzeta = [inputtbme,me_scale,atomicZ,HamType,freeze_occupations,T,V](double zeta, Operator& Hbare)
+      {
+        Hbare = zeta*zeta*T + zeta*V;
+        HFMBPT hf(Hbare); // HFMBPT inherits from HartreeFock, so no harm done here.
+        if (freeze_occupations == "false" )  hf.UnFreezeOccupations();
+        hf.Solve();
+        return hf.EHF;
+      };
+      double zeta1 = 8.0;
+      double Ehf1 = fzeta(zeta1, Hbare);
+      double alpha = 1.0;
+      double gamma = 1.0;
+      double rho = 0.5;
+      double sigma = 0.5;
+      double zeta2 = zeta1 + 1.0;
+      for (int iter=0; iter<1000; ++iter){
+        double Ehf2 = fzeta(zeta2, Hbare);
+        if( Ehf1 > Ehf2 ) {
+          double tmp = zeta1;
+          zeta1 = zeta2;
+          zeta2 = tmp;
+          tmp = Ehf1;
+          Ehf1 = Ehf2;
+          Ehf2 = tmp;
+        }
+        if(std::abs(zeta2-zeta1) < 1.e-4) break;
+        double zeta_0 = zeta1;
+        double zeta_r = zeta_0 + alpha * (zeta_0 - zeta2);
+        double Ehf_r = fzeta(zeta_r, Hbare);
+        if( Ehf1 <= Ehf_r and Ehf_r < Ehf2 ) zeta2 = zeta_r;
+        else if(Ehf_r < Ehf1){
+          double zeta_e = zeta_0 + gamma*(zeta2 - zeta_0);
+          double Ehf_e = fzeta(zeta_e, Hbare);
+          if( Ehf_e < Ehf_r) zeta2 = zeta_e;
+          else zeta2 = zeta_r;
+        }
+        else{
+          double zeta_c = zeta_0 + rho*(zeta2 - zeta_0);
+          double Ehf_c = fzeta(zeta_c, Hbare);
+          if( Ehf_c < Ehf2 ) zeta2 = zeta_c;
+          else zeta2 = zeta1 + sigma*(zeta2-zeta1);
+        }
+      }
+      std::cout << "The beta zeta is " << zeta1 << std::endl;
     }
 
     std::cout << "Creating HF" << std::endl;

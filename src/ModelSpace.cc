@@ -400,18 +400,12 @@ void ModelSpace::Init( std::map<std::array<int,4>,double> hole_list, std::set<st
 //   std::cout << std::endl;
 
    // Make sure no orbits are both core and valence
-   std::set<std::array<int,4>> core_list_tmp;
    for (auto& c : core_list)
    {
      if ( find(valence_list.begin(), valence_list.end(), c) != valence_list.end() )
-       std::cout << "!!!!!!!!!!!!! ModelSpace::Init : Conflicting definition. Orbit (" << c[0] << " " << c[1] << " " << c[2] << " " << c[3] << ") is in core and valence spaces, removed from core list." << std::endl;
-
-     // Added by T. Miyagi, to do Ni92 core
-     else core_list_tmp.insert(c);
-
+       std::cout << "!!!!!!!!!!!!! ModelSpace::Init : Conflicting definition. Orbit (" << c[0] << " " << c[1] << " " << c[2] << " " << c[3] << ") is in core and valence spaces." << std::endl;
 //       std::cout << "!!!!!!!!!!!!! ModelSpace::Init : Conflicting definition. Orbit " << c << " is in core and valence spaces." << std::endl;
    }
-   core_list = core_list_tmp;
 
    std::vector<int> IsospinList = {-1, 1};
    if (single_species) IsospinList.pop_back(); // just use tz = -1 in this case
@@ -882,12 +876,10 @@ void ModelSpace::SetReference(std::set<index_t> new_reference)
   std::map<std::array<int,4>,double> hlist ;
   std::set<std::array<int,4>> clist ;
   std::set<std::array<int,4>> vlist ;
-  std::cout <<  "New reference: " << std::endl;
   for ( auto h : new_reference )
   {
     Orbit& oh = GetOrbit(h);
     hlist[ {oh.n, oh.l, oh.j2, oh.tz2}]  = 1.0;
-    std::cout <<  "Orbit (" << oh.n << " " << oh.l << " " << oh.j2 << " " << oh.tz2 << ")" << std::endl;
   }
   for ( auto c : core )
   {

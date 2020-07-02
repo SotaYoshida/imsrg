@@ -171,8 +171,8 @@ namespace Atom
       Operator V = Operator(modelspace,0,0,0,2);
       if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".snt") rw.ReadTokyoAtomic(     inputtbme,T,false,atomicZ,"Kinetic");
       if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".gz")  rw.ReadMiyagiAtomicGzip(inputtbme,T,false,atomicZ,"Kinetic");
-      if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".snt") rw.ReadTokyoAtomic(     inputtbme,V,false,atomicZ,"Coulomb");
-      if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".gz")  rw.ReadMiyagiAtomicGzip(inputtbme,V,false,atomicZ,"Coulomb");
+      if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".snt") rw.ReadTokyoAtomic(     inputtbme,V,false,atomicZ,"VCoulomb");
+      if ( inputtbme.substr( inputtbme.find_last_of(".")) == ".gz")  rw.ReadMiyagiAtomicGzip(inputtbme,V,false,atomicZ,"VCoulomb");
       // labmda function get Ehf
       auto fzeta = [inputtbme,me_scale,atomicZ,HamType,freeze_occupations,T,V](double zeta, Operator& Hbare)
       {

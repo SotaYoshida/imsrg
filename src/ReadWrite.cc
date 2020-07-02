@@ -4692,7 +4692,7 @@ void ReadWrite::ReadTokyoAtomic(std::string filename, Operator& op, bool rescale
     if ( type=="FineDarwin" ) { op.OneBody(io,jo) = Darwin*zeta*zeta*zeta*atomicZ; }
     if ( type=="FineSpinOrbit" ) { op.OneBody(io,jo) = LS*zeta*zeta*zeta*atomicZ; }
     if ( type=="Kinetic" ) { op.OneBody(i,j) = t*zeta*zeta; }
-    if ( type=="Coulomb" ) { op.OneBody(i,j) = -atomicZ*v*zeta; }
+    if ( type=="VCoulomb" ) { op.OneBody(i,j) = -atomicZ*v*zeta; }
     if (op.IsHermitian())
       op.OneBody(jo,io) = op.OneBody(io,jo);
     else if (op.IsAntiHermitian())
@@ -4912,7 +4912,7 @@ void ReadWrite::ReadMiyagiAtomicGzip(std::string filename, Operator& op, bool re
       if ( type=="FineDarwin" ) { op.OneBody(i,j) = Darwin*zeta*zeta*zeta*atomicZ; }
       if ( type=="FineSpinOrbit" ) { op.OneBody(i,j) = LS*zeta*zeta*zeta*atomicZ; }
       if ( type=="Kinetic" ) { op.OneBody(i,j) = t*zeta*zeta; }
-      if ( type=="Coulomb" ) { op.OneBody(i,j) = -atomicZ*v*zeta; }
+      if ( type=="VCoulomb" ) { op.OneBody(i,j) = -atomicZ*v*zeta; }
       if (op.IsHermitian())
         op.OneBody(j,i) = op.OneBody(i,j);
       else if (op.IsAntiHermitian())

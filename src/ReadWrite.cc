@@ -5026,6 +5026,8 @@ Operator ReadWrite::ReadAtomicOpGzip(std::string filename, ModelSpace& ms, doubl
     for(int nlj2=0; nlj2<=nlj1; ++nlj2) {
       double me;
       zipstream >> me;
+      if( l_vals[nlj1] > ms.GetLmax() ) continue;
+      if( l_vals[nlj2] > ms.GetLmax() ) continue;
       if( energy_vals[nlj1] > ms.GetEmax() ) continue;
       if( energy_vals[nlj2] > ms.GetEmax() ) continue;
       int i = orbits_remap.at(nlj1);
@@ -5056,6 +5058,10 @@ Operator ReadWrite::ReadAtomicOpGzip(std::string filename, ModelSpace& ms, doubl
               zipstream >> me;
               if( nlj1==nlj2 and Jij%2==1) continue;
               if( nlj3==nlj4 and Jkl%2==1) continue;
+              if( l_vals[nlj1] > ms.GetLmax() ) continue;
+              if( l_vals[nlj2] > ms.GetLmax() ) continue;
+              if( l_vals[nlj3] > ms.GetLmax() ) continue;
+              if( l_vals[nlj4] > ms.GetLmax() ) continue;
               if( energy_vals[nlj1] > ms.GetEmax() ) continue;
               if( energy_vals[nlj2] > ms.GetEmax() ) continue;
               if( energy_vals[nlj3] > ms.GetEmax() ) continue;

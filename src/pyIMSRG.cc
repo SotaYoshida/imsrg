@@ -136,6 +136,7 @@ PYBIND11_MODULE(pyIMSRG, m)
       .def("ScaleOneBody", &Operator::ScaleOneBody)
       .def("ScaleTwoBody", &Operator::ScaleTwoBody)
       .def("DoNormalOrdering", &Operator::DoNormalOrdering)
+      .def("DoNormalOrderingCore", &Operator::DoNormalOrderingCore)
       .def("UndoNormalOrdering", &Operator::UndoNormalOrdering)
       .def("SetModelSpace", &Operator::SetModelSpace)
       .def("Norm", &Operator::Norm)
@@ -171,6 +172,8 @@ PYBIND11_MODULE(pyIMSRG, m)
    py::class_<arma::mat>(m,"ArmaMat")
       .def(py::init<>())
       .def("Print",&ArmaMatPrint)
+      .def("save", [](arma::mat& self,std::string fname) { self.save(fname);}, py::arg("filename") )
+      .def("load", [](arma::mat& self,std::string fname) { self.load(fname);}, py::arg("filename") )
       .def(py::self *= double())
       .def(py::self * double())
       .def(py::self /= double())
@@ -179,12 +182,15 @@ PYBIND11_MODULE(pyIMSRG, m)
       .def(py::self + double())
       .def(py::self -= double())
       .def(py::self - double())
+      .def("__call__", [](arma::mat& self,const int i, const int j) {return self(i,j);}, py::is_operator()  )
    ;
 
    py::class_<TwoBodyME>(m,"TwoBodyME")
       .def(py::init<>())
       .def("GetTBME_J", TB_GetTBME_J)
       .def("GetTBME_J_norm", TB_GetTBME_J_norm)
+      .def("GetTBMEmonopole",[](TwoBodyME& self, int a, int b, int c, int d){ return self.GetTBMEmonopole(a,b,c,d);}, py::arg("a"),py::arg("b"),py::arg("c"),py::arg("d"))
+      .def("GetTBMEmonopole_norm",[](TwoBodyME& self, int a, int b, int c, int d){ return self.GetTBMEmonopole_norm(a,b,c,d);}, py::arg("a"),py::arg("b"),py::arg("c"),py::arg("d"))
    ;
 
 //   py::class_<ThreeBodyME>(m,"ThreeBodyME")
@@ -269,6 +275,10 @@ PYBIND11_MODULE(pyIMSRG, m)
       .def("WriteDaggerOperator",&ReadWrite::WriteDaggerOperator)
       .def("ReadJacobi3NFiles",&ReadWrite::ReadJacobi3NFiles)
       .def("WriteValence3body",&ReadWrite::WriteValence3body)
+      .def("SetScratchDir", &ReadWrite::SetScratchDir)
+      .def("GetScratchDir", &ReadWrite::GetScratchDir)
+      .def("CopyFile",&ReadWrite::CopyFile,py::arg("filein"),py::arg("fileout"))
+//      .def("WriteOmega",&ReadWrite::WriteOmega, py::arg("basename"),py::arg("scratch_dir"),py::arg("nOmegas"))
    ;
 
 
@@ -343,7 +353,13 @@ PYBIND11_MODULE(pyIMSRG, m)
       .def("GetOperator", &IMSRGSolver::GetOperator)
       .def("EstimateBCHError", &IMSRGSolver::EstimateBCHError)
       .def("UpdateEta", &IMSRGSolver::UpdateEta)
+      .def("GetNOmegaWritten", &IMSRGSolver::GetNOmegaWritten)
+      .def("GetOmegaSize", &IMSRGSolver::GetOmegaSize)
+//      .def("GetScratchDir",[](IMSRGSolver& self){ return self.rw->GetScratchDir();} )
+      .def("GetScratchDir",[](IMSRGSolver& self){ return self.scratchdir;} )
+      .def("FlushOmegaToScratch",&IMSRGSolver::FlushOmegaToScratch)
       .def_readwrite("Eta", &IMSRGSolver::Eta)
+      .def_readwrite("n_omega_written",&IMSRGSolver::n_omega_written) // I'm not sure I like just directly exposing this...
    ;
 
 

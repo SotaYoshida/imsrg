@@ -24,11 +24,13 @@
 #include <iostream>
 #include <iomanip>
 
+// Is this a reasonable place to have this?
 double r2p = 0.770; // effective proton intrinsic charge radius squared
 double r2n = -0.1149; // effective neutron intrisic charge radius squared
-double DF = 0.033; // Darwin-Foldy correction to the charge radius
+double DarwinFoldy = 0.033; // Darwin-Foldy correction to the charge radius
 
 
+//////////////////
 class Parameters
 {
  public:
@@ -47,28 +49,21 @@ class Parameters
   std::vector<std::string> v(std::string);
   std::string DefaultFlowFile();
   std::string DefaultIntFile();
-  // added by T. Miyagi
-  std::string DefaultSummaryFile();
-  std::string DefaultFlow1File();
-  std::string DefaultFlow2File();
-  std::string GetFileName(std::string, std::string);
-  //
   bool help_mode;
 };
 
 std::map<std::string,std::string> Parameters::string_par = {
-  {"2bme",			"none"},
-  {"3bme",			"none"},
+  {"2bme",			"none"},        // name of file containing 2-body matrix elements
+  {"3bme",			"none"},        // name of file containing 3-body matrix elements
+  {"3bme_type",			"full"},        // are the 3-body matrix elements in NO2B format, or do we get all of them (full)?
+  {"no2b_precision",		"single"},      // if we use the no2b file type, do we store with single precision, or half precision?
   {"core_generator",		"atan"},	// generator used for core part of 2-step decoupling
   {"valence_generator",		"shell-model-atan"},	// generator used for valence decoupling and 1-step (also single-ref)
-  {"outputdir",			"output"},	// name of output flow file
   {"flowfile",			"default"},	// name of output flow file
-  {"flow1file",			""},	// name of flow matrix file
-  {"flow2file",			""},	// name of flow matrix file
-  {"summaryfile",			"default"},	// name of summary flow file
   {"intfile",			"default"},	// name of output interaction fille
   {"fmt2",			"me2j"},	// can also be navratil or Navratil to read Petr's TBME format
   {"fmt3",			"me3j"},	// can also be navratil or Navratil to read Petr's TBME format
+  {"input_op_fmt",		"navratil"},	// navratil means read Petr Navratil's format for 2b currents. miyagi means Takayuki Miyagi's format.
   {"reference",			"default"},	// nucleus used for HF and normal ordering.
   {"valence_space",		""},		// either valence space or nucleus for single reference
   {"custom_valence_space",      ""},		// if the provided valence spaces just aren't good enough for you
@@ -84,6 +79,18 @@ std::map<std::string,std::string> Parameters::string_par = {
   {"write_omega",		"false"},	// write omega to disk
   {"nucleon_mass_correction",	"false"},	// include effect of proton-neutron mass splitting
   {"hunter_gatherer",	        "false"},	// use hunter-gatherer approach to splitting omega
+  {"relativistic_correction",   "false"},       // include the p^4 relativistic correction to the kinetic energy
+  {"IMSRG3",                    "false"},       // include 3-body terms in commutators. 
+  {"imsrg3_n7",                 "false"},       // include only n^7 scaling 3-body terms in commutators. Only does something if IMSRG3=true.
+  {"physical_system",           "nuclear"},     // treat nucleus or atom. For atom, switch units from MeV,fm to eV,nm.
+  {"freeze_occupations",        "false"},       // Should we freeze the occupations, or fill according to HF energy
+  {"discard_no2b_from_3n",      "false"},       // For diagnostics. Use the 3N, but discard the 3N contribution to the NO 2-body after HF.
+  {"use_NAT_occupations",       "false"},       // When using natural orbitals, should we use the corresponding occupations?
+  {"store_3bme_pn",             "false"},       // should the 3-body matrix elements be stored in proton-neutron formalism? Default is isospin.
+  {"discard_residual_input3N",  "false"},       // If we're doing IMSRG3, should we discard the residual input 3N (only keep induced)?
+  {"only_2b_eta",               "false"},       // If we're doing IMSRG3, keep eta as 2b 
+  {"only_2b_omega",             "false"},       // If we're doing IMSRG3, keep omega (the magnus operator) as 2b 
+  {"perturbative_triples",      "false"},       // Compute perturbative energy shift due to [2,2]->3 induced 3-body 
 };
 
 
@@ -97,9 +104,11 @@ std::map<std::string,double> Parameters::double_par = {
   {"ode_tolerance",	1e-6},	// error tolerance for the ode solver
   {"denominator_delta",	   0},	// offset added to the denominator in the generator
   {"BetaCM",               0},  // Prefactor for Lawson-Glockner term
-  {"BetaCM_trans",         0},  // Prefactor for Lawson-Glockner term
   {"hwBetaCM",            -1},  // Oscillator frequency used in the Lawson-Glockner term. Negative value means use the frequency of the basis
   {"eta_criterion",     1e-6},  // Threshold on ||eta|| for convergence in the flow
+  {"hw_trap",             -1},  // Frequency for harmonic lab-frame trap V = 1/2 M omega**2 * r**2
+  {"dE3max",		99}, // cut on energies which limits the 3-body states considered in IMSRG(3) commutators
+  {"OccNat3Cut",	-1}, // cut on natural orbital occupations which limits the 3-body states considered in IMSRG(3) commutators
 
 };
 
@@ -107,20 +116,21 @@ std::map<std::string,int> Parameters::int_par = {
   {"A",	-1},	// Aeff for kinetic energy. -1 means take A of reference
   {"e3max",		12},
   {"emax",		6},
-  {"emax_imsrg",		-1},
-  {"e2max_imsrg",		-1},
+  {"lmax",              99999}, // lmax for the whole calculation
   {"lmax3",		-1}, // lmax for the 3body interaction
   {"nsteps",		-1},	// do the decoupling in 1 step or core-then-valence. -1 means default
   {"file2e1max",	12},
-  {"file2e2max",	24},
-  {"file2lmax",		10},
+  {"file2e2max",	-1},// -1 means "default" which assumes e2max = 2 * emax
+  {"file2lmax",		-1},// by default assume that there's no lmax cut, so lmax = emax
   {"file3e1max",	12},
-  {"file3e2max",	24},
+  {"file3e2max",	-1},// by default assume no extra e2max cut
   {"file3e3max",	12},
+  {"atomicZ",           -1}, // the Z of the nucleus for an atomic calculation. -1 means do a neutral atom
+  {"emax_unocc",        -1}, // separate emax cut for l,j values that will not be occupied in the reference
 };
 
 std::map<std::string,std::vector<std::string>> Parameters::vec_par = {
- {"Operators", {} },
+ {"Operators", {} },    // Operators to transform
  {"OperatorsFromFile", {} },  // These will mostly be MECs for operators
  {"OperatorsPT1", {} },   // First order perturbative correction to (1b part of) operator.
  {"OperatorsRPA", {} },   // RPA resummed correction to (1b part of) operator.
@@ -129,6 +139,7 @@ std::map<std::string,std::vector<std::string>> Parameters::vec_par = {
 };
 
 
+// The constructor
 Parameters::Parameters(int argc, char** argv)
 {
   help_mode = false;
@@ -210,19 +221,19 @@ std::vector<std::string> Parameters::v(std::string key)
   return vec_par[key];
 }
 
-//std::string Parameters::DefaultFlowFile()
-//{
-//  char strbuf[200];
-//  sprintf(strbuf, "output/BCH_%s_%s_%s_hw%.0f_e%d_A%d.dat",string_par["method"].c_str(),string_par["reference"].c_str(),string_par["valence_space"].c_str(),double_par["hw"],int_par["emax"],int_par["A"]);
-//  return std::string(strbuf);
-//}
-//
-//std::string Parameters::DefaultIntFile()
-//{
-//  char strbuf[200];
-//  sprintf(strbuf, "output/%s_%s_%s_hw%.0f_e%d_A%d",string_par["method"].c_str(),string_par["reference"].c_str(),string_par["valence_space"].c_str(),double_par["hw"],int_par["emax"],int_par["A"]);
-//  return std::string(strbuf);
-//}
+std::string Parameters::DefaultFlowFile()
+{
+  char strbuf[200];
+  sprintf(strbuf, "output/BCH_%s_%s_%s_hw%.0f_e%d_A%d.dat",string_par["method"].c_str(),string_par["reference"].c_str(),string_par["valence_space"].c_str(),double_par["hw"],int_par["emax"],int_par["A"]);
+  return std::string(strbuf);
+}
+
+std::string Parameters::DefaultIntFile()
+{
+  char strbuf[200];
+  sprintf(strbuf, "output/%s_%s_%s_hw%.0f_e%d_A%d",string_par["method"].c_str(),string_par["reference"].c_str(),string_par["valence_space"].c_str(),double_par["hw"],int_par["emax"],int_par["A"]);
+  return std::string(strbuf);
+}
 
 void Parameters::PrintOptions()
 {
@@ -248,91 +259,4 @@ void Parameters::PrintOptions()
 
 }
 
-//added by T.Miyagi
 
-std::string Parameters::DefaultFlowFile()
-{
-  return GetFileName("flow_",".dat");
-}
-
-std::string Parameters::DefaultSummaryFile()
-{
-  return GetFileName("summary_",".dat");
-}
-
-std::string Parameters::DefaultFlow1File()
-{
-  return GetFileName("flow_f_",".dat");
-}
-
-std::string Parameters::DefaultFlow2File()
-{
-  return GetFileName("flow_gamma_",".dat");
-}
-
-std::string Parameters::DefaultIntFile()
-{
-  return GetFileName("","");
-}
-
-std::string Parameters::GetFileName(std::string name, std::string ext)
-{
-  char strbuf[200];
-<<<<<<< HEAD
-  int eimsrg=int_par["emax_imsrg"];
-  int e2imsrg=int_par["e2max_imsrg"];
-  if(eimsrg == -1) eimsrg = int_par["emax"];
-  if(e2imsrg == -1) e2imsrg = 2*eimsrg;
-  sprintf(strbuf, "%s/%s%s_%s_%s_%s_hw%.0f_e%d_eimsrg%d_e2imsrg%d_A%d_beta%.1f_delta%.0f%s",
-      string_par["outputdir"].c_str(),
-      name.c_str(),
-      string_par["method"].c_str(),
-      string_par["reference"].c_str(),
-      string_par["valence_space"].c_str(),
-      string_par["basis"].c_str(),
-      double_par["hw"],
-      int_par["emax"],
-      eimsrg,
-      e2imsrg,
-      int_par["A"],
-      double_par["BetaCM"],
-      double_par["denominator_delta"],
-      ext.c_str()
-      );
-=======
-  if(double_par["BetaCM"] < 1.e-3){
-    sprintf(strbuf, "%s/%s%s_%s_%s_%s_hw%.0f_e%d_eimsrg%d_A%d_delta%.0f%s",
-        string_par["outputdir"].c_str(),
-        name.c_str(),
-        string_par["method"].c_str(),
-        string_par["reference"].c_str(),
-        string_par["valence_space"].c_str(),
-        string_par["basis"].c_str(),
-        double_par["hw"],
-        int_par["emax"],
-        int_par["emax_imsrg"],
-        int_par["A"],
-        double_par["denominator_delta"],
-        ext.c_str()
-        );
-  }
-  else{
-    sprintf(strbuf, "%s/%s%s_%s_%s_%s_hw%.0f_e%d_eimsrg%d_A%d_beta%.1f_delta%.0f%s",
-        string_par["outputdir"].c_str(),
-        name.c_str(),
-        string_par["method"].c_str(),
-        string_par["reference"].c_str(),
-        string_par["valence_space"].c_str(),
-        string_par["basis"].c_str(),
-        double_par["hw"],
-        int_par["emax"],
-        int_par["emax_imsrg"],
-        int_par["A"],
-        double_par["BetaCM"],
-        double_par["denominator_delta"],
-        ext.c_str()
-        );
-  }
->>>>>>> 78c3a06be552848201eea03162998fc28b6ed6c3
-  return std::string(strbuf);
-}

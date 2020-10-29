@@ -39,8 +39,8 @@ class IMSRGSolver
 
 //  private:
   ModelSpace* modelspace;
-  ReadWrite* rw;
-  Operator* H_0;
+//  ReadWrite* rw;
+  Operator* H_0; 
   std::deque<Operator> FlowingOps;
   Operator H_saved;
   Operator Eta;
@@ -56,12 +56,18 @@ class IMSRGSolver
   double eta_criterion;
   std::string method;
   std::string flowfile;
+  std::string scratchdir;
   IMSRGProfiler profiler;
   int n_omega_written;
   int max_omega_written;
   bool magnus_adaptive;
   bool hunter_gatherer;
+  bool perturbative_triples;
 
+  double Elast;
+  double cumulative_error;
+  double pert_triples_this_omega;
+  double pert_triples_sum;
 
 
   ~IMSRGSolver();
@@ -70,15 +76,20 @@ class IMSRGSolver
   void NewOmega();
   void GatherOmega(); // hunter-gatherer mode of updating omega
   void SetHin( Operator& H_in);
-  void SetReadWrite( ReadWrite& r){rw = &r;};
+//  void SetReadWrite( ReadWrite& r){rw = &r; scratchdir = rw->GetScratchDir();};
+  void SetScratchDir( std::string sdir) { scratchdir = sdir; };
+  std::string GetScratchDir( ) {return scratchdir; };
+  void SetReadWrite( ReadWrite& r){scratchdir = r.GetScratchDir();}; // for backwards compatibility
   void Reset();
   void AddOperator(Operator& Op){FlowingOps.push_back(Op);};
+  Operator GetOperator(size_t i){return FlowingOps.at(i);};
   void UpdateEta(); // Force eta to be calculated. For debugging.
 
   void SetMethod(std::string m){method=m;};
   void Solve();
   void Solve_magnus_euler();
   void Solve_magnus_modified_euler();
+  void Solve_flow_RK4();
 
   Operator Transform(Operator& OpIn);
   Operator Transform(Operator&& OpIn);
@@ -101,6 +112,7 @@ class IMSRGSolver
   void SetEtaCriterion(float x){eta_criterion = x;};
   void SetMagnusAdaptive(bool b=true){magnus_adaptive = b;};
   void SetHunterGatherer(bool b=true){hunter_gatherer = b;};
+  void SetPerturbativeTriples(bool b=true){perturbative_triples = b;};
 
   int GetSystemDimension();
   Operator& GetH_s(){return FlowingOps[0];};
@@ -120,17 +132,13 @@ class IMSRGSolver
   void SetDenominatorDeltaIndex(int i){generator.SetDenominatorDeltaIndex(i);};
   void SetDenominatorDeltaOrbit(std::string o){generator.SetDenominatorDeltaOrbit(o);};
 
+  void FlushOmegaToScratch();
   void CleanupScratch();
 
-  // added by T. Miyagi
-  std::string flow1file;
-  std::string flow2file;
-  void SetFlow1File(std::string);
-  void WriteStatusFlow1(std::string);
-  void WriteStatusFlow1(std::ostream&);
-  void SetFlow2File(std::string);
-  void WriteStatusFlow2(std::string);
-  void WriteStatusFlow2(std::ostream&);
+  double EstimateStepError();
+  double EstimateBCHError( );
+
+  double GetPerturbativeTriples();
 
 
   // This is used to get flow info from odeint

@@ -29,10 +29,14 @@
 #include <iostream>
 #include "ModelSpace.hh"
 #include "Operator.hh"
+#include "ThreeBodyME.hh"
+//#include "DaggerOperator.hh"
+#include "Jacobi3BME.hh"
 
 
 class ReadWrite
 {
+
  public:
    ~ReadWrite();
    ReadWrite();
@@ -52,6 +56,9 @@ class ReadWrite
    void Read3bodyHDF5( std::string filename, Operator& op);
    void Read3bodyHDF5_new( std::string filename, Operator& op);
 #endif
+   size_t Jacobi2b_Channel_Hash(int S, int T, int Tz, int J);
+   void Jacobi2b_Channel_UnHash(size_t key, int& S, int& T, int& Tz, int& J);
+   void ReadDarmstadt_2bodyRel( std::string filename, Operator& Op );
    void Read2bCurrent_Navratil( std::string filename, Operator& Op);
    void Write_me2j( std::string filename, Operator& op, int emax, int e2max, int lmax);
    void Write_me3j( std::string filename, Operator& op, int E1max, int E2max, int E3max);
@@ -74,6 +81,8 @@ class ReadWrite
    void WriteTensorTwoBody(std::string filename, Operator& H, std::string opname);
    void WriteDaggerOperator( Operator& op, std::string filename, std::string opname="");
 
+//   void WriteValence3body( ThreeBodyMEpn& threeBME, std::string filename );
+   void WriteValence3body( ThreeBodyME& threeBME, std::string filename );
 
    void ReadBareTBME_Jason( std::string filename, Operator& Hbare);
    void ReadTensorOperator_Nathan( std::string filename1b, std::string filename2b, Operator& op);
@@ -92,7 +101,7 @@ class ReadWrite
    std::array<double,5> GetLECs(){return LECs;};
    void SetLECs_preset(std::string);
    void SetCoMCorr(bool b){doCoM_corr = b;std::cout <<"Setting com_corr to "<< b << std::endl;};
-   void SetScratchDir( std::string d){scratch_dir = d;};
+   void SetScratchDir( std::string d){scratch_dir = d; std::cout << "Setting scratch dir to " << d << std::endl;};
    std::string GetScratchDir(){return scratch_dir;};
    int GetAref(){return Aref;};
    int GetZref(){return Zref;};
@@ -100,17 +109,26 @@ class ReadWrite
    void SetZref(int z){Zref = z;};
    void Set3NFormat( std::string fmt ){format3N=fmt;};
 
+   void ReadJacobi3NFiles( Jacobi3BME& jacobi3bme, std::string poi_name, std::string eig_name, std::string v3int_name );
+
    // added by T.Miyagi
    void ReadTokyo(std::string, Operator&, std::string);
    void ReadTokyo(std::string, Operator&);
    void WriteTokyo(Operator&, std::string, std::string);
    void WriteTokyoFull(Operator&, std::string); // only for Hamiltonian
    void WriteTensorTokyo(std::string, Operator&);
+   Operator ReadOperator2b_Miyagi(std::string, ModelSpace&); // general operator me2j-like format
    void skip_comments(std::ifstream&);
+
+
+
+   // added by A.Belley
+//   void WriteOmega(std::string filename, std::string scratch, int size);
+   void CopyFile(std::string file1, std::string file2);
 
    // Fields
 
-   std::map<std::string,std::string> InputParameters;
+//   std::map<std::string,std::string> InputParameters; // I believe this is very very deprecated
 
    bool InGoodState(){return goodstate;};
    bool doCoM_corr;
@@ -130,21 +148,28 @@ class ReadWrite
 
 /// Wrapper class so we can treat a std::vector of floats like a stream, using the extraction operator >>.
 /// This is used for the binary version of ReadWrite::Read_Darmstadt_3body_from_stream().
+//template <typename T>
 class VectorStream
 {
  public:
+//  VectorStream(std::vector<T>& v) : vec(v), i(0) {};
   VectorStream(std::vector<float>& v) : vec(v), i(0) {};
 //  VectorStream(std::vector<double>& v) : vec(v), i(0) {};
+//  VectorStream& operator>>(T& x) { x = vec[i++]; return (VectorStream&)(*this);}
   VectorStream& operator>>(float& x) { x = vec[i++]; return (VectorStream&)(*this);}
 //  VectorStream& operator>>(double& x) { x = vec[i++]; return (VectorStream&)(*this);}
   bool good(){ return i<vec.size(); };
   void getline(char[], int) {}; // Don't do nuthin'.
   void read(char* buf, size_t len) {memcpy((void*)buf, (const void*)&vec[i], len);}; // Totally untested...
  private:
+//  std::vector<T>& vec;
   std::vector<float>& vec;
 //  std::vector<double>& vec;
   long long unsigned int i;
 };
+
+
+
 
 #endif
 

@@ -80,7 +80,7 @@ std::map<std::string,std::string> Parameters::string_par = {
   {"nucleon_mass_correction",	"false"},	// include effect of proton-neutron mass splitting
   {"hunter_gatherer",	        "false"},	// use hunter-gatherer approach to splitting omega
   {"relativistic_correction",   "false"},       // include the p^4 relativistic correction to the kinetic energy
-  {"IMSRG3",                    "false"},       // include 3-body terms in commutators. 
+  {"IMSRG3",                    "false"},       // include 3-body terms in commutators.
   {"imsrg3_n7",                 "false"},       // include only n^7 scaling 3-body terms in commutators. Only does something if IMSRG3=true.
   {"physical_system",           "nuclear"},     // treat nucleus or atom. For atom, switch units from MeV,fm to eV,nm.
   {"freeze_occupations",        "false"},       // Should we freeze the occupations, or fill according to HF energy
@@ -88,9 +88,9 @@ std::map<std::string,std::string> Parameters::string_par = {
   {"use_NAT_occupations",       "false"},       // When using natural orbitals, should we use the corresponding occupations?
   {"store_3bme_pn",             "false"},       // should the 3-body matrix elements be stored in proton-neutron formalism? Default is isospin.
   {"discard_residual_input3N",  "false"},       // If we're doing IMSRG3, should we discard the residual input 3N (only keep induced)?
-  {"only_2b_eta",               "false"},       // If we're doing IMSRG3, keep eta as 2b 
-  {"only_2b_omega",             "false"},       // If we're doing IMSRG3, keep omega (the magnus operator) as 2b 
-  {"perturbative_triples",      "false"},       // Compute perturbative energy shift due to [2,2]->3 induced 3-body 
+  {"only_2b_eta",               "false"},       // If we're doing IMSRG3, keep eta as 2b
+  {"only_2b_omega",             "false"},       // If we're doing IMSRG3, keep omega (the magnus operator) as 2b
+  {"perturbative_triples",      "false"},       // Compute perturbative energy shift due to [2,2]->3 induced 3-body
 };
 
 
@@ -116,6 +116,9 @@ std::map<std::string,int> Parameters::int_par = {
   {"A",	-1},	// Aeff for kinetic energy. -1 means take A of reference
   {"e3max",		12},
   {"emax",		6},
+  {"emax_imsrg",		-1}, // emax cut for imsrg calc
+  {"e2max_imsrg",		-1}, // e2max cut for imsrg calc
+  {"e3max_imsrg",		-1}, // e3max cut for imsrg calc (IMSRG3)
   {"lmax",              99999}, // lmax for the whole calculation
   {"lmax3",		-1}, // lmax for the 3body interaction
   {"nsteps",		-1},	// do the decoupling in 1 step or core-then-valence. -1 means default

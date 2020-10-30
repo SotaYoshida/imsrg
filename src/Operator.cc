@@ -691,7 +691,14 @@ Operator Operator::DoNormalOrderingDagger( int sign , std::set<index_t> occupied
 Operator Operator::Truncate(ModelSpace& ms_new)
 {
   Operator OpNew(ms_new, rank_J, rank_T, parity, particle_rank);
-
+  std::cout << "Operator trunction: ("
+    << std::setw(4) << modelspace->GetEmax()
+    << std::setw(4) << modelspace->GetE2max()
+    << std::setw(4) << modelspace->GetE3max()
+    << ") to ("
+    << std::setw(4) << ms_new.GetEmax()
+    << std::setw(4) << ms_new.GetE2max()
+    << std::setw(4) << ms_new.GetE3max() << ")" << std::endl;
   int new_emax = ms_new.GetEmax();
   if ( new_emax > modelspace->GetEmax() )
   {
@@ -705,23 +712,60 @@ Operator Operator::Truncate(ModelSpace& ms_new)
   OpNew.ZeroBody = ZeroBody;
   OpNew.hermitian = hermitian;
   OpNew.antihermitian = antihermitian;
+  // check
+  //std::cout << "Old New" << std::endl;
+  //std::cout << std::setw(12) << std::setprecision(6) << ZeroBody
+  //  << std::setw(12) << std::setprecision(6) << OpNew.ZeroBody << std::endl;
   int norb = ms_new.GetNumberOrbits();
   OpNew.OneBody = OneBody.submat(0,0,norb-1,norb-1);
+  // check
+  //for (auto& i : ms_new.all_orbits){
+  //  for (auto& j : ms_new.all_orbits){
+  //    Orbit & oi = ms_new.GetOrbit(i);
+  //    Orbit & oj = ms_new.GetOrbit(j);
+  //    int i_old = modelspace->GetOrbitIndex(oi.n, oi.l, oi.j2, oi.tz2);
+  //    int j_old = modelspace->GetOrbitIndex(oj.n, oj.l, oj.j2, oj.tz2);
+  //    std::cout << std::setw(12) << std::setprecision(6) << OneBody(i_old,j_old)
+  //      << std::setw(12) << std::setprecision(6) << OpNew.OneBody(i,j) << std::endl;
+  //  }
+  //}
   for (auto& itmat : OpNew.TwoBody.MatEl )
   {
-    int ch = itmat.first[0];
-    TwoBodyChannel& tbc_new = ms_new.GetTwoBodyChannel(ch);
-    int chold = modelspace->GetTwoBodyChannelIndex(tbc_new.J,tbc_new.parity,tbc_new.Tz);
-    TwoBodyChannel& tbc = modelspace->GetTwoBodyChannel(chold);
+    int chbra = itmat.first[0];
+    int chket = itmat.first[1];
+    TwoBodyChannel& tbc_bra_new = ms_new.GetTwoBodyChannel(chbra);
+    TwoBodyChannel& tbc_ket_new = ms_new.GetTwoBodyChannel(chket);
+    int chbraold = modelspace->GetTwoBodyChannelIndex(tbc_bra_new.J,tbc_bra_new.parity,tbc_bra_new.Tz);
+    int chketold = modelspace->GetTwoBodyChannelIndex(tbc_ket_new.J,tbc_ket_new.parity,tbc_ket_new.Tz);
+    TwoBodyChannel& tbc_bra = modelspace->GetTwoBodyChannel(chbraold);
+    TwoBodyChannel& tbc_ket = modelspace->GetTwoBodyChannel(chketold);
     auto& Mat_new = itmat.second;
-    auto& Mat = TwoBody.GetMatrix(chold,chold);
-    int nkets = tbc_new.GetNumberKets();
-    arma::uvec ibra_old(nkets);
-    for (int ibra=0;ibra<nkets;++ibra)
-    {
-      ibra_old(ibra) = tbc.GetLocalIndex(tbc_new.GetKetIndex(ibra));
+    auto& Mat = TwoBody.GetMatrix(chbraold,chketold);
+    int nkets_bra = tbc_bra_new.GetNumberKets();
+    int nkets_ket = tbc_ket_new.GetNumberKets();
+    arma::uvec ibra_old(nkets_bra);
+    arma::uvec iket_old(nkets_ket);
+    for (int ibra=0;ibra<nkets_bra;++ibra) {
+      Ket & bra=tbc_bra_new.GetKet(ibra);
+      ibra_old(ibra) = tbc_bra.GetLocalIndex(bra.op->index, bra.oq->index);
     }
-    Mat_new = Mat.submat(ibra_old,ibra_old);
+    for (int iket=0;iket<nkets_ket;++iket){
+      Ket & ket=tbc_ket_new.GetKet(iket);
+      iket_old(iket) = tbc_ket.GetLocalIndex(ket.op->index, ket.oq->index);
+    }
+    Mat_new = Mat.submat(ibra_old,iket_old);
+    // check
+    //for (int ibra=0;ibra<nkets_bra;++ibra){
+    //  for (int iket=0;iket<nkets_ket;++iket){
+    //    Ket & bra=tbc_bra_new.GetKet(ibra);
+    //    Ket & ket=tbc_ket_new.GetKet(iket);
+    //    size_t ibra_old = tbc_bra.GetLocalIndex(bra.op->index, bra.oq->index);
+    //    size_t iket_old = tbc_ket.GetLocalIndex(ket.op->index, ket.oq->index);
+    //    std::cout << std::setw(12) << std::setprecision(6) << Mat[ibra_old,iket_old]
+    //      << std::setw(12) << std::setprecision(6) << Mat_new[ibra,iket] << std::endl;
+
+    //  }
+    //}
   }
   return OpNew;
 }
@@ -951,12 +995,14 @@ double Operator::GetMP2_Energy()
          if (j<i) continue;
          double ej = OneBody(j,j);
          Orbit& oj = modelspace->GetOrbit(j);
+         if(2*(oi.n+oj.n)+oi.l+oj.l > modelspace->GetE2max()) continue;
          for ( auto& b: modelspace->holes)
          {
            if (b<a) continue;
            Orbit& ob = modelspace->GetOrbit(b);
            if ( (oi.l+oj.l+oa.l+ob.l)%2 >0) continue;
            if ( (oi.tz2 + oj.tz2) != (oa.tz2 +ob.tz2) ) continue;
+           if(2*(oa.n+ob.n)+oa.l+ob.l > modelspace->GetE2max()) continue;
            double eb = OneBody(b,b);
            double denom = ea+eb-ei-ej;
            int Jmin = std::max(std::abs(oi.j2-oj.j2),std::abs(oa.j2-ob.j2))/2;
@@ -1079,7 +1125,7 @@ std::array<double,3> Operator::GetMP3_Energy()
    index_t nparticles = modelspace->particles.size();
    modelspace->PreCalculateSixJ();
 
-   
+
 
    int nch_CC = modelspace->GetNumberTwoBodyChannels_CC();
 
@@ -1099,8 +1145,10 @@ std::array<double,3> Operator::GetMP3_Energy()
        Ket& ket_ai = tbc_CC.GetKet(iket_ai);
        index_t a = ket_ai.p;
        index_t i = ket_ai.q;
-       double ja = 0.5*modelspace->GetOrbit(a).j2;
-       double ji = 0.5*modelspace->GetOrbit(i).j2;
+       Orbit & oa = modelspace->GetOrbit(a);
+       Orbit & oi = modelspace->GetOrbit(i);
+       double ja = 0.5*oa.j2;
+       double ji = 0.5*oi.j2;
 
        int phase_ai = 1;
        int phase_ia = - AngMom::phase( ja+ji - Jph );
@@ -1117,9 +1165,11 @@ std::array<double,3> Operator::GetMP3_Energy()
          Ket& ket_bj = tbc_CC.GetKet(iket_bj);
          index_t b = ket_bj.p;
          index_t j = ket_bj.q;
+         Orbit & ob = modelspace->GetOrbit(b);
+         Orbit & oj = modelspace->GetOrbit(j);
 
-         double jb = 0.5*modelspace->GetOrbit(b).j2;
-         double jj = 0.5*modelspace->GetOrbit(j).j2;
+         double jb = 0.5*ob.j2;
+         double jj = 0.5*oj.j2;
 
          int phase_bj = 1;
          int phase_jb = - AngMom::phase( jb+jj - Jph );
@@ -1129,7 +1179,6 @@ std::array<double,3> Operator::GetMP3_Energy()
            std::swap(jb,jj);
            std::swap(phase_bj,phase_jb);
          }
-
          double Delta_ijab = OneBody(i,i) + OneBody(j,j) - OneBody(a,a) - OneBody(b,b);
          int J1min = std::max(std::abs(ja-jb),std::abs(ji-jj));
          int J1max = std::min(ja+jb,ji+jj);
@@ -1137,6 +1186,10 @@ std::array<double,3> Operator::GetMP3_Energy()
          double tbme_bjck = 0;
          double tbme_ckia = 0;
 
+         if(2*(oi.n+oj.n)+oi.l+oj.l > modelspace->GetE2max()) continue;
+         if(2*(oa.n+ob.n)+oa.l+ob.l > modelspace->GetE2max()) continue;
+         if(2*(oi.n+ob.n)+oi.l+ob.l > modelspace->GetE2max()) continue;
+         if(2*(oa.n+oj.n)+oa.l+oj.l > modelspace->GetE2max()) continue;
          if ( AngMom::Triangle(jj,jb,Jph) and AngMom::Triangle(ji,ja,Jph))
          {
           for (int J1=J1min;J1<=J1max;++J1)  //Pandya 1: <ai`| V |jb`>_Jtot

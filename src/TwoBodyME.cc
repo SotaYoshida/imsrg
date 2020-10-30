@@ -119,9 +119,11 @@ double TwoBodyME::GetTBME(int ch_bra, int ch_ket, int a, int b, int c, int d) co
    return norm * GetTBME_norm(ch_bra,ch_ket,a,b,c,d);
 }
 
-/// This returns the normalized matrix element 
+/// This returns the normalized matrix element
 double TwoBodyME::GetTBME_norm(int ch_bra, int ch_ket, int a, int b, int c, int d) const
 {
+   if(not modelspace->CheckE2max(a,b)) return 0;
+   if(not modelspace->CheckE2max(c,d)) return 0;
    TwoBodyChannel& tbc_bra =  modelspace->GetTwoBodyChannel(ch_bra);
    TwoBodyChannel& tbc_ket =  modelspace->GetTwoBodyChannel(ch_ket);
    auto bra_ind = tbc_bra.GetLocalIndex(std::min(a,b),std::max(a,b));
@@ -143,6 +145,8 @@ double TwoBodyME::GetTBME_norm(int ch_bra, int ch_ket, int a, int b, int c, int 
 
 void TwoBodyME::SetTBME(int ch_bra, int ch_ket, int a, int b, int c, int d, double tbme)
 {
+   if(not modelspace->CheckE2max(a,b)) return;
+   if(not modelspace->CheckE2max(c,d)) return;
    TwoBodyChannel& tbc_bra =  modelspace->GetTwoBodyChannel(ch_bra);
    TwoBodyChannel& tbc_ket =  modelspace->GetTwoBodyChannel(ch_ket);
    int bra_ind = tbc_bra.GetLocalIndex(std::min(a,b),std::max(a,b));
@@ -159,6 +163,8 @@ void TwoBodyME::SetTBME(int ch_bra, int ch_ket, int a, int b, int c, int d, doub
 
 void TwoBodyME::AddToTBME(int ch_bra, int ch_ket, int a, int b, int c, int d, double tbme)
 {
+   if(not modelspace->CheckE2max(a,b)) return;
+   if(not modelspace->CheckE2max(c,d)) return;
    TwoBodyChannel& tbc_bra =  modelspace->GetTwoBodyChannel(ch_bra);
    TwoBodyChannel& tbc_ket =  modelspace->GetTwoBodyChannel(ch_ket);
 //   cout << "Tzbra = " << tbc_bra.Tz << "   Tzket = " << tbc_ket.Tz << "  rank_T = " << rank_T << endl;
@@ -200,11 +206,24 @@ void TwoBodyME::AddToTBME(int ch_bra, int ch_ket, Ket& bra, Ket& ket, double tbm
 
 double TwoBodyME::GetTBME_norm(int ch_bra, int ch_ket, int ibra, int iket) const
 {
+
+   TwoBodyChannel& tbc_bra = modelspace->GetTwoBodyChannel(ch_bra);
+   TwoBodyChannel& tbc_ket = modelspace->GetTwoBodyChannel(ch_ket);
+   Ket& bra = tbc_bra.GetKet(ibra);
+   Ket& ket = tbc_ket.GetKet(iket);
+   if(not modelspace->CheckE2max(bra.op->index,bra.oq->index)) return 0;
+   if(not modelspace->CheckE2max(ket.op->index,ket.oq->index)) return 0;
    return GetMatrix(ch_bra,ch_ket)(ibra,iket);
 }
 
 void TwoBodyME::SetTBME(int ch_bra, int ch_ket, int ibra, int iket, double tbme)
 {
+   TwoBodyChannel& tbc_bra = modelspace->GetTwoBodyChannel(ch_bra);
+   TwoBodyChannel& tbc_ket = modelspace->GetTwoBodyChannel(ch_ket);
+   Ket& bra = tbc_bra.GetKet(ibra);
+   Ket& ket = tbc_ket.GetKet(iket);
+   if(not modelspace->CheckE2max(bra.op->index,bra.oq->index)) return;
+   if(not modelspace->CheckE2max(ket.op->index,ket.oq->index)) return;
    GetMatrix(ch_bra,ch_ket)(ibra,iket) = tbme;
    if (IsHermitian())
       GetMatrix(ch_bra,ch_ket)(iket,ibra) = tbme;
@@ -213,6 +232,12 @@ void TwoBodyME::SetTBME(int ch_bra, int ch_ket, int ibra, int iket, double tbme)
 }
 void TwoBodyME::AddToTBME(int ch_bra, int ch_ket, int ibra, int iket, double tbme)
 {
+   TwoBodyChannel& tbc_bra = modelspace->GetTwoBodyChannel(ch_bra);
+   TwoBodyChannel& tbc_ket = modelspace->GetTwoBodyChannel(ch_ket);
+   Ket& bra = tbc_bra.GetKet(ibra);
+   Ket& ket = tbc_ket.GetKet(iket);
+   if(not modelspace->CheckE2max(bra.op->index,bra.oq->index)) return;
+   if(not modelspace->CheckE2max(ket.op->index,ket.oq->index)) return;
    if (ch_bra>ch_ket)
    {
      std::swap(ch_bra,ch_ket);
@@ -512,7 +537,7 @@ double TwoBodyME::GetTBMEmonopole(int a, int b, int c, int d) const
 
    int jmin = std::abs(oa.j2 - ob.j2)/2;
    int jmax = (oa.j2 + ob.j2)/2;
-   
+
    for (int J=jmin;J<=jmax;++J)
    {
 
@@ -538,7 +563,7 @@ double TwoBodyME::GetTBMEmonopole_norm(int a, int b, int c, int d) const
 
    int jmin = std::abs(oa.j2 - ob.j2)/2;
    int jmax = (oa.j2 + ob.j2)/2;
-   
+
    for (int J=jmin;J<=jmax;++J)
    {
 

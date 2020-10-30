@@ -124,7 +124,7 @@ Operator UnitTest::RandomOp( ModelSpace& modelspace, int jrank, int tz, int pari
 //                   or ( a==b and a==c and twoT==3 and oa.j2<3 )
 //                   or ( d==e and d==f and twoT==3 and od.j2<3 ))
 //                 {
-//                    Rando.ThreeBody.MatEl[location] = 0.0; // zero by symmetry 
+//                    Rando.ThreeBody.MatEl[location] = 0.0; // zero by symmetry
 ////                    if (a==4 and b==4 and c==0 and d==4 and e==4 and f==0)
 ////                    {
 ////                       std::cout << "SKIPPING Jab,Jde,J2, tab,tde,twoT  " << Jab << " " << Jde << " " << J2 << "   " << tab << " " << tde << " " << twoT
@@ -147,7 +147,7 @@ Operator UnitTest::RandomOp( ModelSpace& modelspace, int jrank, int tz, int pari
 //                            Rando.ThreeBody.MatEl[location] = hermitian * me_flip;
 ////                       std::cout << "  after ... element 874 is " << Rando.ThreeBody.MatEl[874] << std::endl;
 //                         }
-//                         
+//
 //                       }
 ////                    if (a==4 and b==4 and c==0 and d==4 and e==4 and f==0)
 ////                    {
@@ -164,7 +164,7 @@ Operator UnitTest::RandomOp( ModelSpace& modelspace, int jrank, int tz, int pari
 //
 //       } //Jde
 //      } //Jab
-//      
+//
 //    }
 //
 //
@@ -180,7 +180,7 @@ Operator UnitTest::RandomOp( ModelSpace& modelspace, int jrank, int tz, int pari
   if (particle_rank > 1) std::cout << "   norm of 2b " << Rando.TwoBodyNorm();
   if (particle_rank > 2) std::cout << "   norm of 3b " << Rando.ThreeBodyNorm();
   std::cout << std::endl;
-  
+
   return Rando;
 }
 
@@ -225,7 +225,7 @@ Operator UnitTest::RandomDaggerOp(ModelSpace& modelspace, index_t Q)
          // check whether |kQ> lives in this channel
          if ( (ok.tz2+oQ.tz2 != 2*tbc.Tz) or ((ok.l+oQ.l)%2 != tbc.parity) or ( (ok.j2+oQ.j2)<2*tbc.J ) or ( std::abs(ok.j2-oQ.j2)>2*tbc.J) ) continue;
 //         if ( not tbc.CheckChannel_ket( &ok, &oQ) ) continue;
-         
+
          double random_me = distribution(generator);
 //         dag.TwoBody.SetTBME(ch,ch,bra.p,bra.q,k,Q, random_me);
          dag.ThreeLeg.SetME(ch,bra.p,bra.q,k, random_me);
@@ -272,7 +272,7 @@ Operator UnitTest::RandomDaggerOp(ModelSpace& modelspace, index_t Q)
          Orbit& ok = modelspace.GetOrbit(k);
          // check whether |kQ> lives in this channel
          if ( not tbc.CheckChannel_ket( &ok, &oQ) ) continue;
-         
+
          double random_me = distribution(generator);
          dag.TwoBody.SetTBME(ch,ch,bra.p,bra.q,k,Q, random_me);
        }
@@ -484,13 +484,13 @@ void UnitTest::TestCommutators3(Operator& X, Operator& Y)
   all_good &= Test_comm223ss( X, Y );
 //  all_good &= Test_comm133ss( X, Y );
 //
-//  all_good &= Test_comm332_ppph_hhhpss( X, Y ); 
-//  all_good &= Test_comm332_pphhss( X, Y );  
+//  all_good &= Test_comm332_ppph_hhhpss( X, Y );
+//  all_good &= Test_comm332_pphhss( X, Y );
 
-//  all_good &= Test_comm233_pp_hhss( X, Y );   
-//  all_good &= Test_comm233_ph_ss( X, Y );  
-//  all_good &= Test_comm333_ppp_hhh_ss( X, Y );  
-//  all_good &= Test_comm333_pph_hhp_ss( X, Y );  
+//  all_good &= Test_comm233_pp_hhss( X, Y );
+//  all_good &= Test_comm233_ph_ss( X, Y );
+//  all_good &= Test_comm333_ppp_hhh_ss( X, Y );
+//  all_good &= Test_comm333_pph_hhp_ss( X, Y );
 
 
 
@@ -517,7 +517,7 @@ void UnitTest::TestDaggerCommutators(index_t Q)
   Operator Y = RandomDaggerOp(*modelspace, Q);
 
   Orbit& oQ = Y.modelspace->GetOrbit(Q);
-  
+
   Y *= 0;
   std::vector<Operator> Yn;
   std::vector<Operator> Zn;
@@ -529,7 +529,7 @@ void UnitTest::TestDaggerCommutators(index_t Q)
     Zn.push_back(  Commutator::Commutator( X, Yn.back() ) );
     Zn.back() = Commutator::Commutator( X, Zn.back() );
   }
-  
+
   Operator Z = Commutator::Commutator( X, Y);
   Z = Commutator::Commutator( X, Z);
 
@@ -612,7 +612,7 @@ void UnitTest::TestDaggerCommutatorsAlln(index_t Q)
   for (auto z : Zn) std::cout << z.Norm() << " ";
   std::cout << std::endl << "Norm of Zdiff = " << Znorm << std::endl;
 
-  
+
 
   bool all_good = true;
 
@@ -756,18 +756,18 @@ double UnitTest::GetMschemeMatrixElement_3b( const Operator& Op, int a, int ma, 
         matel += clebsch_ab * clebsch_abc * clebsch_de * clebsch_def * meJ;
 //        std::cout << " line " << __LINE__ << "   J1,J2,J = " << Jab << " " << Jde << " " << twoJ << "  cgs: " << clebsch_ab << " " << clebsch_abc << " " << clebsch_de << " " << clebsch_def << "   =  " << clebsch_ab * clebsch_abc * clebsch_de * clebsch_def << " * " << meJ << std::endl;
 
-//        if ((a==0 and b==0 and c==3 and d==2 and e==5 and f==2) or (d==0 and e==0 and f==3 and a==2 and b==5 and c==2)) 
-//        if ((a==0 and b==0 and c==3 and d==2 and e==2 and f==5 and Jde==1) ) 
-//        if ((a==0 and b==0 and c==3 and d==2 and e==2 and f==5 ) or  (a==0 and b==3 and c==0 and d==2 and e==2 and f==5 ) or (a==3 and b==0 and c==0 and d==2 and e==2 and f==5 )) 
-//        if ((a==0 and b==0 and c==5 and d==0 and e==0 and f==5 ) or  (a==0 and b==5 and c==0 and d==0 and e==0 and f==5 ) or (a==5 and b==0 and c==0 and d==0 and e==0 and f==5 )) 
-//        if ((a==0 and b==0 and c==10 and d==0 and e==10 and f==0 ) ) 
-//        if ((a==2 and b==0 and c==0 and d==2 and e==0 and f==0 ) ) 
+//        if ((a==0 and b==0 and c==3 and d==2 and e==5 and f==2) or (d==0 and e==0 and f==3 and a==2 and b==5 and c==2))
+//        if ((a==0 and b==0 and c==3 and d==2 and e==2 and f==5 and Jde==1) )
+//        if ((a==0 and b==0 and c==3 and d==2 and e==2 and f==5 ) or  (a==0 and b==3 and c==0 and d==2 and e==2 and f==5 ) or (a==3 and b==0 and c==0 and d==2 and e==2 and f==5 ))
+//        if ((a==0 and b==0 and c==5 and d==0 and e==0 and f==5 ) or  (a==0 and b==5 and c==0 and d==0 and e==0 and f==5 ) or (a==5 and b==0 and c==0 and d==0 and e==0 and f==5 ))
+//        if ((a==0 and b==0 and c==10 and d==0 and e==10 and f==0 ) )
+//        if ((a==2 and b==0 and c==0 and d==2 and e==0 and f==0 ) )
 //        {
 //        std::cout << "$abc: " << a << " " << b << " " << c << " def: " << d << " " << e << " " << f << std::endl;
 //        std::cout << "$m vals: " << ma << " " << mb << " " << mc << "  " << md << " " << me << " " << mf << std::endl;
 //        std::cout << "        Jab Jde twoJ " << Jab << " " << Jde << " " << twoJ
 //                  << " clebsch: " << clebsch_ab << " " << clebsch_de << " " << clebsch_abc << " " << clebsch_def
-//                  << "   matel_J " << meJ 
+//                  << "   matel_J " << meJ
 //                  << "  matel = " << matel << std::endl;
 //        }
 //        if (a==0 and b==0 and c==3 and d==2 and e==5 and f==2) std::cout << "    003252: Jab,Jde,J " << Jab << " " << Jde << " " << twoJ << "   -> " << Op.ThreeBody.GetME_pn(Jab, Jde, twoJ, a,b,c,d,e,f) << " -> " << matel << std::endl;
@@ -790,7 +790,7 @@ double UnitTest::GetMschemeMatrixElement_3b( const Operator& Op, int a, int ma, 
 // This may or may not be the most straightforward way to do things.
 double UnitTest::GetMschemeMatrixElement_1leg( const Operator& Op, int a, int ma )
 {
-  
+
   return Op.OneBody(a,0) ;
 //  return GetMschemeMatrixElement_1b( Op, a, ma, Op.GetQSpaceOrbit(), ma) ;
 }
@@ -855,7 +855,7 @@ double UnitTest::GetMschemeMatrixElement_3leg( const Operator& Op, int a, int ma
 ///
 bool UnitTest::Test_comm110ss( const Operator& X, const Operator& Y )
 {
-   
+
   Operator Z_J( Y );
   Z_J.Erase();
 
@@ -899,7 +899,7 @@ bool UnitTest::Test_comm110ss( const Operator& X, const Operator& Y )
 ///
 /// Z0 = 1/4 sum_abcd nanb (1-nc)(1-nd) ( Xabcd * Ycdab - Yabcd * Xcdab )
 ///
-bool UnitTest::Test_comm220ss( const Operator& X, const Operator& Y) 
+bool UnitTest::Test_comm220ss( const Operator& X, const Operator& Y)
 {
   Operator Z_J( Y );
   Z_J.Erase();
@@ -1013,12 +1013,12 @@ bool UnitTest::Test_comm111ss( const Operator& X, const Operator& Y )
         if (std::abs(err)>1e-6)
         {
           std::cout << "Trouble in " << __func__ << "  i,j = " << i << " " << j << "   Zm_ij = " << Zm_ij
-                    << "   ZJ_ij = " << Z_J.OneBody(i,j) << "   err = " << err << std::endl; 
+                    << "   ZJ_ij = " << Z_J.OneBody(i,j) << "   err = " << err << std::endl;
         }
         summed_error += err*err;
         sum_m += Zm_ij*Zm_ij;
         sum_J += ZJ_ij*ZJ_ij;
-      } 
+      }
     }
   }
 
@@ -1090,18 +1090,18 @@ bool UnitTest::Test_comm121ss( const Operator& X, const Operator& Y)
 
                Zm_ij += na * (1-nb) * ( Xab * Ybiaj - Yaibj * Xba
                                       - Yab * Xbiaj + Xaibj * Yba );
-              
+
              }// for mb
             }// for ma
-          }// for b 
+          }// for b
         }// for a
-      } //if ji=jj etc. 
+      } //if ji=jj etc.
     double ZJ_ij = Z_J.OneBody(i,j);
     double err = Zm_ij - ZJ_ij;
     if (std::abs(err)>1e-6)
     {
       std::cout << "Trouble in " << __func__ << "  i,j = " << i << " " << j << "   Zm_ij = " << Zm_ij
-                << "   ZJ_ij = " << ZJ_ij << "   err = " << err << std::endl; 
+                << "   ZJ_ij = " << ZJ_ij << "   err = " << err << std::endl;
     }
     summed_error += err*err;
     sum_m += Zm_ij*Zm_ij;
@@ -1133,7 +1133,7 @@ bool UnitTest::Test_comm221ss( const Operator& X, const Operator& Y )
   Z_J.Erase();
 
 
-//  Commutator::comm222_pp_hh_221ss( X, Y, Z_J ) ; 
+//  Commutator::comm222_pp_hh_221ss( X, Y, Z_J ) ;
   Commutator::comm221ss( X, Y, Z_J);
 
   if ( Z_J.IsHermitian() )
@@ -1193,14 +1193,14 @@ bool UnitTest::Test_comm221ss( const Operator& X, const Operator& Y )
           }// for b
         }// for a
 
-      } //if ji=jj etc. 
+      } //if ji=jj etc.
 
       double ZJ_ij = Z_J.OneBody(i,j);
       double err = Zm_ij - ZJ_ij;
       if (std::abs(err)>1e-6)
       {
         std::cout << "Trouble in " << __func__ << "  i,j = " << i << " " << j << "   Zm_ij = " << Zm_ij
-                  << "   ZJ_ij = " << ZJ_ij << "   err = " << err << std::endl; 
+                  << "   ZJ_ij = " << ZJ_ij << "   err = " << err << std::endl;
       }
       summed_error += err*err;
       sum_m += Zm_ij*Zm_ij;
@@ -1297,7 +1297,7 @@ bool UnitTest::Test_comm122ss( const Operator& X, const Operator& Y )
 
                    Zm_ijkl +=  ( Xia*Yajkl + Xja*Yiakl - Yijal*Xak - Yijka*Xal)
                               -( Yia*Xajkl + Yja*Xiakl - Xijal*Yak - Xijka*Yal) ;
-                 
+
                 }// for ma
               }// for a
 
@@ -1306,7 +1306,7 @@ bool UnitTest::Test_comm122ss( const Operator& X, const Operator& Y )
               if (std::abs(err)>1e-6)
               {
                 std::cout << "Trouble in " << __func__ << "  i,j,k,l = " << i << " " << j << " " << k << " " << l
-                          << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl; 
+                          << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl;
               }
               summed_error += err*err;
               sum_m += Zm_ijkl*Zm_ijkl;
@@ -1399,7 +1399,7 @@ bool UnitTest::Test_comm222_pp_hhss( const Operator& X, const Operator& Y )
                 {
                    int mb = mi + mj - ma;
                    if (std::abs(mb)>ob.j2) continue;
-                
+
                   double Xijab = GetMschemeMatrixElement_2b( X, i,mi, j,mj, a,ma, b,mb );
                   double Xabkl = GetMschemeMatrixElement_2b( X, a,ma, b,mb, k,mk, l,ml );
                   double Yijab = GetMschemeMatrixElement_2b( Y, i,mi, j,mj, a,ma, b,mb );
@@ -1415,7 +1415,7 @@ bool UnitTest::Test_comm222_pp_hhss( const Operator& X, const Operator& Y )
              if (std::abs(err)>1e-6)
              {
                std::cout << "Trouble in " << __func__ << "  i,j,k,l = " << i << " " << j << " " << k << " " << l
-                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl; 
+                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl;
              }
              summed_error += err*err;
              sum_m += Zm_ijkl*Zm_ijkl;
@@ -1506,19 +1506,19 @@ bool UnitTest::Test_comm222_phss( const Operator& X, const Operator& Y )
 
                    double Xaibk = GetMschemeMatrixElement_2b( X, a,ma, i,mi, b,mb, k,mk );
                    double Ybjal = GetMschemeMatrixElement_2b( Y, b,mb, j,mj, a,ma, l,ml );
-    
+
                    // Pij
                    double Xajbk = GetMschemeMatrixElement_2b( X, a,ma, j,mj, b,mb, k,mk );
                    double Ybial = GetMschemeMatrixElement_2b( Y, b,mb, i,mi, a,ma, l,ml );
-    
+
                    // Pkl
                    double Xaibl = GetMschemeMatrixElement_2b( X, a,ma, i,mi, b,mb, l,ml );
                    double Ybjak = GetMschemeMatrixElement_2b( Y, b,mb, j,mj, a,ma, k,mk );
-    
+
                    // PijPkl
                    double Xajbl = GetMschemeMatrixElement_2b( X, a,ma, j,mj, b,mb, l,ml );
                    double Ybiak = GetMschemeMatrixElement_2b( Y, b,mb, i,mi, a,ma, k,mk );
-    
+
 //                   Zm_ijkl += ( na*(1-nb) - nb*(1-na) ) * ( Xaibk*Ybjal - Xajbk*Ybial - Xaibl*Ybjak + Xajbl*Ybiak );
                    Zm_ijkl += (na - nb) * ( Xaibk*Ybjal - Xajbk*Ybial - Xaibl*Ybjak + Xajbl*Ybiak );
 
@@ -1533,7 +1533,7 @@ bool UnitTest::Test_comm222_phss( const Operator& X, const Operator& Y )
              if (std::abs(err)>1e-6)
              {
                std::cout << "Trouble in " << __func__ << "  i,j,k,l = " << i << " " << j << " " << k << " " << l
-                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl; 
+                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl;
              }
              summed_error += err*err;
              sum_m += Zm_ijkl*Zm_ijkl;
@@ -1773,8 +1773,8 @@ bool UnitTest::Test_comm331ss( const Operator& X, const Operator& Y )
       double err = Zm_ij - ZJ_ij;
       if (std::abs(err)>1e-6)
       {
-        std::cout << "Trouble in " << __func__ << "  i,j = " << i << " " << j 
-                  << "   zij = " << Zm_ij << "   ZJ_ij = " << ZJ_ij << "   err = " << err << std::endl; 
+        std::cout << "Trouble in " << __func__ << "  i,j = " << i << " " << j
+                  << "   zij = " << Zm_ij << "   ZJ_ij = " << ZJ_ij << "   err = " << err << std::endl;
       }
       summed_error += err*err;
       sum_m += Zm_ij*Zm_ij;
@@ -1890,8 +1890,8 @@ bool UnitTest::Test_comm231ss( const Operator& X, const Operator& Y )
       double err = Zm_ij - ZJ_ij;
       if (std::abs(err)>1e-6)
       {
-        std::cout << "Trouble in " << __func__ << "  i,j = " << i << " " << j 
-                  << "   zij = " << Zm_ij << "   ZJ_ij = " << ZJ_ij << "   err = " << err << std::endl; 
+        std::cout << "Trouble in " << __func__ << "  i,j = " << i << " " << j
+                  << "   zij = " << Zm_ij << "   ZJ_ij = " << ZJ_ij << "   err = " << err << std::endl;
       }
       summed_error += err*err;
       sum_m += Zm_ij*Zm_ij;
@@ -1986,7 +1986,7 @@ bool UnitTest::Test_comm132ss( const Operator& X, const Operator& Y )
                 for (int ma=-oa.j2; ma<=oa.j2; ma+=2 )
                 {
                    int mb = ma;
-                
+
                   double xab = GetMschemeMatrixElement_1b( X, a,ma, b,mb );
                   double yab = GetMschemeMatrixElement_1b( Y, a,ma, b,mb );
                   double xijbkla = GetMschemeMatrixElement_3b( X, i,mi, j,mj, b,mb, k,mk, l,ml, a,ma );
@@ -2003,8 +2003,8 @@ bool UnitTest::Test_comm132ss( const Operator& X, const Operator& Y )
              if (std::abs(err)>1e-6)
              {
                std::cout << "Trouble in " << __func__ << "  i,j,k,l = " << i << " " << j << " " << k << " " << l
-                         << " {m} = " << mi << " " << mj << " " << mk << " " << ml 
-                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl; 
+                         << " {m} = " << mi << " " << mj << " " << mk << " " << ml
+                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl;
              }
              summed_error += err*err;
              sum_m += Zm_ijkl*Zm_ijkl;
@@ -2030,7 +2030,7 @@ bool UnitTest::Test_comm132ss( const Operator& X, const Operator& Y )
 
 /// M-Scheme Formula:
 //
-// Z_ijkl = -1/2 * sum_abc (n_a*n_b*nbar_c + nbar_a*nbar_b*n_c) * [  Xicab*Yabjklc - Xjcab*Yabiklc - Yijcabl*Xabkc + Yijcabk*Xablc 
+// Z_ijkl = -1/2 * sum_abc (n_a*n_b*nbar_c + nbar_a*nbar_b*n_c) * [  Xicab*Yabjklc - Xjcab*Yabiklc - Yijcabl*Xabkc + Yijcabk*Xablc
 //                                                                 - Yicab*Xabjklc + Yjcab*Xabiklc + Xijcabl*Yabkc - Xijcabk*Yablc ]
 //
 bool UnitTest::Test_comm232ss( const Operator& X, const Operator& Y )
@@ -2127,7 +2127,7 @@ bool UnitTest::Test_comm232ss( const Operator& X, const Operator& Y )
                     {
                       for (int mc=-oc.j2; mc<=oc.j2; mc+=2 )
                       {
-                  
+
                         double xicab = GetMschemeMatrixElement_2b( X, i,mi, c,mc, a,ma, b,mb );
                         double yicab = GetMschemeMatrixElement_2b( Y, i,mi, c,mc, a,ma, b,mb );
                         double xjcab = GetMschemeMatrixElement_2b( X, j,mj, c,mc, a,ma, b,mb );
@@ -2166,8 +2166,8 @@ bool UnitTest::Test_comm232ss( const Operator& X, const Operator& Y )
              if (std::abs(err)>1e-6)
              {
                std::cout << "Trouble in " << __func__ << "  i,j,k,l = " << i << " " << j << " " << k << " " << l
-                         << " {m} = " << mi << " " << mj << " " << mk << " " << ml 
-                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl; 
+                         << " {m} = " << mi << " " << mj << " " << mk << " " << ml
+                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl;
              }
              summed_error += err*err;
              sum_m += Zm_ijkl*Zm_ijkl;
@@ -2308,8 +2308,8 @@ bool UnitTest::Test_comm332_ppph_hhhpss( const Operator& X, const Operator& Y ) 
              if (std::abs(err)>1e-6)
              {
                std::cout << "Trouble in " << __func__ << "  i,j,k,l = " << i << " " << j << " " << k << " " << l
-                         << " {m} = " << mi << " " << mj << " " << mk << " " << ml 
-                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl; 
+                         << " {m} = " << mi << " " << mj << " " << mk << " " << ml
+                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl;
              }
              summed_error += err*err;
              sum_m += Zm_ijkl*Zm_ijkl;
@@ -2337,7 +2337,7 @@ bool UnitTest::Test_comm332_ppph_hhhpss( const Operator& X, const Operator& Y ) 
 //
 // Z_ijkl = 1/4 (1-Pij)(1-Pkl) sum_abcd (n_a*n_b*nbar_c*nbar_d) * (  Xabicdk*Ycdjabl - Yabicdk*Xcdjabl  )
 //
-// Z_ijkl = 1/4  sum_abcd (n_a*n_b*nbar_c*nbar_d) * (  Xabicdk*Ycdjabl - Yabicdk*Xcdjabl 
+// Z_ijkl = 1/4  sum_abcd (n_a*n_b*nbar_c*nbar_d) * (  Xabicdk*Ycdjabl - Yabicdk*Xcdjabl
 //                                                   - Xabjcdk*Ycdiabl + Yabjcdk*Xcdiabl
 //                                                   - Xabicdl*Ycdjabk + Yabicdl*Xcdjabk
 //                                                   + Xabjcdl*Ycdiabk - Yabjcdl*Xcdiabk )
@@ -2450,7 +2450,7 @@ bool UnitTest::Test_comm332_pphhss( const Operator& X, const Operator& Y ) // te
                         {
                           for (int md=-od.j2; md<=od.j2; md+=2 )
                           {
-                    // Z_ijkl = 1/4  sum_abcd (n_a*n_b*nbar_c*nbar_d) * (  Xabicdk*Ycdjabl - Yabicdk*Xcdjabl 
+                    // Z_ijkl = 1/4  sum_abcd (n_a*n_b*nbar_c*nbar_d) * (  Xabicdk*Ycdjabl - Yabicdk*Xcdjabl
 //                                                   - Xabjcdk*Ycdiabl + Yabjcdk*Xcdiabl
 //                                                   - Xabicdl*Ycdjabk + Yabicdl*Xcdjabk
 //                                                   + Xabjcdl*Ycdiabk - Yabjcdl*Xcdiabk )
@@ -2467,10 +2467,10 @@ bool UnitTest::Test_comm332_pphhss( const Operator& X, const Operator& Y ) // te
 
                           double occfactor = (1-na)*(1-nb)*nc*nd - na*nb*(1-nc)*(1-nd);
 
-//                          Zm_ijkl += 1./4 * occfactor * (xabicdl*ycdjabk 
-                          double dz = 1./4 * occfactor * (xabicdl*ycdjabk 
-                                                       -  xabjcdl*ycdiabk 
-                                                       -  xabicdk*ycdjabl 
+//                          Zm_ijkl += 1./4 * occfactor * (xabicdl*ycdjabk
+                          double dz = 1./4 * occfactor * (xabicdl*ycdjabk
+                                                       -  xabjcdl*ycdiabk
+                                                       -  xabicdk*ycdjabl
                                                        +  xabjcdk*ycdiabl   );
                           Zm_ijkl += dz;
 
@@ -2480,8 +2480,8 @@ bool UnitTest::Test_comm332_pphhss( const Operator& X, const Operator& Y ) // te
 //                          {
 //                          std::cout << "abcd " << a << " " << b << " " << c << " " << d << " {m} " << ma << " " << mb << " " << mc << " " << md
 //                                    << "    occfactor " << occfactor
-////                                    << "  xabjcdk " << xabjcdk << "  ycdiabk " << ycdiabk 
-//                                    << "  xabicdl " << xabicdl << "  ycdjabk " << ycdjabk 
+////                                    << "  xabjcdk " << xabjcdk << "  ycdiabk " << ycdiabk
+//                                    << "  xabicdl " << xabicdl << "  ycdjabk " << ycdjabk
 ////                                    << "  xabicdk " << xabicdk << "  xabicdl " << xabicdl << "  xabjcdk  " << xabjcdk << "  xabjcdl " << xabjcdl
 ////                                    << "  ycdiabk " << ycdiabk << "  ycdiabl " << ycdiabl << "  ycdjabk  " << ycdjabk << "  ycdjabl " << ycdjabl
 //                                    << "  dz = " << dz << "  => " << Zm_ijkl << std::endl;
@@ -2504,10 +2504,10 @@ bool UnitTest::Test_comm332_pphhss( const Operator& X, const Operator& Y ) // te
              if (std::abs(err)>1e-6)
              {
                std::cout << "Trouble in " << __func__ << "  i,j,k,l = " << i << " " << j << " " << k << " " << l
-                         << " {m} = " << mi << " " << mj << " " << mk << " " << ml 
-//                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl; 
+                         << " {m} = " << mi << " " << mj << " " << mk << " " << ml
+//                         << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << "   err = " << err << std::endl;
                          << "   Zm_ijkl = " << Zm_ijkl << "   ZJ_ijkl = " << ZJ_ijkl << " ZJ_old_ijkl " << ZJ_old_ijkl << "   err = " << err
-                         << "  J err = " << ZJ_ijkl - ZJ_old_ijkl << std::endl; 
+                         << "  J err = " << ZJ_ijkl - ZJ_old_ijkl << std::endl;
              }
              summed_error += err*err;
              sum_m += Zm_ijkl*Zm_ijkl;
@@ -2681,14 +2681,14 @@ bool UnitTest::Test_comm223ss( const Operator& X, const Operator& Y )
 
                        }// for m_a
                      }// for a
-                    
+
                     double ZJ_ijklmn = GetMschemeMatrixElement_3b( Z_J, i,m_i, j,m_j, k,m_k, l,m_l, m,m_m, n,m_n );
                     double err = z_ijklmn - ZJ_ijklmn;
                     if (std::abs(err)>1e-6 )
                     {
                       std::cout << "Trouble in " << __func__ << "  i,j,k,l,m,n = " << i << " " << j << " " << k << " " << l << " " << m << " " << n
                                 << " {m} = " << m_i << " " << m_j << " " << m_k << " " << m_l << " " << m_m << " " << m_n
-                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err << std::endl; 
+                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err << std::endl;
                     }
                     summed_error += err*err;
                     sum_m += z_ijklmn*z_ijklmn;
@@ -2699,7 +2699,7 @@ bool UnitTest::Test_comm223ss( const Operator& X, const Operator& Y )
                 } // for m_k
                } // for m_j
               } // for m_i
-              
+
             } // for n
           } // for m
         } // for l
@@ -2716,7 +2716,7 @@ bool UnitTest::Test_comm223ss( const Operator& X, const Operator& Y )
             << "    summed error = " << summed_error << "  => " << passfail << std::endl;
   return passed;
 
- 
+
 }
 
 
@@ -2842,7 +2842,7 @@ bool UnitTest::Test_comm133ss( const Operator& X, const Operator& Y )
                     {
                       std::cout << "Trouble in " << __func__ << "  i,j,k,l,m,n = " << i << " " << j << " " << k << " " << l << " " << m << " " << n
                                 << " {m} = " << m_i << " " << m_j << " " << m_k << " " << m_l << " " << m_m << " " << m_n
-                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err << std::endl; 
+                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err << std::endl;
                     }
                     summed_error += err*err;
                     sum_m += z_ijklmn*z_ijklmn;
@@ -2853,7 +2853,7 @@ bool UnitTest::Test_comm133ss( const Operator& X, const Operator& Y )
                 } // for m_k
                } // for m_j
               } // for m_i
-              
+
             } // for n
           } // for m
         } // for l
@@ -3037,7 +3037,7 @@ bool UnitTest::Test_comm233_pp_hhss( const Operator& X, const Operator& Y ) // t
                     {
                       std::cout << "Trouble in " << __func__ << "  i,j,k,l,m,n = " << i << " " << j << " " << k << " " << l << " " << m << " " << n
                                 << " {m} = " << m_i << " " << m_j << " " << m_k << " " << m_l << " " << m_m << " " << m_n
-                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err << std::endl; 
+                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err << std::endl;
                     }
                     summed_error += err*err;
                     sum_m += z_ijklmn*z_ijklmn;
@@ -3048,7 +3048,7 @@ bool UnitTest::Test_comm233_pp_hhss( const Operator& X, const Operator& Y ) // t
                 } // for m_k
                } // for m_j
               } // for m_i
-              
+
             } // for n
           } // for m
         } // for l
@@ -3079,7 +3079,7 @@ bool UnitTest::Test_comm233_pp_hhss( const Operator& X, const Operator& Y ) // t
 //       =  - sum_ab (na-nb) [ Xbial Yajkbmn - Ybial Xajkbmn  -  Xbjal Yaikbmn + Ybjal Xaikbmn  -  Xbkal Yajibmn + Ybkal Xajibmn
 //                           - Xbiam Yajkbln + Ybiam Xajkbln  +  Xbjam Yaikbln - Ybjam Xaikbln  +  Xbkam Yajibln - Ybkam Xajibln
 //                           - Xbian Yajkbml + Ybian Xajkbml  +  Xbjan Yaikbml - Ybjan Xaikbml  +  Xbkan Yajibml - Ybkan Xajibml  ]
-//                              
+//
 //
 bool UnitTest::Test_comm233_ph_ss( const Operator& X, const Operator& Y ) // test not yet implemented
 {
@@ -3212,7 +3212,7 @@ bool UnitTest::Test_comm233_ph_ss( const Operator& X, const Operator& Y ) // tes
                          double ybjan = GetMschemeMatrixElement_2b( Y, b,m_b, j,m_j, a,m_a, n,m_n  );
                          double ybkan = GetMschemeMatrixElement_2b( Y, b,m_b, k,m_k, a,m_a, n,m_n  );
 //////////////////----------------------------------------------------
-                    
+
                          double xijalmb = GetMschemeMatrixElement_3b( X, i,m_i, j,m_j, a,m_a, l,m_l, m,m_m, b,m_b );
                          double yijalmb = GetMschemeMatrixElement_3b( Y, i,m_i, j,m_j, a,m_a, l,m_l, m,m_m, b,m_b );
                          double xkjalmb = GetMschemeMatrixElement_3b( X, k,m_k, j,m_j, a,m_a, l,m_l, m,m_m, b,m_b );
@@ -3260,7 +3260,7 @@ bool UnitTest::Test_comm233_ph_ss( const Operator& X, const Operator& Y ) // tes
                     {
                       std::cout << "Trouble in " << __func__ << "  i,j,k,l,m,n = " << i << " " << j << " " << k << " " << l << " " << m << " " << n
                                 << " {m} = " << m_i << " " << m_j << " " << m_k << " " << m_l << " " << m_m << " " << m_n
-                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err << std::endl; 
+                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err << std::endl;
                     }
                     summed_error += err*err;
                     sum_m += z_ijklmn*z_ijklmn;
@@ -3271,7 +3271,7 @@ bool UnitTest::Test_comm233_ph_ss( const Operator& X, const Operator& Y ) // tes
                 } // for m_k
                } // for m_j
               } // for m_i
-              
+
             } // for n
           } // for m
         } // for l
@@ -3288,7 +3288,7 @@ bool UnitTest::Test_comm233_ph_ss( const Operator& X, const Operator& Y ) // tes
   return passed;
 
 
- 
+
 }
 
 
@@ -3296,7 +3296,7 @@ bool UnitTest::Test_comm233_ph_ss( const Operator& X, const Operator& Y ) // tes
 // M-Scheme Formula:
 //
 // Z_ijkl = 1/6 sum_abc [na*nb*nc + (1-na)*(1-nb)(1-nc) ] * [  Xijkabc*Yabclmn - Yijkabc*Xabclmn  ]
-//                              
+//
 //
 bool UnitTest::Test_comm333_ppp_hhh_ss( const Operator& X, const Operator& Y ) // test not yet implemented
 {
@@ -3412,7 +3412,7 @@ bool UnitTest::Test_comm333_ppp_hhh_ss( const Operator& X, const Operator& Y ) /
                     {
                       std::cout << "Trouble in " << __func__ << "  i,j,k,l,m,n = " << i << " " << j << " " << k << " " << l << " " << m << " " << n
                                 << " {m} = " << m_i << " " << m_j << " " << m_k << " " << m_l << " " << m_m << " " << m_n
-                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err << std::endl; 
+                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err << std::endl;
                     }
                     summed_error += err*err;
                     sum_m += z_ijklmn*z_ijklmn;
@@ -3423,7 +3423,7 @@ bool UnitTest::Test_comm333_ppp_hhh_ss( const Operator& X, const Operator& Y ) /
                 } // for m_k
                } // for m_j
               } // for m_i
-              
+
             } // for n
           } // for m
         } // for l
@@ -3439,17 +3439,17 @@ bool UnitTest::Test_comm333_ppp_hhh_ss( const Operator& X, const Operator& Y ) /
             << "    summed error = " << summed_error << "  => " << passfail << std::endl;
   return passed;
 
- 
+
 }
 
 
 // M-Scheme Formula:
 //
 // Z_ijkl = - 1/2 sum_abc [na*nb*(1-nc) + (1-na)*(1-nb)*nc ] * P(ij/k) P(l/mn) * [ Xabkcmn*Ycijabl - Yabkcmn*Xcijabl   ]
-//                              
+//
 //        = - 1/2 sum_abc [na*nb*(1-nc) + (1-na)*(1-nb)*nc ] *
-//                [ (Xabkcmn*Ycijabl - Yabkcmn*Xcijabl) - (Xabicmn*Yckjabl - Yabicmn*Xckjabl)  - (Xabjcmn*Ycikabl - Yabjcmn*Xcikabl) 
-//                 -(Xabkcln*Ycijabm - Yabkcln*Xcijabm) + (Xabicln*Yckjabm - Yabicln*Xckjabm)  + (Xabjcln*Ycikabm - Yabjcln*Xcikabm) 
+//                [ (Xabkcmn*Ycijabl - Yabkcmn*Xcijabl) - (Xabicmn*Yckjabl - Yabicmn*Xckjabl)  - (Xabjcmn*Ycikabl - Yabjcmn*Xcikabl)
+//                 -(Xabkcln*Ycijabm - Yabkcln*Xcijabm) + (Xabicln*Yckjabm - Yabicln*Xckjabm)  + (Xabjcln*Ycikabm - Yabjcln*Xcikabm)
 //                 -(Xabkcml*Ycijabn - Yabkcml*Xcijabn) + (Xabicml*Yckjabn - Yabicml*Xckjabn)  + (Xabjcml*Ycikabn - Yabjcml*Xcikabn) ]
 //
 bool UnitTest::Test_comm333_pph_hhp_ss( const Operator& X, const Operator& Y ) // test not yet implemented
@@ -3499,7 +3499,7 @@ bool UnitTest::Test_comm333_pph_hhp_ss( const Operator& X, const Operator& Y ) /
             Orbit& om = X.modelspace->GetOrbit(m);
             for (auto n : X.modelspace->all_orbits )
             {
-//              if (n<m) continue; 
+//              if (n<m) continue;
 //              if (n>m) continue;
               Orbit& on = X.modelspace->GetOrbit(n);
               if ( (oi.l+oj.l+ok.l+ol.l+om.l+on.l)%2 !=0 ) continue;
@@ -3514,7 +3514,7 @@ bool UnitTest::Test_comm333_pph_hhp_ss( const Operator& X, const Operator& Y ) /
 //              double Z101 = Z_J.ThreeBody.GetME_pn(1,0,1,i,j,k,l,m,n);
 //              double Z111 = Z_J.ThreeBody.GetME_pn(1,1,1,i,j,k,l,m,n);
 //              double Z113 = Z_J.ThreeBody.GetME_pn(1,1,3,i,j,k,l,m,n);
-//              std::cout << "Z001 = " <<Z001 << " Z011 = " << Z011 << "  Z101 = " << Z101 << "  Z111 = " << Z111 << "  Z113 = " << Z113 << std::endl; 
+//              std::cout << "Z001 = " <<Z001 << " Z011 = " << Z011 << "  Z101 = " << Z101 << "  Z111 = " << Z111 << "  Z113 = " << Z113 << std::endl;
               // loop over projections
               for (int m_i= oi.j2; m_i<=oi.j2; m_i+=2)
               {
@@ -3611,8 +3611,8 @@ bool UnitTest::Test_comm333_pph_hhp_ss( const Operator& X, const Operator& Y ) /
 
 
 //        =   1/2 sum_abc [na*nb*(1-nc) + (1-na)*(1-nb)*nc ] *
-//                [ (Xabkcmn*Ycijabl - Yabkcmn*Xcijabl) - (Xabicmn*Yckjabl - Yabicmn*Xckjabl)  - (Xabjcmn*Ycikabl - Yabjcmn*Xcikabl) 
-//                 -(Xabkcln*Ycijabm - Yabkcln*Xcijabm) + (Xabicln*Yckjabm - Yabicln*Xckjabm)  + (Xabjcln*Ycikabm - Yabjcln*Xcikabm) 
+//                [ (Xabkcmn*Ycijabl - Yabkcmn*Xcijabl) - (Xabicmn*Yckjabl - Yabicmn*Xckjabl)  - (Xabjcmn*Ycikabl - Yabjcmn*Xcikabl)
+//                 -(Xabkcln*Ycijabm - Yabkcln*Xcijabm) + (Xabicln*Yckjabm - Yabicln*Xckjabm)  + (Xabjcln*Ycikabm - Yabjcln*Xcikabm)
 //                 -(Xabkcml*Ycijabn - Yabkcml*Xcijabn) + (Xabicml*Yckjabn - Yabicml*Xckjabn)  + (Xabjcml*Ycikabn - Yabjcml*Xcikabn) ]
                            double dz = 0;
                            dz += xabklmc * yijcabn - yabklmc * xijcabn ; // Z1
@@ -3676,26 +3676,26 @@ bool UnitTest::Test_comm333_pph_hhp_ss( const Operator& X, const Operator& Y ) /
 //                    double Z1131 = -sqrt(3)/2 * -sqrt(10.)/9 * X113 * Y111;
 //                    double Z1133 = -sqrt(3)/2 * 7*4/(9*sqrt(10)) * X113 * Y113;
 //                    double Z1135 = -sqrt(3)/2 * -2/(sqrt(10)) * X113 * Y115;
-//                   
+//
 //                    std::cout << "I think X113 = " << X113 << "  and  Y111 = " << Y111 << std::endl;
 //                    std::cout << "I think the J1p=0 piece should be " << Z0013 << " + " << Z0113 << " + " << Z0133 << "  = " << Z0013+Z0113+Z0133 << std::endl;
 //                    std::cout << "and I think the J1p=1 piece should be "
 //                    << Z1013 << " + " << Z1111 << " + " << Z1113 << " + " << Z1115 << " + " << Z1131 << " + " << Z1133 << " + " << Z1135 << " = "
 //                    << Z1013  +  Z1111  +  Z1113  + Z1115  +  Z1131  +  Z1133 +  Z1135 << std::endl;
-//                    std::cout << " so total Jscheme should be " 
+//                    std::cout << " so total Jscheme should be "
 //                    << Z0013+Z0113+Z0133 + Z1013  +  Z1111  +  Z1113  + Z1115  +  Z1131  +  Z1133 +  Z1135
 //                    << "   =>  " << -2/sqrt(12) * (Z0013+Z0113+Z0133 + Z1013  +  Z1111  +  Z1113  + Z1115  +  Z1131  +  Z1133 +  Z1135) << std::endl;
-                    
+
 
                     double ZJ_ijklmn = GetMschemeMatrixElement_3b( Z_J, i,m_i, j,m_j, k,m_k, l,m_l, m,m_m, n,m_n );
-                    double ZJ_hermconj = GetMschemeMatrixElement_3b( Z_J, l,m_l, m,m_m, n,m_n , i,m_i, j,m_j, k,m_k); 
+                    double ZJ_hermconj = GetMschemeMatrixElement_3b( Z_J, l,m_l, m,m_m, n,m_n , i,m_i, j,m_j, k,m_k);
                     double err = z_ijklmn - ZJ_ijklmn;
 //                    std::cout << z_ijklmn << std::endl;
                     if (std::abs(err)>1e-6 )
                     {
                       std::cout << "Trouble in " << __func__ << "  i,j,k,l,m,n = " << i << " " << j << " " << k << " " << l << " " << m << " " << n
                                 << " {m} = " << m_i << " " << m_j << " " << m_k << " " << m_l << " " << m_m << " " << m_n
-                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err <<  "  hc = " << ZJ_hermconj << std::endl; 
+                                << "   Zm_ijklmn = " << z_ijklmn << "   ZJ_ijklmn = " << ZJ_ijklmn << "   err = " << err <<  "  hc = " << ZJ_hermconj << std::endl;
                     }
                     summed_error += err*err;
                     sum_m += z_ijklmn*z_ijklmn;
@@ -3706,7 +3706,7 @@ bool UnitTest::Test_comm333_pph_hhp_ss( const Operator& X, const Operator& Y ) /
                 } // for m_k
                } // for m_j
               } // for m_i
-              
+
             } // for n
           } // for m
         } // for l
@@ -3723,7 +3723,7 @@ bool UnitTest::Test_comm333_pph_hhp_ss( const Operator& X, const Operator& Y ) /
   return passed;
 
 
- 
+
 }
 
 
@@ -3782,8 +3782,8 @@ bool UnitTest::Test_comm211sd( const Operator& X, const Operator& Y )
     if (std::abs(err)>1e-6)
     {
       std::cout << "Trouble in " << __func__ << "  i = " << i <<  "   Zm_i = " << Zm_i
-                << "   ZJ_i = " << Z_J.OneBody(i,0) << "   err = " << err << std::endl; 
-//                << "   ZJ_i = " << Z_J.OneBody(i,Q) << "   err = " << err << std::endl; 
+                << "   ZJ_i = " << Z_J.OneBody(i,0) << "   err = " << err << std::endl;
+//                << "   ZJ_i = " << Z_J.OneBody(i,Q) << "   err = " << err << std::endl;
     }
     summed_error += err*err;
     sum_m += Zm_i*Zm_i;
@@ -3859,8 +3859,8 @@ bool UnitTest::Test_comm231sd( const Operator& X, const Operator& Y )
     if (std::abs(err)>1e-6)
     {
       std::cout << "Trouble in " << __func__ << "  i = " << i <<  "   Zm_i = " << Zm_i
-                << "   ZJ_i = " << Z_J.OneBody(i,0) << "   err = " << err << std::endl; 
-//                << "   ZJ_i = " << Z_J.OneBody(i,Q) << "   err = " << err << std::endl; 
+                << "   ZJ_i = " << Z_J.OneBody(i,0) << "   err = " << err << std::endl;
+//                << "   ZJ_i = " << Z_J.OneBody(i,Q) << "   err = " << err << std::endl;
     }
     summed_error += err*err;
     sum_m += Zm_i*Zm_i;
@@ -3942,8 +3942,8 @@ bool UnitTest::Test_comm431sd( const Operator& X, const Operator& Y )
     if (std::abs(err)>1e-6)
     {
       std::cout << "Trouble in " << __func__ << "  i = " << i <<  "   Zm_i = " << Zm_i
-                << "   ZJ_i = " << Z_J.OneBody(i,0) << "   err = " << err << std::endl; 
-//                << "   ZJ_i = " << Z_J.OneBody(i,Q) << "   err = " << err << std::endl; 
+                << "   ZJ_i = " << Z_J.OneBody(i,0) << "   err = " << err << std::endl;
+//                << "   ZJ_i = " << Z_J.OneBody(i,Q) << "   err = " << err << std::endl;
     }
     summed_error += err*err;
     sum_m += Zm_i*Zm_i;
@@ -4043,9 +4043,9 @@ bool UnitTest::Test_comm413sd( const Operator& Xin, const Operator& Y )
              double err = Zm_ijk - ZJ_ijk;
              if (std::abs(err)>1e-6)
              {
-               std::cout << "Trouble in " << __func__ << "  i,j,k = " << i << " " << j << " " << k 
+               std::cout << "Trouble in " << __func__ << "  i,j,k = " << i << " " << j << " " << k
                          << "  mvals " << mi << " " << mj << " " << mk << "   " << mQ
-                         << "   Zm_ijk = " << Zm_ijk << "   ZJ_ijk = " << ZJ_ijk << "   err = " << err << std::endl; 
+                         << "   Zm_ijk = " << Zm_ijk << "   ZJ_ijk = " << ZJ_ijk << "   err = " << err << std::endl;
              }
              summed_error += err*err;
              sum_m += Zm_ijk*Zm_ijk;
@@ -4151,9 +4151,9 @@ bool UnitTest::Test_comm233sd( const Operator& X, const Operator& Yin )
              double err = Zm_ijk - ZJ_ijk;
              if (std::abs(err)>1e-6)
              {
-               std::cout << "Trouble in " << __func__ << "  i,j,k = " << i << " " << j << " " << k 
+               std::cout << "Trouble in " << __func__ << "  i,j,k = " << i << " " << j << " " << k
                          << "  mvals " << mi << " " << mj << " " << mk
-                         << "   Zm_ijk = " << Zm_ijk << "   ZJ_ijk = " << ZJ_ijk << "   err = " << err << std::endl; 
+                         << "   Zm_ijk = " << Zm_ijk << "   ZJ_ijk = " << ZJ_ijk << "   err = " << err << std::endl;
              }
              summed_error += err*err;
              sum_m += Zm_ijk*Zm_ijk;
@@ -4180,7 +4180,7 @@ bool UnitTest::Test_comm233sd( const Operator& X, const Operator& Yin )
 /// M-Scheme Formula:
 //
 // 433 pp/hh:
-// Zijk =  1/2 sum_ab (nanb - na`nb`)  Xijab*Yabk 
+// Zijk =  1/2 sum_ab (nanb - na`nb`)  Xijab*Yabk
 //
 bool UnitTest::Test_comm433_pp_hh_sd( const Operator& X, const Operator& Yin )
 {
@@ -4256,9 +4256,9 @@ bool UnitTest::Test_comm433_pp_hh_sd( const Operator& X, const Operator& Yin )
              double err = Zm_ijk - ZJ_ijk;
              if (std::abs(err)>1e-6)
              {
-               std::cout << "Trouble in " << __func__ << "  i,j,k = " << i << " " << j << " " << k 
+               std::cout << "Trouble in " << __func__ << "  i,j,k = " << i << " " << j << " " << k
                          << "  mvals " << mi << " " << mj << " " << mk
-                         << "   Zm_ijk = " << Zm_ijk << "   ZJ_ijk = " << ZJ_ijk << "   err = " << err << std::endl; 
+                         << "   Zm_ijk = " << Zm_ijk << "   ZJ_ijk = " << ZJ_ijk << "   err = " << err << std::endl;
              }
              summed_error += err*err;
              sum_m += Zm_ijk*Zm_ijk;
@@ -4377,9 +4377,9 @@ bool UnitTest::Test_comm433sd_ph( const Operator& X, const Operator& Yin )
              double err = Zm_ijk - ZJ_ijk;
              if (std::abs(err)>1e-6)
              {
-               std::cout << "Trouble in " << __func__ << "  i,j,k = " << i << " " << j << " " << k 
+               std::cout << "Trouble in " << __func__ << "  i,j,k = " << i << " " << j << " " << k
                          << "  mvals " << mi << " " << mj << " " << mk
-                         << "   Zm_ijk = " << Zm_ijk << "   ZJ_ijk = " << ZJ_ijk << "   err = " << err << std::endl; 
+                         << "   Zm_ijk = " << Zm_ijk << "   ZJ_ijk = " << ZJ_ijk << "   err = " << err << std::endl;
              }
              summed_error += err*err;
              sum_m += Zm_ijk*Zm_ijk;
@@ -4404,7 +4404,7 @@ bool UnitTest::Test_comm433sd_ph( const Operator& X, const Operator& Yin )
 
 bool UnitTest::SanityCheck()
 {
- 
+
   #ifdef BUILDVERSION
   std::cout << "BUILD VERSION = " << BUILDVERSION << std::endl;
   #endif
@@ -4419,7 +4419,7 @@ bool UnitTest::SanityCheck()
   std::cout << "Construct a model space..." << std::endl;
   int emax = 2;
   std::string ref = "He4";
-  auto ms = ModelSpace(2,ref,ref);
+  auto ms = ModelSpace(2,4,6,ref,ref);
 //  int A,Z;
   double A,Z;
   ms.GetAZfromString("Pb208",A,Z);
@@ -4439,7 +4439,7 @@ bool UnitTest::SanityCheck()
     std::cout << "amix = " << amix << " (should be 4.5)  zmix = " << zmix << " (should be 2.5) " << std::endl;
     return false;
   }
-  
+
 
   std::cout << "Construct the kinetic energy operator..." << std::endl;
   Operator trel = imsrg_util::Trel_Op(ms);

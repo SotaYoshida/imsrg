@@ -179,7 +179,7 @@ struct TwoBodyChannel
 
    virtual bool CheckChannel_ket(Orbit* op, Orbit* oq) const;  // check if |pq> participates in this channel
    bool CheckChannel_ket(Ket &ket) const {return CheckChannel_ket(ket.op,ket.oq);};  // check if |pq> participates in this channel
-   
+
 };
 
 
@@ -280,6 +280,7 @@ class ModelSpace
    std::vector<ThreeBodyChannel> ThreeBodyChannels; // vector of ThreeBodyChannel structs
    std::map<size_t,size_t> Ket3IndexLookup;
    std::map<size_t,size_t> ThreeBodyChannelLookup;
+   std::map<size_t,size_t> KetIndexLookup;
 
 //   std::map< std::array<int,3>, std::map< std::array<size_t,2>,std::array<std::vector<size_t>,2> > > PandyaLookup; // I'm not sure how necessary this is...
    std::map< std::array<int,3>, std::vector<size_t> > PandyaLookup; // I'm not sure how necessary this is...
@@ -297,10 +298,10 @@ class ModelSpace
 
    std::set<std::array<int,2>> hole_quantum_numbers; // For checking if an orbit could mix with the hole orbits
 
-   std::vector<index_t> KetIndex_pp; 
+   std::vector<index_t> KetIndex_pp;
    std::vector<index_t> KetIndex_ph;
    std::vector<index_t> KetIndex_hh;
-   std::vector<index_t> KetIndex_cc; 
+   std::vector<index_t> KetIndex_cc;
    std::vector<index_t> KetIndex_vc;
    std::vector<index_t> KetIndex_qc;
    std::vector<index_t> KetIndex_vv;
@@ -340,29 +341,29 @@ class ModelSpace
    ModelSpace();
    ModelSpace(const ModelSpace&); // copy constructor
    ModelSpace( ModelSpace&&); // move constructor
-   ModelSpace(int emax, std::vector<std::string> hole_list, std::vector<std::string> valence_list);
-   ModelSpace(int emax, std::vector<std::string> hole_list, std::vector<std::string> core_list, std::vector<std::string> valence_list);
-   ModelSpace(int emax, std::string reference, std::string valence);
-   ModelSpace(int emax, std::string reference);
+   ModelSpace(int emax, int e2max, int e3max, std::vector<std::string> hole_list, std::vector<std::string> valence_list);
+   ModelSpace(int emax, int e2max, int e3max, std::vector<std::string> hole_list, std::vector<std::string> core_list, std::vector<std::string> valence_list);
+   ModelSpace(int emax, int e2max, int e3max, std::string reference, std::string valence);
+   ModelSpace(int emax, int e2max, int e3max, std::string reference);
 
 
    // Overloaded operators
-   ModelSpace operator=(const ModelSpace&); 
-   ModelSpace operator=(ModelSpace&&); 
+   ModelSpace operator=(const ModelSpace&);
+   ModelSpace operator=(ModelSpace&&);
 
    // Methods
 
 //   void SetUpOrbits( );
 
-   void Init(int emax, std::string reference, std::string valence);
+   void Init(int emax, int e2max, int e3max, std::string reference, std::string valence);
 //   void Init(int emax, std::map<index_t,double> hole_list, std::string valence);
-   void Init(int emax, std::map<std::array<int,4>,double> hole_list, std::string valence);
+   void Init(int emax, int e2max, int e3max, std::map<std::array<int,4>,double> hole_list, std::string valence);
 //   void Init(int emax, std::map<index_t,double> hole_list, std::vector<index_t> core_list, std::vector<index_t> valence_list);// keep this for backward-compatibility
 //   void Init(int emax, std::map<index_t,double> hole_list, std::set<index_t> core_list, std::set<index_t> valence_list);
    void Init( std::map<std::array<int,4>,double> hole_list, std::set<std::array<int,4>> core_list, std::set<std::array<int,4>> valence_list);
-   void Init(int emax, std::vector<std::string> hole_list, std::vector<std::string> core_list, std::vector<std::string> valence_list);// backward-compatibility
-   void Init_occ_from_file(int emax, std::string valence, std::string occ_file);
-   void InitSingleSpecies( int emax, std::string reference, std::string valence); // Work with just one type of fermion
+   void Init(int emax, int e2max, int e3max, std::vector<std::string> hole_list, std::vector<std::string> core_list, std::vector<std::string> valence_list);// backward-compatibility
+   void Init_occ_from_file(int emax, int e2max, int e3max, std::string valence, std::string occ_file);
+   void InitSingleSpecies( int emax, int e2max, int e3max, std::string reference, std::string valence); // Work with just one type of fermion
 
 
 //   std::map<index_t,double> GetOrbitsAZ(int A, int Z);
@@ -386,13 +387,13 @@ class ModelSpace
 //   void AddOrbit(int n, int l, int j2, int tz2, double occ, int io);
    void FindEFermi();
    // Setter/Getters
-   Orbit& GetOrbit(int i); 
+   Orbit& GetOrbit(int i);
    Ket& GetKet(int i) const {return (Ket&) Kets[i];};
-   Ket& GetKet(int p, int q) const {return (Ket&) Kets[Index2(p,q)];};
+   Ket& GetKet(int p, int q) const {return (Ket&) Kets[KetIndexLookup.at(Index2(p,q))];};
    Ket3& GetKet3(int i) const {return (Ket3&) Kets3[i];};
    size_t GetOrbitIndex(int n, int l, int j2, int tz2) const {return Index1(n,l,j2,tz2);};
-   size_t GetKetIndex(int p, int q) const {return Index2(p,q);}; // convention is p<=q
-   size_t GetKetIndex(Ket * ket) const {return Index2(ket->p,ket->q);}; // convention is p<=q
+   size_t GetKetIndex(int p, int q) const {return KetIndexLookup.at(Index2(p,q));}; // convention is p<=q
+   size_t GetKetIndex(Ket * ket) const {return KetIndexLookup.at(Index2(ket->p,ket->q));}; // convention is p<=q
    size_t GetKet3Index(int p, int q, int r, int Jpq){return Ket3IndexLookup.at(Ket3IndexHash(p,q,r,Jpq));};
    size_t Ket3IndexHash(size_t p, size_t q, size_t r, size_t Jpq);
    size_t ThreeBodyChannelHash( int twoJ, int parity, int twoTz);
@@ -453,13 +454,14 @@ class ModelSpace
    double GetMoshinsky( int N, int Lam, int n, int lam, int n1, int l1, int n2, int l2, int L); // Inconsistent notation. Not ideal.
    bool SixJ_is_empty(){ return SixJList.empty(); };
    double GetT3b(index_t a,index_t b, index_t c, int Jab, int J, int N1, int L1, int S1, int J1, int N2, int L2,int J2,int J12,int Ncm,int Lcm); // 15 index object. yikes.
+   bool CheckE2max(int a, int b);
 
    size_t GetOrbitIndex(std::string);
    size_t GetTwoBodyChannelIndex(int j, int p, int t);
    void UnpackTwoBodyChannelIndex( size_t ch, int& j, int& p, int& tz);
    int phase(int x) {return (x%2)==0 ? 1 : -1;};
 
-   
+
    size_t GetThreeBodyChannelIndex( int twoJ, int parity, int twoTz );
    std::array<size_t,2> CountThreeBodyStatesInsideCut();
 

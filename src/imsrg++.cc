@@ -1016,9 +1016,9 @@ int main(int argc, char** argv)
     HNO = imsrgsolver.GetH_s();
 
     int nOmega = imsrgsolver.GetOmegaSize() + imsrgsolver.GetNOmegaWritten();
-    std::cout << "Undoing NO wrt A=" << modelspace.GetAref() << " Z=" << modelspace.GetZref() << std::endl;
+    std::cout << "Undoing NO wrt A=" << modelspace_imsrg.GetAref() << " Z=" << modelspace_imsrg.GetZref() << std::endl;
     std::cout << "Before doing so, the spes are " << std::endl;
-    for ( auto i : modelspace.all_orbits ) std::cout << "  " << i << " : " << HNO.OneBody(i,i) << std::endl;
+    for ( auto i : modelspace_imsrg.all_orbits ) std::cout << "  " << i << " : " << HNO.OneBody(i,i) << std::endl;
     if (IMSRG3)
     {
       std::cout << "Re-normal-ordering wrt the core. For now, we just throw away the 3N at this step." << std::endl;
@@ -1056,12 +1056,12 @@ int main(int argc, char** argv)
 
   // If we're doing a shell model interaction, write the
   // interaction files to disk.
-  if (modelspace.valence.size() > 0)
+  if (modelspace_imsrg.valence.size() > 0)
   {
     if (valence_file_format == "antoine") // this is still being tested...
     {
       rw.WriteAntoine_int(imsrgsolver.GetH_s(),intfile+".ant");
-      rw.WriteAntoine_input(imsrgsolver.GetH_s(),intfile+".inp",modelspace.GetAref(),modelspace.GetZref());
+      rw.WriteAntoine_input(imsrgsolver.GetH_s(),intfile+".inp",modelspace_imsrg.GetAref(),modelspace_imsrg.GetZref());
     }
     std::cout << "Writing files: " << intfile << std::endl;
     if (valence_file_format == "tokyo")
@@ -1118,8 +1118,8 @@ int main(int argc, char** argv)
       std::cout << opnames[i] << " = " << ops[i].ZeroBody << std::endl;
       if ( opnames[i] == "Rp2" )
       {
-        int Z = modelspace.GetTargetZ();
-        int A = modelspace.GetTargetMass();
+        int Z = modelspace_imsrg.GetTargetZ();
+        int A = modelspace_imsrg.GetTargetMass();
         std::cout << " IMSRG point proton radius = " << sqrt( op.ZeroBody ) << std::endl;
         std::cout << " IMSRG charge radius = " << sqrt( op.ZeroBody + r2p + r2n*(A-Z)/Z + DarwinFoldy) << std::endl;
       }
@@ -1149,7 +1149,7 @@ int main(int argc, char** argv)
       auto opname = opnames[i];
       std::cout << i << ": " << opname << " " << std::endl;
 
-      Operator op = imsrg_util::OperatorFromString( modelspace, opname );
+      Operator op = imsrg_util::OperatorFromString( modelspace_imsrg, opname );
 
       if ( basis == "HF")
       {

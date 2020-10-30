@@ -945,7 +945,7 @@ int main(int argc, char** argv)
 
     imsrgsolver.SetGenerator(valence_generator);
     std::cout << "Setting generator to " << valence_generator << std::endl;
-    modelspace.ResetFirstPass();
+    modelspace_imsrg.ResetFirstPass();
     if (valence_generator.find("imaginary")!=std::string::npos or valence_generator.find("wegner")!=std::string::npos)
     {
       if (ds_0>1e-2)
@@ -994,15 +994,14 @@ int main(int argc, char** argv)
   ModelSpace ms2(modelspace_imsrg);
   ms2.SetReference(ms2.core); // change the reference
   bool renormal_order = false;
-  if (modelspace.valence.size() > 0 )
-    //  if (modelspace.valence.size() > 0 or basis=="NAT")
+  if (modelspace_imsrg.valence.size() > 0 )
   {
-    renormal_order = modelspace.holes.size() != modelspace.core.size();
+    renormal_order = modelspace_imsrg.holes.size() != modelspace.core.size();
     if (not renormal_order)
     {
-      for (auto c : modelspace.core)
+      for (auto c : modelspace_imsrg.core)
       {
-        if ( (find( modelspace.holes.begin(), modelspace.holes.end(), c) == modelspace.holes.end()) or (std::abs(1-modelspace.GetOrbit(c).occ)>1e-6))
+        if ( (find( modelspace_imsrg.holes.begin(), modelspace_imsrg.holes.end(), c) == modelspace_imsrg.holes.end()) or (std::abs(1-modelspace_imsrg.GetOrbit(c).occ)>1e-6))
         {
           renormal_order = true;
           break;
@@ -1149,7 +1148,7 @@ int main(int argc, char** argv)
       auto opname = opnames[i];
       std::cout << i << ": " << opname << " " << std::endl;
 
-      Operator op = imsrg_util::OperatorFromString( modelspace_imsrg, opname );
+      Operator op = imsrg_util::OperatorFromString( modelspace, opname );
 
       if ( basis == "HF")
       {

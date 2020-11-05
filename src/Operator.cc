@@ -692,17 +692,22 @@ Operator Operator::Truncate(ModelSpace& ms_new)
 {
   Operator OpNew(ms_new, rank_J, rank_T, parity, particle_rank);
   std::cout << "Operator trunction: ("
-    << std::setw(4) << modelspace->GetEmax()
-    << std::setw(4) << modelspace->GetE2max()
-    << std::setw(4) << modelspace->GetE3max()
+    << std::setw(3) << modelspace->GetEmax() << ", "
+    << std::setw(3) << modelspace->GetE2max() << ", "
+    << std::setw(3) << modelspace->GetE3max() <<
     << ") to ("
-    << std::setw(4) << ms_new.GetEmax()
-    << std::setw(4) << ms_new.GetE2max()
-    << std::setw(4) << ms_new.GetE3max() << ")" << std::endl;
+    << std::setw(3) << ms_new.GetEmax() << ", "
+    << std::setw(3) << ms_new.GetE2max() << ", "
+    << std::setw(3) << ms_new.GetE3max() << ")" << std::endl;
   int new_emax = ms_new.GetEmax();
-  if ( new_emax > modelspace->GetEmax() )
+  int new_e2max = ms_new.GetE2max();
+  int new_e3max = ms_new.GetE3max();
+  if ( new_emax > modelspace->GetEmax() or new_e2max > modelspace->GetE2max() or new_e3max > modelspace->GetE3max() )
   {
     std::cout << "Error: Cannot truncate an operator with emax = " << modelspace->GetEmax() << " to one with emax = " << new_emax << std::endl;
+    std::cout << "Error: Cannot truncate an operator with e2max = " << modelspace->GetE2max() << " to one with e2max = " << new_e2max << std::endl;
+    std::cout << "Error: Cannot truncate an operator with e3max = " << modelspace->GetE3max() << " to one with e3max = " << new_e3max << std::endl;
+    std::cout << "Return empty operator " << std::endl;
     return OpNew;
   }
 //  OpNew.rank_J=rank_J;
@@ -767,6 +772,8 @@ Operator Operator::Truncate(ModelSpace& ms_new)
     //  }
     //}
   }
+  if( particle_rank == 2) return OpNew;
+  std::cout << "3-body part of Truncate method has not implemented yet." << std::endl;
   return OpNew;
 }
 

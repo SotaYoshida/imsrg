@@ -141,6 +141,7 @@ void HFMBPT::GetNaturalOrbitals()
 //*********************************************************************
 void HFMBPT::DiagonalizeRho()
 {
+  arma::mat F_HF = C.t() * F * C; // Fock matrix (HF basis)
   for (auto& it : Hbare.OneBodyChannels)
   {
 //    arma::uvec orbvec(it.second);
@@ -159,9 +160,19 @@ void HFMBPT::DiagonalizeRho()
       rho_ch.print();
       exit(0);
     }
-    Occ(orbvec_d) = eig;
-
-    C_HF2NAT.submat(orbvec, orbvec_d) = vec;
+    // reordering
+    arma::mat F_ch = F_HF.submat(orbvec, orbvec);
+    F_ch = vec.t() * F_ch * vec;
+    arma::uvec sort_idx = arma::sort_index(F_ch.diag(), "ascend");
+    arma::uvec idx = arma::regspace<arma::uvec>(0,orbvec.size()-1);
+    Occ(orbvec_d) = eig(sort_idx);
+    //std::cout << ":" << std::endl;
+    //std::cout << vec << std::endl;
+    //std::cout << "aa" << std::endl;
+    //std::cout << vec(sort_idx) << std::endl;
+    C_HF2NAT.submat(orbvec,orbvec) = vec(idx,sort_idx);
+    // reordering
+    //C_HF2NAT.submat(orbvec, orbvec_d) = vec;
   }
  // Choose ordering and phases so that C_HF2NAT looks as close to the identity as possible
   ReorderHFMBPTCoefficients();
@@ -344,7 +355,7 @@ Operator HFMBPT::GetNormalOrderedHNAT(int particle_rank)
   std::function<double (int,int,int,int,int,int,int)> GetVNO2B;
   if ( Hbare.ThreeBodyNO2B.initialized)
   {
-    GetVNO2B = [this] (int i,int j, int a, int k, int l, int b, int J){ 
+    GetVNO2B = [this] (int i,int j, int a, int k, int l, int b, int J){
                  return this->Hbare.ThreeBodyNO2B.GetThBME(i,j,a,k,l,b,J);
                };
   }

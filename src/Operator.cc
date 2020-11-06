@@ -694,7 +694,7 @@ Operator Operator::Truncate(ModelSpace& ms_new)
   std::cout << "Operator trunction: ("
     << std::setw(3) << modelspace->GetEmax() << ", "
     << std::setw(3) << modelspace->GetE2max() << ", "
-    << std::setw(3) << modelspace->GetE3max() <<
+    << std::setw(3) << modelspace->GetE3max()
     << ") to ("
     << std::setw(3) << ms_new.GetEmax() << ", "
     << std::setw(3) << ms_new.GetE2max() << ", "

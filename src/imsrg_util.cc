@@ -10,7 +10,6 @@
 #include <gsl/gsl_sf_bessel.h> // to use bessel functions
 #include <gsl/gsl_sf_laguerre.h>
 #include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_sf_bessel.h>
 #include <iostream>
 #include <iomanip>
 #include <math.h>
@@ -56,74 +55,76 @@ namespace imsrg_util
  /// Convenient way to generate pre-coded operators
  Operator OperatorFromString(ModelSpace& modelspace, std::string opname )
  {
+      double t_start = omp_get_wtime();
+      Operator theop;
       std::vector<std::string> opnamesplit = split_string( opname, "_" );  // split std::string on _ into a vector of std::string so that, e.g. "R2_p1"  =>  {"R2", "p1"}
 
-           if (opname == "R2_p1")         return R2_1body_Op(modelspace,"proton") ;
-      else if (opname == "R2_p2")         return R2_2body_Op(modelspace,"proton") ;
-      else if (opname == "R2_n1")         return R2_1body_Op(modelspace,"neutron") ;
-      else if (opname == "R2_n2")         return R2_2body_Op(modelspace,"neutron") ;
-      else if (opname == "Rp2")           return Rp2_corrected_Op(modelspace,modelspace.GetTargetMass(),modelspace.GetTargetZ()) ;
-      else if (opname == "Rn2")           return Rn2_corrected_Op(modelspace,modelspace.GetTargetMass(),modelspace.GetTargetZ()) ;
-      else if (opname == "Rm2")           return Rm2_corrected_Op(modelspace,modelspace.GetTargetMass(),modelspace.GetTargetZ()) ;
-      else if (opname == "Rm2lab")        return RSquaredOp(modelspace) ;
-      else if (opname == "ISM")           return MultipoleResponseOp(modelspace,2,0) ; // Isoscalar monopole (see PRC97(2018)054306 ) --added by bhu
-      else if (opname == "ISQ")           return MultipoleResponseOp(modelspace,2,2) ; // Isoscalar quadrupole (see PRC97(2018)054306 ) --added by bhu
-      else if (opname == "IVD")           return IVDipoleOp(modelspace,1,1) ; // Isovector dipole (see PRC97(2018)054306 ) --added by bhu
-      else if (opname == "E1")            return ElectricMultipoleOp(modelspace,1) ;
-      else if (opname == "E2")            return ElectricMultipoleOp(modelspace,2) ;
-      else if (opname == "E3")            return ElectricMultipoleOp(modelspace,3) ;
-      else if (opname == "E4")            return ElectricMultipoleOp(modelspace,4) ;
-      else if (opname == "E5")            return ElectricMultipoleOp(modelspace,5) ;
-      else if (opname == "E6")            return ElectricMultipoleOp(modelspace,6) ;
-      else if (opname == "E2int")         return IntrinsicElectricMultipoleOp(modelspace,2) ; // Untested
-      else if (opname == "nE2")           return NeutronElectricMultipoleOp(modelspace,2) ;
-      else if (opname == "M1")            return MagneticMultipoleOp(modelspace,1) ;
-      else if (opname == "M2")            return MagneticMultipoleOp(modelspace,2) ;
-      else if (opname == "M3")            return MagneticMultipoleOp(modelspace,3) ;
-      else if (opname == "M4")            return MagneticMultipoleOp(modelspace,4) ;
-      else if (opname == "M5")            return MagneticMultipoleOp(modelspace,5) ;
-      else if (opname == "M1p")           return MagneticMultipoleOp_pn(modelspace,1,"proton") ;
-      else if (opname == "M1n")           return MagneticMultipoleOp_pn(modelspace,1,"neutron") ;
-      else if (opname == "M1S")           return MagneticMultipoleOp_pn(modelspace,1,"spin") ;
-      else if (opname == "M1L")           return MagneticMultipoleOp_pn(modelspace,1,"orbit") ;
-      else if (opname == "Fermi")         return AllowedFermi_Op(modelspace) ;
-      else if (opname == "GamowTeller")   return AllowedGamowTeller_Op(modelspace) ;
-      else if (opname == "Iso2")          return Isospin2_Op(modelspace) ;
-      else if (opname == "R2CM")          return R2CM_Op(modelspace) ;
-      else if (opname == "Trel")          return Trel_Op(modelspace) ;
-      else if (opname == "TCM")           return TCM_Op(modelspace) ;
-      else if (opname == "Rso")           return RpSpinOrbitCorrection(modelspace) ;
-      else if (opname == "RadialOverlap") return RadialOverlap(modelspace); // Untested...
-      else if (opname == "Sigma")         return Sigma_Op(modelspace);
-      else if (opname == "Sigma_p")       return Sigma_Op_pn(modelspace,"proton");
-      else if (opname == "Sigma_n")       return Sigma_Op_pn(modelspace,"neutron");
-      else if (opname == "L2rel")         return L2rel_Op(modelspace); // Untested...
-      else if (opname == "QdotQ")         return QdotQ_Op(modelspace); // Untested...
-      else if (opname == "VCoul")         return VCoulomb_Op(modelspace); // Untested...
-      else if (opname == "hfsNMS")         return atomic_hfs::NormalMassShift(modelspace, 1);
-      else if (opname == "hfsSMS")         return atomic_hfs::SpecificMassShift(modelspace, 1);
-      else if (opname == "VCentralCoul")         return VCentralCoulomb_Op(modelspace); 
-      else if (opname == "AxialCharge")         return AxialCharge_Op(modelspace); // Untested...
+           if (opname == "R2_p1")         theop =  R2_1body_Op(modelspace,"proton") ;
+      else if (opname == "R2_p2")         theop =  R2_2body_Op(modelspace,"proton") ;
+      else if (opname == "R2_n1")         theop =  R2_1body_Op(modelspace,"neutron") ;
+      else if (opname == "R2_n2")         theop =  R2_2body_Op(modelspace,"neutron") ;
+      else if (opname == "Rp2")           theop =  Rp2_corrected_Op(modelspace,modelspace.GetTargetMass(),modelspace.GetTargetZ()) ;
+      else if (opname == "Rn2")           theop =  Rn2_corrected_Op(modelspace,modelspace.GetTargetMass(),modelspace.GetTargetZ()) ;
+      else if (opname == "Rm2")           theop =  Rm2_corrected_Op(modelspace,modelspace.GetTargetMass(),modelspace.GetTargetZ()) ;
+      else if (opname == "Rm2lab")        theop =  RSquaredOp(modelspace) ;
+      else if (opname == "ISM")           theop =  MultipoleResponseOp(modelspace,2,0) ; // Isoscalar monopole (see PRC97(2018)054306 ) --added by bhu
+      else if (opname == "ISQ")           theop =  MultipoleResponseOp(modelspace,2,2) ; // Isoscalar quadrupole (see PRC97(2018)054306 ) --added by bhu
+      else if (opname == "IVD")           theop =  IVDipoleOp(modelspace,1,1) ; // Isovector dipole (see PRC97(2018)054306 ) --added by bhu
+      else if (opname == "E1")            theop =  ElectricMultipoleOp(modelspace,1) ;
+      else if (opname == "E2")            theop =  ElectricMultipoleOp(modelspace,2) ;
+      else if (opname == "E3")            theop =  ElectricMultipoleOp(modelspace,3) ;
+      else if (opname == "E4")            theop =  ElectricMultipoleOp(modelspace,4) ;
+      else if (opname == "E5")            theop =  ElectricMultipoleOp(modelspace,5) ;
+      else if (opname == "E6")            theop =  ElectricMultipoleOp(modelspace,6) ;
+      else if (opname == "E2int")         theop =  IntrinsicElectricMultipoleOp(modelspace,2) ; // Untested
+      else if (opname == "nE2")           theop =  NeutronElectricMultipoleOp(modelspace,2) ;
+      else if (opname == "M1")            theop =  MagneticMultipoleOp(modelspace,1) ;
+      else if (opname == "M2")            theop =  MagneticMultipoleOp(modelspace,2) ;
+      else if (opname == "M3")            theop =  MagneticMultipoleOp(modelspace,3) ;
+      else if (opname == "M4")            theop =  MagneticMultipoleOp(modelspace,4) ;
+      else if (opname == "M5")            theop =  MagneticMultipoleOp(modelspace,5) ;
+      else if (opname == "M1p")           theop =  MagneticMultipoleOp_pn(modelspace,1,"proton") ;
+      else if (opname == "M1n")           theop =  MagneticMultipoleOp_pn(modelspace,1,"neutron") ;
+      else if (opname == "M1S")           theop =  MagneticMultipoleOp_pn(modelspace,1,"spin") ;
+      else if (opname == "M1L")           theop =  MagneticMultipoleOp_pn(modelspace,1,"orbit") ;
+      else if (opname == "Fermi")         theop =  AllowedFermi_Op(modelspace) ;
+      else if (opname == "GamowTeller")   theop =  AllowedGamowTeller_Op(modelspace) ;
+      else if (opname == "Iso2")          theop =  Isospin2_Op(modelspace) ;
+      else if (opname == "R2CM")          theop =  R2CM_Op(modelspace) ;
+      else if (opname == "Trel")          theop =  Trel_Op(modelspace) ;
+      else if (opname == "TCM")           theop =  TCM_Op(modelspace) ;
+      else if (opname == "Rso")           theop =  RpSpinOrbitCorrection(modelspace) ;
+      else if (opname == "RadialOverlap") theop =  RadialOverlap(modelspace); // Untested...
+      else if (opname == "Sigma")         theop =  Sigma_Op(modelspace);
+      else if (opname == "Sigma_p")       theop =  Sigma_Op_pn(modelspace,"proton");
+      else if (opname == "Sigma_n")       theop =  Sigma_Op_pn(modelspace,"neutron");
+      else if (opname == "L2rel")         theop =  L2rel_Op(modelspace); // Untested...
+      else if (opname == "QdotQ")         theop =  QdotQ_Op(modelspace); // Untested...
+      else if (opname == "VCoul")         theop =  VCoulomb_Op(modelspace); // Untested...
+      else if (opname == "hfsNMS")        theop =  atomic_hfs::NormalMassShift(modelspace, 1);
+      else if (opname == "hfsSMS")        theop =  atomic_hfs::SpecificMassShift(modelspace, 1);
+      else if (opname == "VCentralCoul")  theop =  VCentralCoulomb_Op(modelspace); 
+      else if (opname == "AxialCharge")   theop =  AxialCharge_Op(modelspace); // Untested...
       else if (opnamesplit[0] =="HCM")
       {
-         if ( opnamesplit.size() == 1 ) return HCM_Op(modelspace);
+         if ( opnamesplit.size() == 1 ) theop =  HCM_Op(modelspace);
          double hw_HCM; // frequency of trapping potential
          std::istringstream( opnamesplit[1] ) >> hw_HCM;
          int A = modelspace.GetTargetMass();
-         return TCM_Op(modelspace) + 0.5*A*M_NUCLEON*hw_HCM*hw_HCM/HBARC/HBARC*R2CM_Op(modelspace);
+         theop =  TCM_Op(modelspace) + 0.5*A*M_NUCLEON*hw_HCM*hw_HCM/HBARC/HBARC*R2CM_Op(modelspace);
       }
       else if (opnamesplit[0] == "VCM") // GetHCM with a different frequency, ie HCM_24 for hw=24
       {
          double hw_VCM; // frequency of trapping potential
          std::istringstream(opnamesplit[1]) >> hw_VCM;
          int A = modelspace.GetTargetMass();
-         return 0.5*A*M_NUCLEON*hw_VCM*hw_VCM/HBARC/HBARC*R2CM_Op(modelspace); 
+         theop =  0.5*A*M_NUCLEON*hw_VCM*hw_VCM/HBARC/HBARC*R2CM_Op(modelspace); 
       }
       else if (opnamesplit[0] == "Rp2Z") // Get point proton radius for specified Z, e.g. Rp2Z_10 for neon
       {
         int Z_rp;
         std::istringstream(opnamesplit[1]) >> Z_rp;
-        return Rp2_corrected_Op(modelspace,modelspace.GetTargetMass(),Z_rp) ;
+        theop =  Rp2_corrected_Op(modelspace,modelspace.GetTargetMass(),Z_rp) ;
       }
       else if (opnamesplit[0] == "Rp2AZ") // Get point proton radius for specified A and Z, e.g. Rp2AZ_20_10 for neon
       {
@@ -131,62 +132,74 @@ namespace imsrg_util
         int Z_rp;
         std::istringstream(opnamesplit[1]) >> A_rp;
         std::istringstream(opnamesplit[2]) >> Z_rp;
-        return Rp2_corrected_Op(modelspace,A_rp,Z_rp) ;
+        theop =  Rp2_corrected_Op(modelspace,A_rp,Z_rp) ;
       }
       else if (opnamesplit[0] == "Rn2Z") // Get point neutron radius for specified Z
       {
         int Z_rp;
         std::istringstream(opnamesplit[1]) >> Z_rp;
-        return Rn2_corrected_Op(modelspace,modelspace.GetTargetMass(),Z_rp) ;
+        theop =  Rn2_corrected_Op(modelspace,modelspace.GetTargetMass(),Z_rp) ;
       }
       else if (opnamesplit[0] == "rhop") // point proton  density at position r, e.g. rhop_1.25
       {
         double rr;
         std::istringstream(opnamesplit[1]) >> rr;
-        return ProtonDensityAtR(modelspace,rr);
+        theop =  DensityAtR(modelspace,rr,"proton");
       }
       else if (opnamesplit[0] == "rhon") // point neutron density at position r
       {
         double rr;
         std::istringstream(opnamesplit[1]) >> rr;
-        return NeutronDensityAtR(modelspace,rr); // whoops... I'd forgotten the "return". Thanks Johannes...
+        theop =  DensityAtR(modelspace,rr,"neutron"); // whoops... I'd forgotten the "theop = ". Thanks Johannes...
+      }
+      else if (opnamesplit[0] == "FFp") // point proton  form factor F(q), e.g. FFp_1.25, where q is in fm^-1
+      {
+        double q;
+        std::istringstream(opnamesplit[1]) >> q;
+        theop =  FormfactorAtQ(modelspace,q,"proton");
+      }
+      else if (opnamesplit[0] == "FFn") // point neutron  form factor F(q), e.g. FFp_1.25, where q is in fm^-1
+      {
+        double q;
+        std::istringstream(opnamesplit[1]) >> q;
+        theop =  FormfactorAtQ(modelspace,q,"neutron");
       }
       else if (opnamesplit[0] == "OneOcc") // Get occupation of specified orbit, e.g. OneOccp_1p3
       {
          index_t ind = modelspace.String2Index( {  opnamesplit[1] } )[0];
          Orbit& oi = modelspace.GetOrbit(ind);
-         return NumberOp(modelspace,oi.n,oi.l,oi.j2,oi.tz2) ;
+         theop =  NumberOp(modelspace,oi.n,oi.l,oi.j2,oi.tz2) ;
       }
       else if (opnamesplit[0]== "AllOcc") // Get occupation of orbit, summed over all values of radial quantum number n, e.g. AllOccpp3
       {
          index_t ind = modelspace.String2Index( { "0"+ opnamesplit[1] } )[0];
          Orbit& oi = modelspace.GetOrbit(ind);
-         return NumberOpAlln(modelspace,oi.l,oi.j2,oi.tz2) ;
+         theop =  NumberOpAlln(modelspace,oi.l,oi.j2,oi.tz2) ;
       }
       else if (opnamesplit[0] == "OBD")
       {
          index_t i = modelspace.String2Index( { opnamesplit[1] } )[0];
          index_t j = modelspace.String2Index( { opnamesplit[2] } )[0];
-         return OneBodyDensity(modelspace,i,j);
+         theop =  OneBodyDensity(modelspace,i,j);
       }
       else if (opnamesplit[0] == "protonFBC") // Fourier bessel coefficient of order nu
       {
          int nu;
          std::istringstream(opnamesplit[1]) >> nu;
-         return FourierBesselCoeff( modelspace, nu, 8.0, modelspace.proton_orbits);
+         theop =  FourierBesselCoeff( modelspace, nu, 8.0, modelspace.proton_orbits);
       }
       else if (opnamesplit[0] == "neutronFBC") // Fourier bessel coefficient of order nu
       {
          int nu;
          std::istringstream(opnamesplit[1]) >> nu;
-         return FourierBesselCoeff( modelspace, nu, 8.0, modelspace.neutron_orbits) ;
+         theop =  FourierBesselCoeff( modelspace, nu, 8.0, modelspace.neutron_orbits) ;
       }
       else if (opnamesplit[0] == "M0nuCT" )
       {
         double R0;
         if (opnamesplit.size() < 2 ) std::cout << "ERROR!!!  " << __func__ << "    need to specify a cutoff for M0nuCT" << std::endl;
         std::istringstream( opnamesplit[1]) >> R0;
-        return M0nu_contact_Op(modelspace, R0);
+        theop =  M0nu_contact_Op(modelspace, R0);
       }
 
       else if (opnamesplit[0] == "DMNREFT") // Dark matter non-relativistic EFT operators 
@@ -210,19 +223,19 @@ namespace imsrg_util
              };
         if ( dmop.find(dmopname) != dmop.end() )
         {
-        return dmop[dmopname](modelspace, J, q );
+        theop =  dmop[dmopname](modelspace, J, q );
         }
       }
       else if (opnamesplit[0] == "Dagger" or opnamesplit[0] == "DaggerHF" )
       {
         index_t Q = modelspace.String2Index({opnamesplit[1]})[0];
         std::cout << "call Dagger_Op with Q = " << Q << std::endl;
-        return Dagger_Op( modelspace, Q);
+        theop =  Dagger_Op( modelspace, Q);
       }
       else if (opnamesplit[0] == "DaggerAlln")
       {
         index_t Q = modelspace.String2Index({opnamesplit[1]})[0];
-        return DaggerAlln_Op( modelspace, Q);
+        theop =  DaggerAlln_Op( modelspace, Q);
       }
       else if (opnamesplit[0] == "M0nu") // Neutrinoless Double Beta Decay Operators   format e.g.  M0nu_GT_7.72_none or M0nu_F_12.6_AV18
       {
@@ -237,14 +250,16 @@ namespace imsrg_util
              };
         if ( M0nuop.find(M0nuopname) != M0nuop.end() )
         {
-        return M0nuop[M0nuopname](modelspace,Eclosure,src);
+        theop =  M0nuop[M0nuopname](modelspace,Eclosure,src);
         }
       }
       else //need to remove from the list
       {
          std::cout << "Unknown operator: " << opname << std::endl;
       }
-      return Operator();
+//      theop =  Operator();
+      theop.profiler.timer[opname] += omp_get_wtime() - t_start;
+      return theop;
  
  }
 
@@ -282,6 +297,10 @@ namespace imsrg_util
    return OBD;
  }
 
+ /// Gives \f$ rho_{n,l}(r)\f$ , the norm squared of the harmonic oscillator radial wave function evaluated at r.
+ /// This is normalized so that integrating \f$ rho(r) r^2 dr \f$ gives 1.
+ /// This means that it is related to the acutal density by a factor of $\f 4\pi \f$.
+ /// This is equivalent to squaring the return value of HO_Radial_psi().
  double HO_density(int n, int l, double hw, double r)
  {
     double v = M_NUCLEON * hw / (HBARC*HBARC);
@@ -291,15 +310,15 @@ namespace imsrg_util
     return rho;
  }
 
-double HO_Radial_psi(int n, int l, double hw, double r)
-{
+ double HO_Radial_psi(int n, int l, double hw, double r)
+ {
    double b = sqrt( (HBARC*HBARC) / (hw * M_NUCLEON) );
    double x = r/b;
    double Norm = 2*sqrt( gsl_sf_fact(n) * pow(2,n+l) / SQRTPI / gsl_sf_doublefact(2*n+2*l+1) / pow(b,3.0) );
    double L = gsl_sf_laguerre_n(n,l+0.5,x*x);
    double psi = Norm * pow(x,l) * exp(-x*x*0.5) * L;
    return psi;
-}
+ }
 
  // Just do the HF transformation
  std::vector<double> GetOccupationsHF(HartreeFock& hf)
@@ -1206,26 +1225,92 @@ Operator RSquaredOp(ModelSpace& modelspace)
  }
 
 
-Operator ProtonDensityAtR(ModelSpace& modelspace, double R)
+/// Operator whose expectation value gives the proton density at radius R
+/// \f$ \hat{rho}(r) = \sum_{ij} \phi_i^{*}(r) \phi_j(r) a^{\dagger}_ia_j \f$
+/// Normalized such that \f$ 4\pi \int dr r^2 \rho(r) = Z$.
+//Operator ProtonDensityAtR(ModelSpace& modelspace, double R)
+Operator DensityAtR(ModelSpace& modelspace, double R, std::string pn)
 {
   Operator Rho(modelspace,0,0,0,2);
-  for ( auto i : modelspace.proton_orbits)
+  double fourpi = 4*PI;
+  double hw = modelspace.GetHbarOmega();
+
+  auto pn_list = pn=="proton" ? modelspace.proton_orbits  : modelspace.neutron_orbits;
+  for ( auto i : pn_list)
   {
     Orbit& oi = modelspace.GetOrbit(i);
-    Rho.OneBody(i,i) = HO_density(oi.n,oi.l,modelspace.GetHbarOmega(),R);
+    for ( auto j : Rho.OneBodyChannels.at({oi.l,oi.j2,oi.tz2}) )
+    {
+       Orbit& oj = modelspace.GetOrbit(j);
+       Rho.OneBody(i,j) = HO_Radial_psi(oi.n,oi.l,hw,R) * HO_Radial_psi( oj.n, oj.l, hw, R) / fourpi;
+    }
   }
   return Rho;
 }
 
-Operator NeutronDensityAtR(ModelSpace& modelspace, double R)
+
+/// Get the point nucleon form factor at a given momentum transfer q.
+/// \f$ F(q) = 4\pi \int_0^{\infty} dr r^2 j_0(qr) \rho(r) \f$
+/// We absorb the \f$ 4pi \f$ by using radial wave functions which are normalized to 1.
+/// The form factor is normalized such that for protons \f$ F(q=0) = Z \f$ and likewise for neutrons.
+/// At low q, the form factor behaves as \f$ F(q\approx = 0) = Z(1 - r^2 q^2 / 6) \f$, where $r^2$ is the rms point proton radius.
+Operator FormfactorAtQ(ModelSpace& modelspace, double q, std::string pn)
 {
-  Operator Rho(modelspace,0,0,0,2);
-  for ( auto i : modelspace.neutron_orbits)
+  Operator Fq(modelspace,0,0,0,2);
+  double hw = modelspace.GetHbarOmega();
+  double bosc = HBARC / sqrt( M_NUCLEON * hw );
+  double k = q * bosc; // put q in oscillator units
+
+  int npoints = 200;  // current options for npoints are 0-50, 100, and 200.
+  std::vector<double> xvals(npoints,0.);
+  std::vector<double> weights(npoints,0.);
+  std::vector<double> bessel_j0(npoints,0.);
+  for (int ix=0;ix<npoints;ix++)
+  {
+     xvals[ix]    = GaussLaguerre::gauss_laguerre_points_200[ix][0] ;
+     weights[ix]  =   GaussLaguerre::gauss_laguerre_points_200[ix][1] * xvals[ix] * xvals[ix]  ; // includes x^2 from jacobian
+     bessel_j0[ix] =   gsl_sf_bessel_j0( k * xvals[ix] ) ;
+   }
+ 
+ 
+  auto pn_list = pn=="proton" ? modelspace.proton_orbits  : modelspace.neutron_orbits;
+  for ( auto i : pn_list)
   {
     Orbit& oi = modelspace.GetOrbit(i);
-    Rho.OneBody(i,i) = HO_density(oi.n,oi.l,modelspace.GetHbarOmega(),R);
+    std::vector<double> phi_i(npoints,0.);
+
+    // compare with HO_Radial_psi: no factor sqrt(1/b^3) because we have a b^3 out front from changing variables from r to r/b.
+    double Norm_i = 2*sqrt( gsl_sf_fact(oi.n) * pow(2,oi.n+oi.l) / SQRTPI / gsl_sf_doublefact(2*oi.n+2*oi.l+1) );
+
+    for (int ix=0;ix<npoints;ix++)
+    {
+       double x = xvals[ix];
+       // extra +x in exponent comes from Gauss-Laguerre weighting.
+       phi_i[ix] = Norm_i * pow(x,oi.l) * exp(-x*x*0.5 + x) * gsl_sf_laguerre_n(oi.n,oi.l+0.5,x*x) ;
+    }
+    for ( auto j : Fq.OneBodyChannels.at({oi.l,oi.j2,oi.tz2}) )
+    {
+       if (i<j) continue;
+       Orbit& oj = modelspace.GetOrbit(j);
+
+       double Norm_j = 2*sqrt( gsl_sf_fact(oj.n) * pow(2,oj.n+oj.l) / SQRTPI / gsl_sf_doublefact(2*oj.n+2*oj.l+1) );
+       std::vector<double> phi_j(npoints,0.);
+       for (int ix=0;ix<npoints;ix++)
+       {
+          double x = xvals[ix];
+          // Notice no +x in the exponent here
+          phi_j[ix] = Norm_j * pow(x,oj.l) * exp(-x*x*0.5 ) * gsl_sf_laguerre_n(oj.n,oj.l+0.5,x*x) ;
+       }
+       double fq_ij = 0;
+       for (int ix=0;ix<npoints;ix++)
+       {
+          fq_ij += weights[ix] *  bessel_j0[ix] * phi_i[ix] * phi_j[ix];
+       }
+       Fq.OneBody(i,j) = fq_ij;
+       Fq.OneBody(j,i) = fq_ij;
+    }
   }
-  return Rho;
+  return Fq;
 }
 
 

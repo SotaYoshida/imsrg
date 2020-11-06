@@ -2020,6 +2020,9 @@ namespace Commutator {
     int herm = Z.IsAntiHermitian() ? -1 : 1 ;
     std::map<int,double> e_fermi = Z.modelspace->GetEFermi();
 
+    if (X.GetParticleRank() < 3) return;
+    if (Y.GetParticleRank() < 3) return;
+
     size_t nch2 = Z.modelspace->GetNumberTwoBodyChannels();
     size_t norb = Z.modelspace->GetNumberOrbits();
 #pragma omp parallel for schedule(dynamic,1) if (not Z.modelspace->scalar3b_transform_first_pass)
@@ -2118,7 +2121,6 @@ namespace Commutator {
 
 
 
-
   //*****************************************************************************************
   //                   |i
   //    *~~[X]~~*      |        Uncoupled expression:
@@ -2140,6 +2142,7 @@ namespace Commutator {
     auto& Y2 = Y.TwoBody;
     auto& Y3 = Y.ThreeBody;
     auto& Z1 = Z.OneBody;
+    int x_particle_rank = X.GetParticleRank();
     std::map<int,double> e_fermi = Z.modelspace->GetEFermi();
 
     size_t norb = Z.modelspace->GetNumberOrbits();
@@ -2221,7 +2224,8 @@ namespace Commutator {
                     and (  (occnat_c*(1-occnat_c) * occnat_d*(1-occnat_d) * occnat_i*(1-occnat_i) ) > Z.modelspace->GetOccNat3Cut() )
                     and (  (occnat_a*(1-occnat_a) * occnat_b*(1-occnat_b) * occnat_j*(1-occnat_j) ) > Z.modelspace->GetOccNat3Cut() )   )
                 {
-                  xcdiabj = X3.GetME_pn(J,J,twoJ,c,d,i,a,b,j);
+                  //                xcdiabj = X3.GetME_pn(J,J,twoJ,c,d,i,a,b,j);
+                  xcdiabj = x_particle_rank>2 ? X3.GetME_pn(J,J,twoJ,c,d,i,a,b,j) :  0;
                   ycdiabj = Y3.GetME_pn(J,J,twoJ,c,d,i,a,b,j);
                 }
                 if ( (std::max(ea+eb+ei,ec+ed+ej) <= Z.modelspace->E3max )
@@ -2229,7 +2233,8 @@ namespace Commutator {
                     and (  (occnat_c*(1-occnat_c) * occnat_d*(1-occnat_d) * occnat_j*(1-occnat_j) ) > Z.modelspace->GetOccNat3Cut() )
                     and (  (occnat_a*(1-occnat_a) * occnat_b*(1-occnat_b) * occnat_i*(1-occnat_i) ) > Z.modelspace->GetOccNat3Cut() )   )
                 {
-                  xabicdj = X3.GetME_pn(J,J,twoJ,a,b,i,c,d,j);
+                  //                xabicdj = X3.GetME_pn(J,J,twoJ,a,b,i,c,d,j);
+                  xabicdj = x_particle_rank>2 ? X3.GetME_pn(J,J,twoJ,a,b,i,c,d,j) : 0 ;
                   yabicdj = Y3.GetME_pn(J,J,twoJ,a,b,i,c,d,j);
                 }
                 zij += prefactor * (twoJ+1) * ( (Xabcd * ycdiabj - yabicdj * Xcdab)
@@ -2248,7 +2253,6 @@ namespace Commutator {
 
     Z.profiler.timer[__func__] += omp_get_wtime() - tstart;
   }
-
 
 
 
@@ -2468,8 +2472,6 @@ namespace Commutator {
     Z.profiler.timer[__func__] += omp_get_wtime() - tstart;
   }
 
-
-
   //*****************************************************************************************
   //
   // i|  j|   *~~[X]  Uncoupled expression:
@@ -2494,6 +2496,7 @@ namespace Commutator {
     auto& Y1 = Y.OneBody;
     auto& Y3 = Y.ThreeBody;
     auto& Z2 = Z.TwoBody;
+    int x_particle_rank = X.GetParticleRank();
     std::map<int,double> e_fermi = Z.modelspace->GetEFermi();
 
     int norb = Z.modelspace->GetNumberOrbits();
@@ -2558,7 +2561,8 @@ namespace Commutator {
               int twoJ_max = oa.j2 + 2*J;
               for (int twoJ=twoJ_min; twoJ<=twoJ_max; twoJ+=2)
               {
-                double xijbkla = X3.GetME_pn(J,J,twoJ,i,j,b,k,l,a);
+                //              double xijbkla = X3.GetME_pn(J,J,twoJ,i,j,b,k,l,a);
+                double xijbkla = x_particle_rank > 2 ? X3.GetME_pn(J,J,twoJ,i,j,b,k,l,a) : 0;
                 double yijbkla = Y3.GetME_pn(J,J,twoJ,i,j,b,k,l,a);
 
                 zijkl += occfactor * (twoJ+1.)/(2*J+1) * ( X1(a,b) * yijbkla -  Y1(a,b) * xijbkla );
@@ -2575,7 +2579,6 @@ namespace Commutator {
 
     Z.profiler.timer[__func__] += omp_get_wtime() - tstart;
   }
-
 
 
 
@@ -2913,7 +2916,8 @@ namespace Commutator {
             size_t iket_klc = (size_t) recoupling_cache[pointer_klc+2+ilist_klc];
             double recouple_ket =      recoupling_cache[pointer_klc+2+listsize_klc+ilist_klc];
 
-            xabjklc += recouple_bra*recouple_ket * X3.GetME_pn_ch(ch_check,ch_check, ibra_abj, iket_klc );
+            //               xabjklc += recouple_bra*recouple_ket * X3.GetME_pn_ch(ch_check,ch_check, ibra_abj, iket_klc );
+            if (x_has_3 ) xabjklc += recouple_bra*recouple_ket * X3.GetME_pn_ch(ch_check,ch_check, ibra_abj, iket_klc );
             yabjklc += recouple_bra*recouple_ket * Y3.GetME_pn_ch(ch_check,ch_check, ibra_abj, iket_klc );
           }
         }
@@ -3000,7 +3004,6 @@ namespace Commutator {
 
   Z.profiler.timer[__func__] += omp_get_wtime() - tstart;
   }
-
 
 
 
@@ -3573,6 +3576,10 @@ namespace Commutator {
     auto& Y3 = Y.ThreeBody;
     auto& Z2 = Z.TwoBody;
 
+    bool x3_allocated = X3.IsAllocated();
+    bool y3_allocated = Y3.IsAllocated();
+    if ( not ( x3_allocated and y3_allocated) ) return;
+
     int hX = X.IsHermitian() ? 1 : -1;
     int hY = Y.IsHermitian() ? 1 : -1;
     std::map<int,double> e_fermi = Z.modelspace->GetEFermi();
@@ -3827,6 +3834,9 @@ void comm332_pphhss( const Operator& X, const Operator& Y, Operator& Z )
   std::map<int,double> e_fermi = Z.modelspace->GetEFermi();
   //  std::cout << "  fermi levels " << e_fermi[-1] << " " << e_fermi[+1] << std::endl;
 
+  bool x3_allocated = X3.IsAllocated();
+  bool y3_allocated = Y3.IsAllocated();
+  if ( not ( x3_allocated and y3_allocated) ) return;
 
   size_t nch = Z.modelspace->GetNumberTwoBodyChannels();
   size_t nch_CC = Z.modelspace->TwoBodyChannels_CC.size();
@@ -4291,7 +4301,6 @@ void comm332_pphhss( const Operator& X, const Operator& Y, Operator& Z )
 }
 
 
-
 void comm332_pphhss_debug( const Operator& X, const Operator& Y, Operator& Z )
   //void comm332_pphhss( const Operator& X, const Operator& Y, Operator& Z )
 {
@@ -4301,6 +4310,11 @@ void comm332_pphhss_debug( const Operator& X, const Operator& Y, Operator& Z )
   auto& Y3 = Y.ThreeBody;
   auto& Z2 = Z.TwoBody;
   std::map<int,double> e_fermi = Z.modelspace->GetEFermi();
+
+
+  bool x3_allocated = X3.IsAllocated();
+  bool y3_allocated = Y3.IsAllocated();
+  if ( not ( x3_allocated and y3_allocated) ) return;
 
   int nch = Z.modelspace->GetNumberTwoBodyChannels();
 #pragma omp parallel for schedule(dynamic,1) if (not Z.modelspace->scalar3b_transform_first_pass)
@@ -4590,7 +4604,6 @@ void comm332_pphhss_debug( const Operator& X, const Operator& Y, Operator& Z )
   }// for ch
   Z.profiler.timer[__func__] += omp_get_wtime() - tstart;
 }
-
 
 
 
@@ -5203,8 +5216,8 @@ void comm223ss( const Operator& X, const Operator& Y, Operator& Z )
     nch_pph++;
   }// for iter_obc
 
-  Zbar.resize( Zbar_n_elements, 0. );
   std::cout << __func__ << "  allocating Zbar   " << Zbar_n_elements << " elements  ~ " << Zbar_n_elements * sizeof(float) /(1024.*1024*1024) << " GB" << std::endl;
+  Zbar.resize( Zbar_n_elements, 0. );
 
   Z.profiler.timer["comm223_setup_loop"] += omp_get_wtime() - t_internal;
   t_internal = omp_get_wtime();
@@ -7480,6 +7493,9 @@ void comm233_phss( const Operator& X, const Operator& Y, Operator& Z )
   int hX = X.IsHermitian() ? 1 : -1;
   int hY = Y.IsHermitian() ? 1 : -1;
 
+  bool x3_allocated = X3.IsAllocated();
+  bool y3_allocated = Y3.IsAllocated();
+
   size_t nch2 = Z.modelspace->GetNumberTwoBodyChannels(); // number of regular 2b channels
   size_t nch2_CC = Z.modelspace->TwoBodyChannels_CC.size(); // number of particle hole channels
   std::deque<std::vector<size_t>> ph_kets_cc(nch2_CC); // list of ph 2b kets for each CC channel
@@ -7734,11 +7750,23 @@ void comm233_phss( const Operator& X, const Operator& Y, Operator& Z )
         {
           int phase_y = Z.modelspace->phase( (oa.j2+twoJp)/2 );
 
+          double xablmij = 0;
+          double yablmij = 0;
           // get the X3 and Y3 elements in one go (to avoid doing the recoupling twice)
-          auto xandy = Y3.GetME_pn_TwoOps( Jij,Jlm,twoJp, i,j,a, l,m,b, X3,Y3 );
-          double xablmij = xandy[0];
-          double yablmij = xandy[1];
-
+          if ( x3_allocated and y3_allocated )
+          {
+            auto xandy = Y3.GetME_pn_TwoOps( Jij,Jlm,twoJp, i,j,a, l,m,b, X3,Y3 );
+            xablmij = xandy[0];
+            yablmij = xandy[1];
+          }
+          else if (y3_allocated)
+          {
+             yablmij = Y3.GetME_pn(Jij, Jlm, twoJp,i,j,a,l,m,b);
+          }
+          else if (x3_allocated)
+          {
+             xablmij = X3.GetME_pn(Jij, Jlm, twoJp,i,j,a,l,m,b);
+          }
 
           double sixjy = Z.modelspace->GetSixJ( Jij, Jlm, Jph, jb, ja, 0.5*twoJp);
           X3bar_ablmij -= phase_y * (twoJp+1) * sixjy * xablmij;
@@ -8387,6 +8415,11 @@ void comm333_ppp_hhhss( const Operator& X, const Operator& Y, Operator& Z )
   int hY = Y.IsHermitian() ? 1 : -1;
   std::map<int,double> e_fermi = Z.modelspace->GetEFermi();
 
+
+  bool x3_allocated = X3.IsAllocated();
+  bool y3_allocated = Y3.IsAllocated();
+  if ( not ( x3_allocated and y3_allocated) ) return;
+
   size_t nch3 = Z.modelspace->GetNumberThreeBodyChannels();
 #pragma omp parallel for schedule(dynamic,1)
   for (size_t ch3=0; ch3<nch3; ch3++)
@@ -8506,6 +8539,10 @@ void comm333_pph_hhpss( const Operator& X, const Operator& Y, Operator& Z )
 
   int hX = X.IsHermitian() ? 1 : -1;
   int hY = Y.IsHermitian() ? 1 : -1;
+
+  bool x3_allocated = X3.IsAllocated();
+  bool y3_allocated = Y3.IsAllocated();
+  if ( not ( x3_allocated and y3_allocated) ) return;
 
   size_t nch2 = Z.modelspace->GetNumberTwoBodyChannels();
   size_t nch3 = Z.modelspace->GetNumberThreeBodyChannels();

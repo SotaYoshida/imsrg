@@ -95,6 +95,7 @@ int main(int argc, char** argv)
   bool relativistic_correction = parameters.s("relativistic_correction") == "true";
   bool IMSRG3 = parameters.s("IMSRG3") == "true";
   bool imsrg3_n7 = parameters.s("imsrg3_n7") == "true";
+  bool imsrg3_at_end = parameters.s("imsrg3_at_end") == "true";
   bool write_omega = parameters.s("write_omega") == "true";
   bool freeze_occupations = parameters.s("freeze_occupations")=="true";
   bool discard_no2b_from_3n = parameters.s("discard_no2b_from_3n")=="true";
@@ -563,7 +564,7 @@ int main(int argc, char** argv)
     std::cout << "Truncations: dE3max = " << dE3max << "   OccNat3Cut = " << std::scientific << OccNat3Cut << "  ->  number of 3-body states kept:  " << nstates[0] << " out of " << nstates[1] << std::endl << std::fixed;
   }
 
-  if (IMSRG3 )
+  if (IMSRG3  )
   {
     modelspace.SetdE3max(dE3max);
     modelspace.SetOccNat3Cut(OccNat3Cut);
@@ -704,30 +705,33 @@ int main(int argc, char** argv)
 
 
 
-    //  for (auto& op : ops)
-    for (size_t i=0;i<ops.size();++i)
-    {
-      //     std::cout << "Before transforming  " << opnames[i] << " has 3b norm " << ops[i].ThreeBodyNorm() << std::endl;
+//  for (auto& op : ops)
+   for (size_t i=0;i<ops.size();++i)
+   {
+//     std::cout << "Before transforming  " << opnames[i] << " has 3b norm " << ops[i].ThreeBodyNorm() << std::endl;
       // We don't transform a DaggerHF, because we want the a^dagger to already refer to the HF basis.
-      if ((basis == "HF") and (opnames[i].find("DaggerHF") == std::string::npos)  )
-      {
-        ops[i] = hf.TransformToHFBasis(ops[i]);
-      }
-      else if ((basis == "NAT") and (opnames[i].find("DaggerHF") == std::string::npos)  )
-      {
-        ops[i] = hf.TransformHOToNATBasis(ops[i]);
-      }
-      //     std::cout << "After transforming  " << opnames[i] << " has 3b norm " << ops[i].ThreeBodyNorm() << std::endl;
-      ops[i] = ops[i].DoNormalOrdering();
-      //     std::cout << "Before normal ordering  " << opnames[i] << " has 3b norm " << ops[i].ThreeBodyNorm() << std::endl;
-      if (method == "MP3")
-      {
-        double dop = ops[i].MP1_Eval( HNO );
-        std::cout << "Operator 1st order correction  " << dop << "  ->  " << ops[i].ZeroBody + dop << std::endl;
-      }
-    }
-
-    for (index_t i=0;i<ops.size();++i)
+     if ((basis == "HF") and (opnames[i].find("DaggerHF") == std::string::npos)  )
+     {
+       ops[i] = hf.TransformToHFBasis(ops[i]);
+     }
+     else if ((basis == "NAT") and (opnames[i].find("DaggerHF") == std::string::npos)  )
+     {
+       ops[i] = hf.TransformHOToNATBasis(ops[i]);
+     }
+//     std::cout << "After transforming  " << opnames[i] << " has 3b norm " << ops[i].ThreeBodyNorm() << std::endl;
+     ops[i] = ops[i].DoNormalOrdering();
+//     std::cout << "Before normal ordering  " << opnames[i] << " has 3b norm " << ops[i].ThreeBodyNorm() << std::endl;
+     if (method == "HF")
+     {
+       double dop = ops[i].MP1_Eval( HNO );
+       std::cout << "HF expectation value  " << opnames[i] << "  " << ops[i].ZeroBody << std::endl;
+     }
+     else if (method == "MP3")
+     {
+       double dop = ops[i].MP1_Eval( HNO );
+       std::cout << "Operator 1st order correction  " << dop << "  ->  " << ops[i].ZeroBody + dop << std::endl;
+     }
+    if ( opnames[i] == "Rp2" )
     {
       //    std::cout << "Before transforming  " << opnames[i] << " has 3b norm " << ops[i].ThreeBodyNorm() << std::endl;
       // We don't transform a DaggerHF, because we want the a^dagger to already refer to the HF basis.
@@ -753,23 +757,7 @@ int main(int argc, char** argv)
         std::cout << " HF charge radius = " << ( abs(Rp2)<1e-6 ? 0.0 : sqrt( Rp2 + r2p + r2n*(A-Z)/Z + DarwinFoldy) ) << std::endl;
       }
     }
-
-    //  for (index_t i=0;i<ops.size();++i)
-    //  {
-    //    std::cout << opnames[i] << " = " << ops[i].ZeroBody << std::endl;
-    //  }
-
-    //  auto itR2p = find(opnames.begin(),opnames.end(),"Rp2");
-    //  if (itR2p != opnames.end())
-    //  {
-    //    Operator& Rp2 = ops[itR2p-opnames.begin()];
-    //    int Z = modelspace.GetTargetZ();
-    //    int A = modelspace.GetTargetMass();
-    //    std::cout << " HF point proton radius = " << sqrt( Rp2.ZeroBody ) << std::endl;
-    //    std::cout << " HF charge radius = " << ( abs(Rp2.ZeroBody)<1e-6 ? 0.0 : sqrt( Rp2.ZeroBody + r2p + r2n*(A-Z)/Z + DarwinFoldy) ) << std::endl;
-    //  }
-
-
+   }
   }// if method != "magnus"
 
   if (basis=="HF" or basis=="NAT")
@@ -961,6 +949,47 @@ int main(int argc, char** argv)
   }
 
 
+  if ( imsrg3_at_end )
+  {
+    if ( method.find("magnus") != std::string::npos )
+    {
+      std::cout << "Performing final BCH transformation at the IMSRG(3) level" << std::endl;
+
+      modelspace.SetdE3max(dE3max);
+      modelspace.SetOccNat3Cut(OccNat3Cut);
+      int new_E3max = std::min(modelspace.GetE3max(), int( std::ceil(3*std::max( modelspace.GetEFermi()[-1], modelspace.GetEFermi()[+1])+dE3max)));
+      std::cout << "Setting new E3max = " << new_E3max << std::endl;
+      modelspace.SetE3max(  new_E3max);
+
+      Operator H3(modelspace,0,0,0,3);
+      std::cout << "Constructed H3" << std::endl;
+      H3.ZeroBody = HNO.ZeroBody;
+      H3.OneBody = HNO.OneBody;
+      H3.TwoBody = HNO.TwoBody;
+      HNO = H3;
+      std::cout << "Replacing HNO" << std::endl;
+      std::cout << "Hbare Three Body Norm is " << Hbare.ThreeBodyNorm() << std::endl;
+      HNO.ThreeBody.SwitchToPN_and_discard();
+
+
+      Commutator::SetUseIMSRG3(true);
+      Commutator::SetUseIMSRG3N7(imsrg3_n7);
+//      Operator H_with_3 = imsrgsolver.Transform(  *(imsrgsolver.H_0) );
+      Operator H_with_3 = imsrgsolver.Transform( HNO );
+
+      // Now throw away the residual 3-body so we don't need to keep it after re-normal ordering
+      H_with_3.SetNumberLegs(4);
+      H_with_3.SetParticleRank(2);
+      imsrgsolver.FlowingOps[0] = H_with_3;
+    }
+    else
+    {
+      std::cout << "selected imsrg3_at_end, but method != magnus, so I don't know what to do. Ignoring." << std::endl;
+    }
+
+  }
+
+
   /*
   // Transform all the operators
   if (method == "magnus")
@@ -1014,8 +1043,8 @@ int main(int argc, char** argv)
 
     HNO = imsrgsolver.GetH_s();
 
-    int nOmega = imsrgsolver.GetOmegaSize() + imsrgsolver.GetNOmegaWritten();
-    std::cout << "Undoing NO wrt A=" << modelspace_imsrg.GetAref() << " Z=" << modelspace_imsrg.GetZref() << std::endl;
+//    int nOmega = imsrgsolver.GetOmegaSize() + imsrgsolver.GetNOmegaWritten();
+    std::cout << "Undoing NO wrt A=" << modelspace.GetAref() << " Z=" << modelspace.GetZref() << std::endl;
     std::cout << "Before doing so, the spes are " << std::endl;
     for ( auto i : modelspace_imsrg.all_orbits ) std::cout << "  " << i << " : " << HNO.OneBody(i,i) << std::endl;
     if (IMSRG3)
@@ -1235,7 +1264,7 @@ int main(int argc, char** argv)
   {
     std::string scratch = rw.GetScratchDir();
     imsrgsolver.FlushOmegaToScratch();
-    for (size_t i=0; i < imsrgsolver.GetNOmegaWritten() ; i++)
+    for (int i=0; i < imsrgsolver.GetNOmegaWritten() ; i++)
     {
       std::ostringstream inputfile,outputfile;
       inputfile << scratch << "/OMEGA_" << std::setw(6) << std::setfill('0') << getpid() << std::setw(3) << std::setfill('0') << i;

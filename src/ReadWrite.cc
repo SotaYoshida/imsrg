@@ -1398,7 +1398,7 @@ void ReadWrite::Read_Darmstadt_3body_from_stream( T& infile, Operator& Hbare, in
     infile.getline(line,LINESIZE);  // read the header
     if ( Hbare.GetTRank() > 0 ) // It's not a Hamiltonian at all! It's a beta decay operator (probably).
     {
- 
+
        float opJ,opP,opT,efil,e2fil,e3fil,lmaxfil;
 //       int opJ,opP,opT,efil,e2fil,e3fil,lmaxfil;
        infile >> opJ >> opP >> opT >> efil >> e2fil >> e3fil >> lmaxfil; // There's an extra header line with useful information.
@@ -2218,7 +2218,7 @@ void ReadWrite::ReadDarmstadt_2bodyRel( std::string filename, Operator& Op )
   int emax = Op.modelspace->Emax;
   infile.ignore(1024,'\n'); // skip header
   int n1,l1,n2,l2,S,J,T,Tz;
-  double v; 
+  double v;
   // channels are labeled by S,J,T,Tz
   std::unordered_map<size_t,arma::mat> Vrel;
   // allocate that bad boy
@@ -2297,7 +2297,7 @@ void ReadWrite::ReadDarmstadt_2bodyRel( std::string filename, Operator& Op )
           for (int Sab=0; Sab<=1; ++Sab)
           {
             if ( std::abs(Lab-Sab)>J or Lab+Sab<J) continue;
-     
+
             double njab = AngMom::NormNineJ(la,sa,ja, lb,sb,jb, Lab,Sab,J);
             if (njab == 0) continue;
             int Scd = Sab;
@@ -4345,7 +4345,7 @@ void ReadWrite::WriteValence3body( ThreeBodyME& threeBME, std::string filename )
       intfile << "!  " << it.first << "   " << oi.n << " " << oi.l << " " << oi.j2 << "/2" << " " << oi.tz2 << "/2" << std::endl;
    }
    intfile << "!" << std::endl;
-   intfile << "!" << std::setw(wint-1) << "a" << " " << std::setw(wint) << "b" << " " << std::setw(wint) <<"c" 
+   intfile << "!" << std::setw(wint-1) << "a" << " " << std::setw(wint) << "b" << " " << std::setw(wint) <<"c"
            << " " << std::setw(wint) << "d" << " " << std::setw(wint) << "e" << " " << std::setw(wint)
            << "f" << "   " << std::setw(wint)  << "Jab" << " " << std::setw(wint) << "Jde"
            << " " << std::setw(wint) << "2J" << "      "
@@ -5527,7 +5527,7 @@ void ReadWrite::CopyFile(std::string filename1, std::string filename2)
 //    std::ifstream f1 (inputfile.str(), std::fstream::binary);
 //    std::ofstream f2 (outputfile.str(), std::fstream::trunc|std::fstream::binary);
 //    f2 << f1.rdbuf ();
-//  } 
+//  }
 }
 
 

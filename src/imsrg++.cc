@@ -1237,6 +1237,121 @@ int main(int argc, char** argv)
 
     }// for opnames
 
+    // the format should look like OpName^j_t_p_r^/path/to/2bfile^/path/to/3bfile  if particle rank of Op is 2-body, then 3bfile is not needed.
+    for (auto& tag : opsfromfile)
+    {
+      std::istringstream ss(tag);
+      std::string opname,qnumbers,f2name,f3name="";
+      //      std::vector<int> qn(4);
+      int j,t,p,r;
+
+      getline(ss,opname,'^');
+      getline(ss,qnumbers,'^');
+      getline(ss,f2name,'^');
+      if ( not ss.eof() )  getline(ss,f3name,'^');
+
+      ss.str(qnumbers);
+      ss.clear();
+      std::string tmp;
+      getline(ss,tmp,'_');
+      std::istringstream(tmp) >> j;
+      getline(ss,tmp,'_');
+      std::istringstream(tmp) >> t;
+      getline(ss,tmp,'_');
+      std::istringstream(tmp) >> p;
+      getline(ss,tmp,'_');
+      std::istringstream(tmp) >> r;
+
+      //      for (int i=0;i<4;i++)
+      //      {
+      //        std::string tmp;
+      //        getline(ss,tmp,'_');
+      //        std::istringstream(tmp) >> qn[i];
+      //      }
+      //
+      ////      int j,t,p,r;
+      //      j = qn[0];
+      //      t = qn[1];
+      //      p = qn[2];
+      //      r = qn[3];
+      std::cout << "Parsed tag. opname = " << opname << "  " << j << " " << t << " " << p << " " << r << "   file2 = " << f2name   << "    file3 = " << f3name << std::endl;
+
+      Operator op(modelspace,j,t,p,r);
+      if (r>2) op.ThreeBody.Allocate();
+      //    std::cout << "Reading operator " << opname << "  in " << input_op_fmt << "  format from files " << f2name << "  ,  " << f3name << std::endl;
+      //    std::cout << "Operator has particle rank " << op.GetParticleRank() << std::endl;
+      if ( input_op_fmt == "navratil" )
+      {
+        rw.Read2bCurrent_Navratil( f2name, op );
+      }
+      else if ( input_op_fmt == "miyagi" )
+      {
+        if (f2name != "")
+        {
+          Operator optmp = rw.ReadOperator2b_Miyagi( f2name, modelspace );
+          op.TwoBody = optmp.TwoBody;
+        }
+        if ( r>2 and f3name != "")  rw.Read_Darmstadt_3body( f3name, op,  file3e1max,file3e2max,file3e3max);
+      }
+
+      if ( basis == "HF")
+      {
+        op = hf.TransformToHFBasis(op).DoNormalOrdering();
+      }
+      if ( basis == "NAT")
+      {
+        op = hf.TransformHOToNATBasis(op).DoNormalOrdering();
+      }
+      std::cout << "   HF: " << op.ZeroBody << std::endl;
+      op = op.Truncate(modelspace_imsrg);
+      op = imsrgsolver.Transform(op);
+
+      if (renormal_order)
+      {
+        op = op.UndoNormalOrdering();
+        op.SetModelSpace(ms2);
+        op = op.DoNormalOrdering();
+      }
+      //      std::cout << " (" << ops[i].ZeroBody << " ) " << std::endl;
+      std::cout << "   IMSRG: " << op.ZeroBody << std::endl;
+      //      rw.WriteOperatorHuman(ops[i],intfile+opnames[i]+"_step2.op");
+
+
+
+      std::cout << "      " << op.GetJRank() << " " << op.GetTRank() << " " << op.GetParity() << "   " << op.GetNumberLegs() << std::endl;
+      if ( ((op.GetJRank()+op.GetTRank()+op.GetParity())<1) and (op.GetNumberLegs()%2==0) )
+      {
+        std::cout << "writing scalar files " << std::endl;
+        if (valence_file_format == "tokyo")
+        {
+          rw.WriteTokyo(op,intfile+"_"+opname+".snt", "op");
+        }
+        else
+        {
+          rw.WriteNuShellX_op(op,intfile+opname+".int");
+        }
+      }
+      else if ( op.GetNumberLegs()%2==1) // odd number of legs -> this is a dagger operator
+      {
+        //      rw.WriteNuShellX_op(ops[i],intfile+opnames[i]+".int"); // do this for now. later make a *.dag format.
+        rw.WriteDaggerOperator( op, intfile+opname+".dag",opname);
+      }
+      else
+      {
+        std::cout << "writing tensor files " << std::endl;
+        if (valence_file_format == "tokyo")
+        {
+          rw.WriteTensorTokyo(intfile+"_"+opname+".snt",op);
+        }
+        else
+        {
+          rw.WriteTensorOneBody(intfile+opname+"_1b.op",op,opname);
+          rw.WriteTensorTwoBody(intfile+opname+"_2b.op",op,opname);
+        }
+      }
+    } //  for opsfromfile
+
+
   }// if method == "magnus"
 
 

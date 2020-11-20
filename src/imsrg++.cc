@@ -818,9 +818,13 @@ int main(int argc, char** argv)
 
 
   ModelSpace modelspace_imsrg = ( reference=="default" ? ModelSpace(eMax_imsrg,e2Max_imsrg,e3Max_imsrg,valence_space) : ModelSpace(eMax_imsrg,e2Max_imsrg,e3Max_imsrg,reference,valence_space) );
+  modelspace_imsrg.SetLmax(lmax);
+  modelspace_imsrg.SetHbarOmega(hw);
   if (emax_unocc>0) modelspace_imsrg.SetEmaxUnocc(emax_unocc);
   if (physical_system == "atomic") modelspace_imsrg.InitSingleSpecies(eMax_imsrg, eMax_imsrg, e3Max_imsrg, reference, valence_space);
   if (occ_file != "none" and occ_file != "" ) modelspace_imsrg.Init_occ_from_file(eMax_imsrg,e2Max_imsrg,e3Max_imsrg,valence_space,occ_file);
+  if (targetMass>0) modelspace_imsrg.SetTargetMass(targetMass);
+  if (lmax3>0) modelspace_imsrg.SetLmax3(lmax3);
   HNO = HNO.Truncate(modelspace_imsrg);
   IMSRGSolver imsrgsolver(HNO);
   imsrgsolver.SetHin(HNO); // necessary?

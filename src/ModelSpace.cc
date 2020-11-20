@@ -40,6 +40,9 @@ std::map< std::string, std::vector<std::string> > ModelSpace::ValenceSpaces  {
     { "fpgdsNR-shell"  ,   {"Ca60","p0f7","p0f5","p1p3","p1p1","n0g9","n0g7","n1d5","n1d3","n2s1"}}, // protons in the fp shell, neutrons in the gds shell
     { "sd3f7p3-shell"  ,   {"Si28","p0d3","n0d3","p1s1","n1s1","p0f7","n0f7","p1p3","n1p3"}},
     { "gds-shell" ,        {"Zr80","p0g9","n0g9","p0g7","n0g7","p1d5","n1d5","p1d3","n1d3","p2s1","n2s1"}}, // This is a big valence space, more than a few particles will be a serious shell model diagonalization
+    { "ps1"  ,         {"He4", "p0p1", "p0p3", "p1s1", "n0p1", "n0p3", "n1s1"}}, // This is for EDM of light nuclei
+    { "pd5s1"  ,         {"He4", "p0p1", "p0p3", "p1s1", "p0d5", "n0p1", "n0p3", "n1s1", "n0d5"}}, //
+    { "jj45"  ,         {"Ni78", "p1p1", "p1p3", "p0f5", "p0g9", "n2s1", "n1d3", "n1d5", "n0g7", "n0h11"}}, // In, Sn
 };
 
 

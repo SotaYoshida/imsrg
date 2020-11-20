@@ -710,7 +710,7 @@ void ReadWrite::Read_Darmstadt_3body( std::string filename, Operator& Hbare, int
 
   double start_time = omp_get_wtime();
   std::string extension = filename.substr( filename.find_last_of("."));
-//  File3N = filename;
+  File3N = filename;
   Aref = Hbare.GetModelSpace()->GetAref();
   Zref = Hbare.GetModelSpace()->GetZref();
 
@@ -5017,8 +5017,8 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
   intfile.open(filename, std::ofstream::out);
   ModelSpace * modelspace = op.GetModelSpace();
   int wint = 4; // width for printing integers
-  int wdouble = 12; // width for printing doubles
-  int pdouble = 6; // precision for printing doubles
+  int wdouble = 18; // width for printing doubles
+  int pdouble = 8; // precision for printing doubles
   std::vector<int> valence_protons(modelspace->valence.size());
   std::vector<int> valence_neutrons(modelspace->valence.size());
   auto it = set_intersection(modelspace->valence.begin(), modelspace->valence.end(), modelspace->proton_orbits.begin(), modelspace->proton_orbits.end(),valence_protons.begin());
@@ -5151,8 +5151,8 @@ void ReadWrite::WriteTokyoFull(Operator& op, std::string filename)
   intfile.open(filename, std::ofstream::out);
   ModelSpace * modelspace = op.GetModelSpace();
   int wint = 4; // width for printing integers
-  int wdouble = 12; // width for printing doubles
-  int pdouble = 6; // precision for printing doubles
+  int wdouble = 18; // width for printing doubles
+  int pdouble = 8; // precision for printing doubles
 
    // protons first
    int Acore = modelspace->GetAref();
@@ -5248,8 +5248,8 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
   outfile.open(filename, std::ofstream::out);
   ModelSpace * modelspace = op.GetModelSpace();
   int wint = 4; // width for printing integers
-  int wdouble = 12; // width for printing doubles
-  int pdouble = 6; // precision for printing doubles
+  int wdouble = 18; // width for printing doubles
+  int pdouble = 8; // precision for printing doubles
   std::vector<int> valence_protons(modelspace->valence.size());
   std::vector<int> valence_neutrons(modelspace->valence.size());
   auto it = set_intersection(modelspace->valence.begin(), modelspace->valence.end(), modelspace->proton_orbits.begin(), modelspace->proton_orbits.end(),valence_protons.begin());

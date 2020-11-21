@@ -5280,7 +5280,8 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
    outfile << "! input 3N: " << File3N.substr( File3N.find_last_of("/\\")+1 ) << std::endl;
    outfile << "! e1max: " << modelspace->GetEmax() << "  e2max: " << modelspace->GetE2max() << "   e3max: " << modelspace->GetE3max() << "   hw: " << modelspace->GetHbarOmega();
    outfile << "   Aref: " << Acore << "  Zref: " << Zcore << "  A_for_kinetic_energy: " << modelspace->GetTargetMass() << std::endl;
-   outfile << "! Zero body term: " << op.ZeroBody << std::endl;
+   outfile << "! Zero body term: " << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble)
+     << op.ZeroBody << std::endl;
    outfile << "! " << std::endl;
    outfile << "! model space" << std::endl;
    outfile << std::setw(wint) << valence_protons.size() << std::setw(wint) << valence_neutrons.size()

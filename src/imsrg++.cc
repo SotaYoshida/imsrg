@@ -153,7 +153,7 @@ int main(int argc, char** argv)
 
   if(eMax_imsrg == -1) eMax_imsrg = eMax;
   if(e2Max_imsrg == -1) e2Max_imsrg = 2*eMax;
-  if(e3Max_imsrg == -1) e3Max_imsrg = 3*eMax;
+  if(e3Max_imsrg == -1) e3Max_imsrg = E3max;
 
   // test 2bme file
   if (inputtbme != "none" and fmt2.find("oakridge")==std::string::npos and fmt2 != "schematic" )
@@ -1293,6 +1293,7 @@ int main(int argc, char** argv)
         if (f2name != "")
         {
           Operator optmp = rw.ReadOperator2b_Miyagi( f2name, modelspace );
+          op.OneBody = optmp.OneBody;
           op.TwoBody = optmp.TwoBody;
         }
         if ( r>2 and f3name != "")  rw.Read_Darmstadt_3body( f3name, op,  file3e1max,file3e2max,file3e3max);

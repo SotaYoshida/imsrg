@@ -691,7 +691,7 @@ Operator Operator::DoNormalOrderingDagger( int sign , std::set<index_t> occupied
 Operator Operator::Truncate(ModelSpace& ms_new)
 {
   Operator OpNew(ms_new, rank_J, rank_T, parity, particle_rank);
-  std::cout << "Operator trunction: ("
+  std::cout << "Operator truncation: ("
     << std::setw(3) << modelspace->GetEmax() << ", "
     << std::setw(3) << modelspace->GetE2max() << ", "
     << std::setw(3) << modelspace->GetE3max()

@@ -123,11 +123,11 @@ void HFMBPT::GetNaturalOrbitals()
 
     holeorbs = arma::uvec( holeorbs_tmp );
     hole_occ = arma::rowvec( hole_occ_tmp );
-//    std::cout << "holeorbs/occs:" << std::endl;
-//    for (size_t i=0; i<holeorbs.size(); i++)
-//    {
-//      std::cout << holeorbs[i] << "   " << hole_occ[i] << std::endl;
-//    }
+    //std::cout << "holeorbs/occs:" << std::endl;
+    //for (size_t i=0; i<holeorbs.size(); i++)
+    //{
+    //  std::cout << holeorbs[i] << "   " << hole_occ[i] << std::endl;
+    //}
 
     // Now we tell modelspace about the new occupations, and any needed reclassification of 'holes' and 'particles'
     UpdateReference();
@@ -144,10 +144,8 @@ void HFMBPT::DiagonalizeRho()
   arma::mat F_HF = C.t() * F * C; // Fock matrix (HF basis)
   for (auto& it : Hbare.OneBodyChannels)
   {
-//    arma::uvec orbvec(it.second);
     arma::uvec orbvec(std::vector<index_t>(it.second.begin(),it.second.end()));
-    arma::uvec orbvec_d = arma::sort(orbvec, "descend");
-//    arma::uvec orbvec_d = sort(orbvec, "descend");
+    arma::uvec orbvec_d = arma::sort(orbvec, "ascend");
     arma::mat rho_ch = rho.submat(orbvec, orbvec);
     arma::mat vec;
     arma::vec eig;
@@ -160,19 +158,16 @@ void HFMBPT::DiagonalizeRho()
       rho_ch.print();
       exit(0);
     }
-    // reordering
+    // Reordering so that the diagonal components of F in NAT rep are in the ascending order.
+    // Since the F has to be computed with renormal ordering process, the following way is not fully consistent,
+    // but it should not be too bad.
     arma::mat F_ch = F_HF.submat(orbvec, orbvec);
     F_ch = vec.t() * F_ch * vec;
     arma::uvec sort_idx = arma::sort_index(F_ch.diag(), "ascend");
     arma::uvec idx = arma::regspace<arma::uvec>(0,orbvec.size()-1);
     Occ(orbvec_d) = eig(sort_idx);
-    //std::cout << ":" << std::endl;
-    //std::cout << vec << std::endl;
-    //std::cout << "aa" << std::endl;
-    //std::cout << vec(sort_idx) << std::endl;
     C_HF2NAT.submat(orbvec,orbvec) = vec(idx,sort_idx);
-    // reordering
-    //C_HF2NAT.submat(orbvec, orbvec_d) = vec;
+    //std::cout << C_HF2NAT.submat(orbvec,orbvec) << std::endl;
   }
  // Choose ordering and phases so that C_HF2NAT looks as close to the identity as possible
   ReorderHFMBPTCoefficients();
@@ -442,6 +437,8 @@ void HFMBPT::GetDensityMatrix()
   Operator Hhf = HartreeFock::GetNormalOrderedH();
   Operator& H(Hhf);
   double t_start = omp_get_wtime();
+  int norbits = modelspace->GetNumberOrbits();
+  rho = arma::mat(norbits,norbits,arma::fill::zeros);
   DensityMatrixPP(H);
   DensityMatrixHH(H);
   DensityMatrixPH(H);
@@ -816,7 +813,7 @@ void HFMBPT::PrintSPEandWF()
   {
     Orbit& oi = modelspace->GetOrbit(i);
     std::cout << std::fixed << std::setw(3) << i << ": " << std::setw(3) << oi.n << " " << std::setw(3) << oi.l << " "
-         << std::setw(3) << oi.j2 << " " << std::setw(3) << oi.tz2 << "   " << std::setw(12) << std::setprecision(6) << F_natbasis(i,i) << " " << std::setw(12) << oi.occ << " " << std::setw(12) << oi.occ_nat*(1-oi.occ_nat) << "   | ";
+         << std::setw(3) << oi.j2 << " " << std::setw(3) << oi.tz2 << "   " << std::setw(12) << std::setprecision(6) << F_natbasis(i,i) << " " << std::setw(12) << oi.occ_nat << " " << std::setw(12) << oi.occ_nat*(1-oi.occ_nat) << "   | ";
 //         << std::setw(3) << oi.j2 << " " << std::setw(3) << oi.tz2 << "   " << std::setw(12) << std::setprecision(6) << F(i,i) << " " << std::setw(12) << oi.occ << "   | ";
     for (int j : Hbare.OneBodyChannels.at({oi.l,oi.j2,oi.tz2}) ) // j runs over HO states
     {
@@ -850,12 +847,19 @@ void HFMBPT::ReorderHFMBPTCoefficients()
        {
          for (index_t j=0;j<i;j++)
          {
-           if ( std::abs( C_HF2NAT(i,j)) > std::abs( C_HF2NAT(i,i) ) )
+           if ( std::abs( C_HF2NAT(orbvec(i),orbvec(j))) > std::abs( C_HF2NAT(orbvec(i),orbvec(i)) ) )
            {
-             C_HF2NAT.swap_cols(i,j);
-             Occ.swap_rows(i,j);
+             C_HF2NAT.swap_cols(orbvec(i),orbvec(j));
+             Occ.swap_rows(orbvec(i),orbvec(j));
              nswaps++;
            }
+           //if ( std::abs( C_HF2NAT(i,j)) > std::abs( C_HF2NAT(i,i) ) )
+           //{
+           //  C_HF2NAT.swap_cols(i,j);
+           //  Occ.swap_rows(i,j);
+           //  nswaps++;
+           //}
+
          }
        }
       }

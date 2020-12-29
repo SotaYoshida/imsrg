@@ -789,7 +789,6 @@ void HartreeFock::FillLowestOrbits()
 //  int placedN = 0;
   std::vector<index_t> holeorbs_tmp;
   std::vector<double> hole_occ_tmp;
-
   for (auto i : sorted_indices)
   {
 
@@ -806,7 +805,6 @@ void HartreeFock::FillLowestOrbits()
       hole_occ_tmp.push_back( std::min(1.0,double(refereceN-placedN)/(oi.j2+1.) ) );
       placedN = std::min(placedN+oi.j2+1.,refereceN);
     }
-
     if((placedZ >= refereceZ) and (placedN >= refereceN) ) break;
   }
 
@@ -1559,7 +1557,7 @@ ThreeBodyME HartreeFock::GetTransformed3B( Operator& OpIn )
         double jj = ojHO.j2 *0.5;
         double jk = okHO.j2 *0.5;
 
-        
+
         for ( size_t indxHF=0; indxHF<nkets_kept; indxHF++ )
         {
            size_t iket_HF = kets_kept[indxHF];
@@ -1666,7 +1664,7 @@ ThreeBodyME HartreeFock::GetTransformed3B( Operator& OpIn )
 //        double VHO = GetTransformed3bme(  Jij,  Jlm, twoJ,  i,j,k,l,m,n);
         double VHF = GetTransformed3bme( OpIn, Jij,  Jlm, twoJ,  i,j,k,l,m,n);
 //        if (ich < 3)
-//        {        
+//        {
 //        double VHO = OpIn.ThreeBody.GetME_pn( Jij,  Jlm, twoJ,  i,j,k,l,m,n);
 //          std::cout << " ich = " << ich << " ibra,iket " << ibra << " " << iket << "   VHO VHF = " << VHO << " " << VHF
 //                    << "  ijklmn = " << i << " " << j << " " << k << " " << l << " " << m << " " << n << "   "

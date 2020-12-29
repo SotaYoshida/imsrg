@@ -541,12 +541,12 @@ int main(int argc, char** argv)
     if (use_NAT_occupations)
     {
       hf.FillLowestOrbits();
-      std::cout << "Undoing NO wrt A=" << modelspace.GetAref() << " Z=" << modelspace.GetZref() << std::endl;
-      HNO = HNO.UndoNormalOrdering();
-      hf.UpdateReference();
-      modelspace.SetReference(modelspace.core); // change the reference
-      std::cout << "Doing NO wrt A=" << modelspace.GetAref() << " Z=" << modelspace.GetZref() << std::endl;
-      HNO = HNO.DoNormalOrdering();
+    //  std::cout << "Undoing NO wrt A=" << modelspace.GetAref() << " Z=" << modelspace.GetZref() << std::endl;
+    //  HNO = HNO.UndoNormalOrdering();
+    //  hf.UpdateReference();
+    //  modelspace.SetReference(modelspace.core); // change the reference
+    //  std::cout << "Doing NO wrt A=" << modelspace.GetAref() << " Z=" << modelspace.GetZref() << std::endl;
+    //  HNO = HNO.DoNormalOrdering();
     }
 
   }

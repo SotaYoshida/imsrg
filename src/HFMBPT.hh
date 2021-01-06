@@ -53,7 +53,6 @@ class HFMBPT : public HartreeFock
 
     void PrintSPEandWF(); // Function override, since we want to express the SPWF in terms of HO states
     void ReorderHFMBPTCoefficients();
-    void ReorderC();
     void UseNATOccupations( bool tf=true ){ use_NAT_occupations=tf;}; // Choose whether to use occupations from rho.
 
 };

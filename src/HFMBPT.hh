@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////////
 //    HFMBPT.hh, part of  imsrg++
 //    Copyright (C) 2019 Takayuki Miyagi
-//      -- code modified by Ragnar Stroberg 2019 
+//      -- code modified by Ragnar Stroberg 2019
 //
 //    This program is free software; you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License as published by
@@ -53,6 +53,7 @@ class HFMBPT : public HartreeFock
 
     void PrintSPEandWF(); // Function override, since we want to express the SPWF in terms of HO states
     void ReorderHFMBPTCoefficients();
+    void ReorderC();
     void UseNATOccupations( bool tf=true ){ use_NAT_occupations=tf;}; // Choose whether to use occupations from rho.
 
 };

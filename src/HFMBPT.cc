@@ -144,11 +144,13 @@ void HFMBPT::DiagonalizeRho()
   arma::mat F_HF = C.t() * F * C; // Fock matrix (HF basis)
   for (auto& it : Hbare.OneBodyChannels)
   {
+
     arma::uvec orbvec(std::vector<index_t>(it.second.begin(),it.second.end()));
-    arma::uvec orbvec_d = arma::sort(orbvec, "ascend");
+    arma::uvec orbvec_d = arma::sort(orbvec, "descend");
     arma::mat rho_ch = rho.submat(orbvec, orbvec);
     arma::mat vec;
     arma::vec eig;
+
     bool success = false;
     success = arma::eig_sym(eig, vec, rho_ch); // eigenvalues are in ascending order
     if(not success)
@@ -158,16 +160,19 @@ void HFMBPT::DiagonalizeRho()
       rho_ch.print();
       exit(0);
     }
+
+    Occ(orbvec_d) = eig;
+    C_HF2NAT.submat(orbvec, orbvec_d) = vec;
+
     // Reordering so that the diagonal components of F in NAT rep are in the ascending order.
     // Since the F has to be computed with renormal ordering process, the following way is not fully consistent,
     // but it should not be too bad.
-    arma::mat F_ch = F_HF.submat(orbvec, orbvec);
-    F_ch = vec.t() * F_ch * vec;
-    arma::uvec sort_idx = arma::sort_index(F_ch.diag(), "ascend");
-    arma::uvec idx = arma::regspace<arma::uvec>(0,orbvec.size()-1);
-    Occ(orbvec_d) = eig(sort_idx);
-    C_HF2NAT.submat(orbvec,orbvec) = vec(idx,sort_idx);
-    //std::cout << C_HF2NAT.submat(orbvec,orbvec) << std::endl;
+    //arma::mat F_ch = F_HF.submat(orbvec, orbvec);
+    //F_ch = vec.t() * F_ch * vec;
+    //arma::uvec sort_idx = arma::sort_index(F_ch.diag(), "ascend");
+    //arma::uvec idx = arma::regspace<arma::uvec>(0,orbvec.size()-1);
+    //Occ(orbvec) = eig(sort_idx);
+    //C_HF2NAT.submat(orbvec,orbvec) = vec(idx,sort_idx);
   }
  // Choose ordering and phases so that C_HF2NAT looks as close to the identity as possible
   ReorderHFMBPTCoefficients();
@@ -838,31 +843,31 @@ void HFMBPT::ReorderHFMBPTCoefficients()
 
    for ( auto& it : Hbare.OneBodyChannels )
    {
-     arma::uvec orbvec(std::vector<index_t>(it.second.begin(),it.second.end())); // convert from std::set to std::vector, and then to arma::uvec
-     int nswaps = 10; // keep track of the number of swaps we had to do, iterate until nswaps==0
-     while (nswaps>0) // loop until we don't have to make any more swaps
-     {
-       nswaps = 0;
-       for (index_t i=0;i<orbvec.size()-1;i++)
-       {
-         for (index_t j=0;j<i;j++)
-         {
-           if ( std::abs( C_HF2NAT(orbvec(i),orbvec(j))) > std::abs( C_HF2NAT(orbvec(i),orbvec(i)) ) )
-           {
-             C_HF2NAT.swap_cols(orbvec(i),orbvec(j));
-             Occ.swap_rows(orbvec(i),orbvec(j));
-             nswaps++;
-           }
-           //if ( std::abs( C_HF2NAT(i,j)) > std::abs( C_HF2NAT(i,i) ) )
-           //{
-           //  C_HF2NAT.swap_cols(i,j);
-           //  Occ.swap_rows(i,j);
-           //  nswaps++;
-           //}
+     //arma::uvec orbvec(std::vector<index_t>(it.second.begin(),it.second.end())); // convert from std::set to std::vector, and then to arma::uvec
+     //int nswaps = 10; // keep track of the number of swaps we had to do, iterate until nswaps==0
+     //while (nswaps>0) // loop until we don't have to make any more swaps
+     //{
+     //  nswaps = 0;
+     //  for (index_t i=0;i<orbvec.size()-1;i++)
+     //  {
+     //    for (index_t j=0;j<i;j++)
+     //    {
+     //      if ( std::abs( C_HF2NAT(orbvec(i),orbvec(j))) > std::abs( C_HF2NAT(orbvec(i),orbvec(i)) ) )
+     //      {
+     //        C_HF2NAT.swap_cols(orbvec(i),orbvec(j));
+     //        Occ.swap_rows(orbvec(i),orbvec(j));
+     //        nswaps++;
+     //      }
+     //      //if ( std::abs( C_HF2NAT(i,j)) > std::abs( C_HF2NAT(i,i) ) )
+     //      //{
+     //      //  C_HF2NAT.swap_cols(i,j);
+     //      //  Occ.swap_rows(i,j);
+     //      //  nswaps++;
+     //      //}
 
-         }
-       }
-      }
+     //    }
+     //  }
+     // }
 
      // Make sure the diagonal terms are positive (to avoid confusion later).
      for (index_t i=0;i<C_HF2NAT.n_rows;++i) // loop through original basis states

@@ -722,18 +722,18 @@ Operator Operator::Truncate(ModelSpace& ms_new)
   //std::cout << std::setw(12) << std::setprecision(6) << ZeroBody
   //  << std::setw(12) << std::setprecision(6) << OpNew.ZeroBody << std::endl;
   int norb = ms_new.GetNumberOrbits();
-  OpNew.OneBody = OneBody.submat(0,0,norb-1,norb-1);
-  // check
-  //for (auto& i : ms_new.all_orbits){
-  //  for (auto& j : ms_new.all_orbits){
-  //    Orbit & oi = ms_new.GetOrbit(i);
-  //    Orbit & oj = ms_new.GetOrbit(j);
-  //    int i_old = modelspace->GetOrbitIndex(oi.n, oi.l, oi.j2, oi.tz2);
-  //    int j_old = modelspace->GetOrbitIndex(oj.n, oj.l, oj.j2, oj.tz2);
-  //    std::cout << std::setw(12) << std::setprecision(6) << OneBody(i_old,j_old)
-  //      << std::setw(12) << std::setprecision(6) << OpNew.OneBody(i,j) << std::endl;
-  //  }
-  //}
+  for (auto& i: ms_new.all_orbits){
+    for (auto& j: ms_new.all_orbits){
+      Orbit& oi = ms_new.GetOrbit(i);
+      Orbit& oj = ms_new.GetOrbit(j);
+      int i_old = modelspace->GetOrbitIndex(oi.n, oi.l, oi.j2, oi.tz2);
+      int j_old = modelspace->GetOrbitIndex(oj.n, oj.l, oj.j2, oj.tz2);
+      OpNew.OneBody(i,j) = OneBody(i_old,j_old);
+      //std::cout << std::setw(12) << std::setprecision(6) << OneBody(i_old,j_old)
+      //  << std::setw(12) << std::setprecision(6) << OpNew.OneBody(i,j) << std::endl;
+    }
+  }
+  //OpNew.OneBody = OneBody.submat(0,0,norb-1,norb-1);
   for (auto& itmat : OpNew.TwoBody.MatEl )
   {
     int chbra = itmat.first[0];

@@ -236,7 +236,7 @@ void IMSRGSolver::Solve_magnus_euler()
     // Write details of the flow
    WriteFlowStatus(flowfile);
    WriteFlowStatus(std::cout);
-   WriteHamil("flow_hamil.txt");
+   //WriteHamil("flow_hamil.txt");
 
 
    for (istep=1;s<smax;++istep)
@@ -299,7 +299,7 @@ void IMSRGSolver::Solve_magnus_euler()
       // Write details of the flow
       WriteFlowStatus(flowfile);
       WriteFlowStatus(std::cout);
-      WriteHamil("flow_hamil.txt");
+      //WriteHamil("flow_hamil.txt");
       Elast = FlowingOps[0].ZeroBody;
 
    }

@@ -825,6 +825,15 @@ int main(int argc, char** argv)
   if (occ_file != "none" and occ_file != "" ) modelspace_imsrg.Init_occ_from_file(eMax_imsrg,e2Max_imsrg,e3Max_imsrg,valence_space,occ_file);
   if (targetMass>0) modelspace_imsrg.SetTargetMass(targetMass);
   if (lmax3>0) modelspace_imsrg.SetLmax3(lmax3);
+  std::map<index_t,double> hole_map;
+  for ( auto& i_new : modelspace_imsrg.all_orbits )
+  {
+    Orbit& oi_new = modelspace_imsrg.GetOrbit(i_new);
+    index_t i_old = modelspace.GetOrbitIndex( oi_new.n, oi_new.l, oi_new.j2, oi_new.tz2 );
+    Orbit& oi_old = modelspace.GetOrbit(i_old);
+    hole_map[i_new] = oi_old.occ;
+  }
+  modelspace_imsrg.SetReference( hole_map );
   HNO = HNO.Truncate(modelspace_imsrg);
   IMSRGSolver imsrgsolver(HNO);
   imsrgsolver.SetHin(HNO); // necessary?

@@ -40,7 +40,7 @@ class IMSRGSolver
 //  private:
   ModelSpace* modelspace;
 //  ReadWrite* rw;
-  Operator* H_0; 
+  Operator* H_0;
   std::deque<Operator> FlowingOps;
   Operator H_saved;
   Operator Eta;
@@ -126,6 +126,7 @@ class IMSRGSolver
   void WriteFlowStatusHeader(std::ostream&);
   void WriteFlowStatus(std::string);
   void WriteFlowStatusHeader(std::string);
+  void WriteHamil(std::string);
 
   void SetDenominatorCutoff(double c){generator.SetDenominatorCutoff(c);};
   void SetDenominatorDelta(double d){generator.SetDenominatorDelta(d);};

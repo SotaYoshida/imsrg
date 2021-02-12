@@ -236,6 +236,7 @@ void IMSRGSolver::Solve_magnus_euler()
     // Write details of the flow
    WriteFlowStatus(flowfile);
    WriteFlowStatus(std::cout);
+   WriteHamil("flow_hamil.txt");
 
 
    for (istep=1;s<smax;++istep)
@@ -298,6 +299,7 @@ void IMSRGSolver::Solve_magnus_euler()
       // Write details of the flow
       WriteFlowStatus(flowfile);
       WriteFlowStatus(std::cout);
+      WriteHamil("flow_hamil.txt");
       Elast = FlowingOps[0].ZeroBody;
 
    }
@@ -955,7 +957,108 @@ double IMSRGSolver::GetPerturbativeTriples()
 
 }
 
+void IMSRGSolver::WriteHamil(std::string fname)
+{
+  if (fname != "")
+  {
+    int prty = 0;
+    int pn = 0;
+    int idx = 0;
+    for ( int i : modelspace->KetIndex_cc) {
+      Ket& ket = modelspace->GetKet(i);
+      if((ket.op->l+ket.oq->l)%2!=prty) continue;
+      if(ket.op->tz2+ket.oq->tz2!=pn) continue;
+      idx += 1;
+    }
+    for ( int i : modelspace->KetIndex_vc) {
+      Ket& ket = modelspace->GetKet(i);
+      if((ket.op->l+ket.oq->l)%2!=prty) continue;
+      if(ket.op->tz2+ket.oq->tz2!=pn) continue;
+      idx += 1;
+    }
+    for ( int i : modelspace->KetIndex_vv) {
+      Ket& ket = modelspace->GetKet(i);
+      if((ket.op->l+ket.oq->l)%2!=prty) continue;
+      if(ket.op->tz2+ket.oq->tz2!=pn) continue;
+      idx += 1;
+    }
+    for ( int i : modelspace->KetIndex_qv) {
+      Ket& ket = modelspace->GetKet(i);
+      if((ket.op->l+ket.oq->l)%2!=prty) continue;
+      if(ket.op->tz2+ket.oq->tz2!=pn) continue;
+      idx += 1;
+    }
+    for ( int i : modelspace->KetIndex_qq) {
+      Ket& ket = modelspace->GetKet(i);
+      if((ket.op->l+ket.oq->l)%2!=prty) continue;
+      if(ket.op->tz2+ket.oq->tz2!=pn) continue;
+      idx += 1;
+    }
+    int n_dim = idx;
+    arma::uvec KetIndex_ordered(n_dim);
+    idx = 0;
+    for ( int i : modelspace->KetIndex_cc) {
+      Ket& ket = modelspace->GetKet(i);
+      if((ket.op->l+ket.oq->l)%2!=prty) continue;
+      if(ket.op->tz2+ket.oq->tz2!=pn) continue;
+      KetIndex_ordered(idx) = i;
+      idx += 1;
+    }
+    for ( int i : modelspace->KetIndex_vc) {
+      Ket& ket = modelspace->GetKet(i);
+      if((ket.op->l+ket.oq->l)%2!=prty) continue;
+      if(ket.op->tz2+ket.oq->tz2!=pn) continue;
+      KetIndex_ordered(idx) = i;
+      idx += 1;
+    }
+    for ( int i : modelspace->KetIndex_vv) {
+      Ket& ket = modelspace->GetKet(i);
+      if((ket.op->l+ket.oq->l)%2!=prty) continue;
+      if(ket.op->tz2+ket.oq->tz2!=pn) continue;
+      KetIndex_ordered(idx) = i;
+      idx += 1;
+    }
+    for ( int i : modelspace->KetIndex_qv) {
+      Ket& ket = modelspace->GetKet(i);
+      if((ket.op->l+ket.oq->l)%2!=prty) continue;
+      if(ket.op->tz2+ket.oq->tz2!=pn) continue;
+      KetIndex_ordered(idx) = i;
+      idx += 1;
+    }
+    for ( int i : modelspace->KetIndex_qq) {
+      Ket& ket = modelspace->GetKet(i);
+      if((ket.op->l+ket.oq->l)%2!=prty) continue;
+      if(ket.op->tz2+ket.oq->tz2!=pn) continue;
+      KetIndex_ordered(idx) = i;
+      idx += 1;
+    }
 
+    auto& H_s = FlowingOps[0];
+    arma::mat Monopole_Mat(n_dim, n_dim, arma::fill::zeros);
+    for( int iibra=0; iibra<n_dim; ++iibra)
+    {
+      int ibra = KetIndex_ordered(iibra);
+      Ket& bra = modelspace->GetKet(ibra);
+      for( int iiket=0; iiket<n_dim; ++iiket)
+      {
+        int iket = KetIndex_ordered(iiket);
+        Ket& ket = modelspace->GetKet(iket);
+        Monopole_Mat(iibra,iiket) = H_s.TwoBody.GetTBMEmonopole(bra.p, bra.q, ket.p, ket.q);
+      }
+    }
+    std::vector<index_t> neutron_orbits;
+    for(index_t it: modelspace->all_orbits){
+      Orbit& o = modelspace->GetOrbit(it);
+      if(o.tz2 == -1) continue;
+      neutron_orbits.push_back(it);
+    }
+    arma::uvec neutrons(neutron_orbits);
+    std::ofstream ff(fname,std::ios::app);
+    ff << s << " " << H_s.ZeroBody << std::endl;
+    ff << H_s.OneBody(neutrons,neutrons) << std::endl;
+    ff << Monopole_Mat << std::endl;
+  }
+}
 
 void IMSRGSolver::WriteFlowStatus(std::string fname)
 {

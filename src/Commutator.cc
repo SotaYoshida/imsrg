@@ -9825,8 +9825,6 @@ void comm121st( const Operator& X, const Operator& Y, Operator& Z)
 }
 
 
-
-
 //*****************************************************************************************
 //
 //    |     |               |      |           [X2,Y1](2) = sum_a ( Y_ia X_ajkl + Y_ja X_iakl - Y_ak X_ijal - Y_al X_ijka )
@@ -9840,7 +9838,7 @@ void comm121st( const Operator& X, const Operator& Y, Operator& Z)
 // Agrees with previous code in the scalar-scalar limit
 //void Operator::comm122st( Operator& Y, Operator& Z )
 //void Operator::comm122st( const Operator& X, const Operator& Y )
-void comm122st( const Operator& X, const Operator& Y , Operator& Z)
+void comm122st_( const Operator& X, const Operator& Y , Operator& Z)
 {
   double tstart = omp_get_wtime();
   int Lambda = Z.rank_J;
@@ -9983,7 +9981,108 @@ void comm122st( const Operator& X, const Operator& Y , Operator& Z)
 }
 
 
+//*****************************************************************************************
+//
+//    |     |               |      |           [X2,Y1](2) = sum_a ( Y_ia X_ajkl + Y_ja X_iakl - Y_ak X_ijal - Y_al X_ijka )
+//    |     |___.Y          |__X___|
+//    |     |         _     |      |
+//    |_____|               |      |_____.Y
+//    |  X  |               |      |
+//
+// -- AGREES WITH NATHAN'S RESULTS
+// Right now, this is the slowest one...
+// Agrees with previous code in the scalar-scalar limit
+//void Operator::comm122st( Operator& Y, Operator& Z )
+//void Operator::comm122st( const Operator& X, const Operator& Y )
+void comm122st( const Operator& X, const Operator& Y , Operator& Z)
+{
+  int Lambda = Z.rank_J;
 
+  std::vector< int > bra_channels;
+  std::vector< int > ket_channels;
+  for ( auto& itmat : Z.TwoBody.MatEl )
+  {
+    bra_channels.push_back( itmat.first[0] );
+    ket_channels.push_back( itmat.first[1] );
+  }
+
+  int nmat = bra_channels.size();
+#pragma omp parallel for schedule(dynamic,1) if (not Z.modelspace->tensor_transform_first_pass.at(Z.rank_J))
+  for (int ii=0; ii<nmat; ++ii)
+  {
+    int ch_bra = bra_channels[ii];
+    int ch_ket = ket_channels[ii];
+
+    TwoBodyChannel& tbc_bra = Z.modelspace->GetTwoBodyChannel(ch_bra);
+    TwoBodyChannel& tbc_ket = Z.modelspace->GetTwoBodyChannel(ch_ket);
+    int J1 = tbc_bra.J;
+    int J2 = tbc_ket.J;
+    int nbras = tbc_bra.GetNumberKets();
+    int nkets = tbc_ket.GetNumberKets();
+    double hatfactor = sqrt((2*J1+1)*(2*J2+1));
+    arma::mat& Z2 = Z.TwoBody.GetMatrix(ch_bra,ch_ket);
+
+    for (int ibra = 0;ibra<nbras; ++ibra)
+    {
+      Ket & bra = tbc_bra.GetKet(ibra);
+      int i = bra.p;
+      int j = bra.q;
+      Orbit& oi = Z.modelspace->GetOrbit(i);
+      Orbit& oj = Z.modelspace->GetOrbit(j);
+      double ji = oi.j2/2.0;
+      double jj = oj.j2/2.0;
+      for (int iket=0;iket<nkets; ++iket)
+      {
+        Ket & ket = tbc_ket.GetKet(iket);
+        int k = ket.p;
+        int l = ket.q;
+        Orbit& ok = Z.modelspace->GetOrbit(k);
+        Orbit& ol = Z.modelspace->GetOrbit(l);
+        double jk = ok.j2/2.0;
+        double jl = ol.j2/2.0;
+
+        double cijkl = 0.0;
+        double c1 = 0;
+        double c2 = 0;
+        double c3 = 0;
+        double c4 = 0;
+        int phase1 = Z.modelspace->phase(ji+jj+J2+Lambda);
+        int phase2 = Z.modelspace->phase(J1-J2+Lambda);
+        int phase3 = Z.modelspace->phase(J1-J2+Lambda);
+        int phase4 = Z.modelspace->phase(jk+jl-J1+Lambda);
+        double norm = bra.delta_pq()==ket.delta_pq() ? 1+bra.delta_pq() : PhysConst::SQRT2;
+
+        for ( int a : Z.modelspace->all_orbits )
+        {
+          c1 = X.OneBody(i,a);
+          c2 = X.OneBody(j,a);
+          c3 = X.OneBody(a,k);
+          c4 = X.OneBody(a,l);
+          if(std::abs(c1)>1.e-8) cijkl += c1 * Y.TwoBody.GetTBME(ch_bra,ch_ket,a,j,k,l);
+          if(std::abs(c2)>1.e-8) cijkl += c2 * Y.TwoBody.GetTBME(ch_bra,ch_ket,i,a,k,l);
+          if(std::abs(c3)>1.e-8) cijkl -= c3 * Y.TwoBody.GetTBME(ch_bra,ch_ket,i,j,a,l);
+          if(std::abs(c4)>1.e-8) cijkl -= c4 * Y.TwoBody.GetTBME(ch_bra,ch_ket,i,j,k,a);
+        }
+
+        Z2(ibra,iket) += cijkl /norm;
+        cijkl = 0.0;
+        for ( int a : Z.modelspace->all_orbits )
+        {
+          double ja = Z.modelspace->GetOrbit(a).j2*0.5;
+          c1 = Y.OneBody(i,a);
+          c2 = Y.OneBody(j,a);
+          c3 = Y.OneBody(a,k);
+          c4 = Y.OneBody(a,l);
+          if(std::abs(c1)>1.e-8) cijkl -= phase1 * c1 * X.TwoBody.GetTBME(ch_ket,ch_ket,a,j,k,l) * Z.modelspace->GetSixJ(J2,J1,Lambda,ji,ja,jj);
+          if(std::abs(c2)>1.e-8) cijkl += phase2 * c2 * X.TwoBody.GetTBME(ch_ket,ch_ket,a,i,k,l) * Z.modelspace->GetSixJ(J2,J1,Lambda,jj,ja,ji);
+          if(std::abs(c3)>1.e-8) cijkl -= phase3 * c3 * X.TwoBody.GetTBME(ch_bra,ch_bra,i,j,l,a) * Z.modelspace->GetSixJ(J1,J2,Lambda,jk,ja,jl);
+          if(std::abs(c4)>1.e-8) cijkl += phase4 * c4 * X.TwoBody.GetTBME(ch_bra,ch_bra,i,j,k,a) * Z.modelspace->GetSixJ(J1,J2,Lambda,jl,ja,jk);
+        }
+        Z2(ibra,iket) += hatfactor * cijkl /norm;
+      }
+    }
+  }
+}
 
 
 // Since comm222_pp_hh and comm211 both require the construction of

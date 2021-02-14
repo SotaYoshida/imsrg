@@ -50,15 +50,15 @@ namespace Commutator{
   void SetOnly2bOmega(bool tf);
 
 
-  Operator Commutator(const Operator& X, const Operator& Y) ; 
+  Operator Commutator(const Operator& X, const Operator& Y) ;
   Operator CommutatorScalarScalar( const Operator& X, const Operator& Y) ;
   Operator CommutatorScalarTensor( const Operator& X, const Operator& Y) ;
   Operator CommutatorScalarDagger( const Operator& X, const Operator& Y) ;
 
 
-  Operator BCH_Product(  Operator& X, Operator& Y )  ; 
-  Operator BCH_Transform( const Operator& Op, const Operator& Omega ) ; 
-  Operator Standard_BCH_Transform( const Operator& Op, const Operator& Omega ) ; 
+  Operator BCH_Product(  Operator& X, Operator& Y )  ;
+  Operator BCH_Transform( const Operator& Op, const Operator& Omega ) ;
+  Operator Standard_BCH_Transform( const Operator& Op, const Operator& Omega ) ;
   Operator Brueckner_BCH_Transform( const Operator& Op, const Operator& Omega ) ;
 
   double EstimateBCHError( Operator& Omega, Operator H);
@@ -72,7 +72,7 @@ namespace Commutator{
   void AddInversePandyaTransformation_SingleChannel(Operator& Z, arma::mat& Zbar, int ch_cc);
 
 
-  void comm110ss( const Operator& X, const Operator& Y, Operator& Z ) ; 
+  void comm110ss( const Operator& X, const Operator& Y, Operator& Z ) ;
   void comm220ss( const Operator& X, const Operator& Y, Operator& Z ) ;
   void comm111ss( const Operator& X, const Operator& Y, Operator& Z ) ;
   void comm121ss( const Operator& X, const Operator& Y, Operator& Z ) ;
@@ -102,7 +102,7 @@ namespace Commutator{
 //  void comm332_pphhss( const Operator& X, const Operator& Y, Operator& Z ) ;      // implemented and tested.
   void comm332_pphhss( const Operator& X, const Operator& Y, Operator& Z ) ;      // implemented and tested.
   void comm332_pphhss_debug( const Operator& X, const Operator& Y, Operator& Z ) ;      // implemented and tested.
-  
+
   void comm133ss( const Operator& X, const Operator& Y, Operator& Z ) ;           // implemented and tested.
   void comm223ss( const Operator& X, const Operator& Y, Operator& Z ) ;           // implemented and tested.
   void comm223ss_new( const Operator& X, const Operator& Y, Operator& Z ) ;           // implemented and tested.
@@ -132,23 +132,22 @@ namespace Commutator{
   void comm111st( const Operator& X, const Operator& Y, Operator& Z) ;
   void comm121st( const Operator& X, const Operator& Y, Operator& Z) ;
   void comm122st( const Operator& X, const Operator& Y, Operator& Z) ;
+  void comm122st_( const Operator& X, const Operator& Y, Operator& Z) ;
   void comm222_pp_hh_221st( const Operator& X, const Operator& Y, Operator& Z) ;
   void comm222_phst( const Operator& X, const Operator& Y, Operator& Z) ;
 
 
-
-
   // commutator terms involving a dagger operator. 211 means [two legs, one leg] => one leg
   // sd means scalar-dagger
-  void comm211sd( const Operator& X, const Operator& Y, Operator& Z) ; 
+  void comm211sd( const Operator& X, const Operator& Y, Operator& Z) ;
   void comm231sd( const Operator& X, const Operator& Y, Operator& Z) ;
   void comm431sd( const Operator& X, const Operator& Y, Operator& Z) ;
-  void comm413_233sd( const Operator& X, const Operator& Y, Operator& Z) ; 
-  void comm433sd_pphh( const Operator& X, const Operator& Y, Operator& Z) ; 
-  void comm433sd_ph( const Operator& X, const Operator& Y, Operator& Z) ; 
+  void comm413_233sd( const Operator& X, const Operator& Y, Operator& Z) ;
+  void comm433sd_pphh( const Operator& X, const Operator& Y, Operator& Z) ;
+  void comm433sd_ph( const Operator& X, const Operator& Y, Operator& Z) ;
   void comm433sd_ph_dumbway( const Operator& X, const Operator& Y, Operator& Z) ; // Do it with loops, not matmult. Easier to check, but much slower.
 
-  void comm433_pp_hh_431sd( const Operator& X, const Operator& Y, Operator& Z ) ; 
+  void comm433_pp_hh_431sd( const Operator& X, const Operator& Y, Operator& Z ) ;
 //  void ConstructDaggerMpp_Mhh(const Operator& X, const Operator& Y, const Operator& Z, TwoBodyME& Mpp, TwoBodyME& Mhh);
   void ConstructDaggerMpp_Mhh(const Operator& X, const Operator& Y, const Operator& Z, ThreeLegME& Mpp, ThreeLegME& Mhh);
   void DoPandyaTransformation_SingleChannel_Dagger(const Operator& Z, arma::mat& X, int ch_cc) ;

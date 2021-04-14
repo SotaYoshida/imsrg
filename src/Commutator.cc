@@ -9838,7 +9838,7 @@ void comm121st( const Operator& X, const Operator& Y, Operator& Z)
 // Agrees with previous code in the scalar-scalar limit
 //void Operator::comm122st( Operator& Y, Operator& Z )
 //void Operator::comm122st( const Operator& X, const Operator& Y )
-void comm122st_( const Operator& X, const Operator& Y , Operator& Z)
+void comm122st( const Operator& X, const Operator& Y , Operator& Z)
 {
   double tstart = omp_get_wtime();
   int Lambda = Z.rank_J;
@@ -9994,7 +9994,7 @@ void comm122st_( const Operator& X, const Operator& Y , Operator& Z)
 // Agrees with previous code in the scalar-scalar limit
 //void Operator::comm122st( Operator& Y, Operator& Z )
 //void Operator::comm122st( const Operator& X, const Operator& Y )
-void comm122st( const Operator& X, const Operator& Y , Operator& Z)
+void comm122st_( const Operator& X, const Operator& Y , Operator& Z)
 {
   int Lambda = Z.rank_J;
 

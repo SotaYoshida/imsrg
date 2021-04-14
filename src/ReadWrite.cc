@@ -5049,7 +5049,7 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
    intfile << "! input 3N: " << File3N.substr( File3N.find_last_of("/\\")+1 ) << std::endl;
    intfile << "! e1max: " << modelspace->GetEmax() << "  e2max: " << modelspace->GetE2max() << "   e3max: " << modelspace->GetE3max() << "   hw: " << modelspace->GetHbarOmega();
    intfile << "   Aref: " << Acore << "  Zref: " << Zcore << "  A_for_kinetic_energy: " << modelspace->GetTargetMass() << std::endl;
-   intfile << "! Zero body term: " << op.ZeroBody << std::endl;
+   intfile << "! Zero body term: " << std::setw(wdouble) << std::setprecision(pdouble) << std::scientific << op.ZeroBody << std::endl;
    intfile << "! " << std::endl;
    intfile << "! model space" << std::endl;
    intfile << std::setw(wint) << valence_protons.size() << std::setw(wint) << valence_neutrons.size()
@@ -5085,7 +5085,7 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
    }
 
    intfile << "! interaction" << std::endl;
-   intfile << cnt_obme << " " << 0 << " " << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
+   intfile << cnt_obme << " " << 0 << " " << std::setw(6) << std::fixed << std::setprecision(2) << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
    for (auto a : modelspace->valence ) {
      int a_ind = orb2kshell[a];
      for (auto b : modelspace->valence) {
@@ -5094,12 +5094,12 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
        double obme = op.OneBody(a,b);
        if(std::abs(obme) < 1e-7) continue;
        intfile << std::setw(wint) << a_ind << std::setw(wint) << b_ind
-           << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << obme
+           << std::setw(wdouble) << std::scientific << std::setprecision(pdouble) << obme
            << std::endl;
      }
    }
 
-   intfile << cnt_tbme << " " << 0 << " " << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
+   intfile << cnt_tbme << " " << 0 << " " << std::setw(6)<< std::fixed << std::setprecision(2) << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
    for (int ch=0; ch<nchan; ++ch)
    {
      TwoBodyChannel tbc = modelspace->GetTwoBodyChannel(ch);
@@ -5137,7 +5137,7 @@ void ReadWrite::WriteTokyo(Operator& op, std::string filename, std::string mode)
          intfile << std::setw(wint) << a_ind << std::setw(wint) << b_ind
            << std::setw(wint) << c_ind << std::setw(wint) << d_ind
            << std::setw(wint) << tbc.J << std::setw(wdouble)
-           << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << tbme
+           << std::scientific << std::setprecision(pdouble) << tbme
            << std::endl;
        }
      }
@@ -5168,7 +5168,7 @@ void ReadWrite::WriteTokyoFull(Operator& op, std::string filename)
    intfile << "! input 3N: " << File3N.substr( File3N.find_last_of("/\\")+1 ) << std::endl;
    intfile << "! e1max: " << modelspace->GetEmax() << "  e2max: " << modelspace->GetE2max() << "   e3max: " << modelspace->GetE3max() << "   hw: " << modelspace->GetHbarOmega();
    intfile << "   Aref: " << Acore << "  Zref: " << Zcore << "  A_for_kinetic_energy: " << modelspace->GetTargetMass() << std::endl;
-   intfile << "! Zero body term: " << op.ZeroBody << std::endl;
+   intfile << "! Zero body term: " << std::setw(wdouble) << std::scientific << std::setprecision(pdouble) << op.ZeroBody << std::endl;
    intfile << "! " << std::endl;
    intfile << "! model space" << std::endl;
    intfile << std::setw(wint) << modelspace->GetNumberOrbits()/2 << std::setw(wint) << modelspace->GetNumberOrbits()/2
@@ -5204,19 +5204,19 @@ void ReadWrite::WriteTokyoFull(Operator& op, std::string filename)
    }
 
    intfile << "! interaction" << std::endl;
-   intfile << cnt_obme << " " << 0 << " " << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
+   intfile << cnt_obme << " " << 0 << " " << std::setw(6) << std::fixed << std::setprecision(2) << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
    for (size_t a=0; a<modelspace->GetNumberOrbits(); ++a ) {
      for (size_t b=0; b<modelspace->GetNumberOrbits(); ++b ) {
        if(a < b) continue;
        double obme = op.OneBody(a,b);
        if(std::abs(obme) < 1e-7) continue;
        intfile << std::setw(wint) << a << std::setw(wint) << b
-           << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << obme
+           << std::setw(wdouble) << std::scientific << std::setprecision(pdouble) << obme
            << std::endl;
      }
    }
 
-   intfile << cnt_tbme << " " << 0 << " " << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
+   intfile << cnt_tbme << " " << 0 << " " << std::setw(6) << std::fixed << std::setprecision(2) << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
    for (int ch=0; ch<nchan; ++ch) {
      TwoBodyChannel tbc = modelspace->GetTwoBodyChannel(ch);
      for (size_t ibra=0; ibra<tbc.GetNumberKets(); ++ibra ) {
@@ -5232,7 +5232,7 @@ void ReadWrite::WriteTokyoFull(Operator& op, std::string filename)
          intfile << std::setw(wint) << a << std::setw(wint) << b
            << std::setw(wint) << c << std::setw(wint) << d
            << std::setw(wint) << tbc.J << std::setw(wdouble)
-           << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << tbme
+           << std::scientific << std::setprecision(pdouble) << tbme
            << std::endl;
        }
      }
@@ -5280,8 +5280,7 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
    outfile << "! input 3N: " << File3N.substr( File3N.find_last_of("/\\")+1 ) << std::endl;
    outfile << "! e1max: " << modelspace->GetEmax() << "  e2max: " << modelspace->GetE2max() << "   e3max: " << modelspace->GetE3max() << "   hw: " << modelspace->GetHbarOmega();
    outfile << "   Aref: " << Acore << "  Zref: " << Zcore << "  A_for_kinetic_energy: " << modelspace->GetTargetMass() << std::endl;
-   outfile << "! Zero body term: " << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble)
-     << op.ZeroBody << std::endl;
+   outfile << "! Zero body term: " << std::setw(wdouble) << std::scientific << std::setprecision(pdouble) << op.ZeroBody << std::endl;
    outfile << "! " << std::endl;
    outfile << "! model space" << std::endl;
    outfile << std::setw(wint) << valence_protons.size() << std::setw(wint) << valence_neutrons.size()
@@ -5293,6 +5292,7 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
      outfile << std::setw(wint) << it.first << std::setw(wint) << oi.n
        << std::setw(wint) << oi.l << std::setw(wint) << oi.j2 << std::setw(wint) << oi.tz2 << std::endl;
    }
+
 
    int cnt_obme = 0;
    for (auto a : modelspace->valence ) {
@@ -5319,7 +5319,7 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
    }
 
    outfile << "! reduced matrix elements" << std::endl;
-   outfile << cnt_obme << " " << 0 << " " << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
+   outfile << cnt_obme << " " << 0 << " "  << std::setw(6)<< std::fixed << std::setprecision(2) << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
    for (auto a : modelspace->valence ) {
      int a_ind = orb2kshell[a];
      for (auto b : modelspace->valence) {
@@ -5327,12 +5327,12 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
        double obme = op.OneBody(a,b);
        if(std::abs(obme) < 1e-7) continue;
        outfile << std::setw(wint) << a_ind << std::setw(wint) << b_ind
-           << std::setw(wdouble) << std::setiosflags(std::ios::fixed) << std::setprecision(pdouble) << obme
+           << std::setw(wdouble) << std::scientific << std::setprecision(pdouble) << obme
            << std::endl;
      }
    }
 
-   outfile << cnt_tbme << " " << 0 << " " << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
+   outfile << cnt_tbme << " " << 0 << " " << std::setw(6)<< std::fixed << std::setprecision(2) << modelspace->GetHbarOmega() << std::endl; // w/o mass dependence
    for (auto& itmat : op.TwoBody.MatEl) {
      TwoBodyChannel& tbc_bra = modelspace->GetTwoBodyChannel(itmat.first[0]);
      TwoBodyChannel& tbc_ket = modelspace->GetTwoBodyChannel(itmat.first[1]);
@@ -5350,7 +5350,7 @@ void ReadWrite::WriteTensorTokyo(std::string filename, Operator& op)
          outfile << std::setw(wint) << a_ind << " " << std::setw(wint) << b_ind << " " << std::setw(wint) <<
            c_ind << " " << std::setw(wint) << d_ind << "   " << std::setw(wint) << tbc_bra.J <<
            " " << std::setw(wint) << tbc_ket.J << "   " <<
-           std::setw(wdouble) << std::setprecision(pdouble) << me << std::endl;
+           std::setw(wdouble) << std::scientific << std::setprecision(pdouble) << me << std::endl;
        }
      }
    }

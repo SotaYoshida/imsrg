@@ -132,12 +132,11 @@ ifeq ($(THEHOST),mox)
 endif
 
 
-
 ifeq ($(THEHOST),cedar)
-#  NEWLIBS := $(filter-out -lopenblas,$(LIBS))
-#  NEWLIBS := $(filter-out -lblas,$(LIBS))
-#  LIBS = $(NEWLIBS) -lopenblas
-#  LIBS = $(NEWLIBS) -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+  NEWINCLUDES := $(filter-out -I./armadillo,$(INCLUDE))
+  INCLUDE = $(NEWINCLUDES)
+  NEWLIBS := $(filter-out -lopenblas,$(LIBS))
+  LIBS = -larmadillo $(NEWLIBS)
 # ifneq ($(PYTHON),off)
 #  ALL += pyIMSRG.so
 #  endif

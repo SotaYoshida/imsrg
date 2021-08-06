@@ -127,8 +127,13 @@ void HartreeFock::CalcEHF()
          e1hf += rho(i,j) * jfactor * KE(i,j);
          e2hf += rho(i,j) * jfactor * 0.5 * Vij(i,j);
          e3hf += rho(i,j) * jfactor * (1./6)*V3ij(i,j);
+	 //if ( i%2==0 and j%2==0){
+	 //  printf("i %4i j %4i rho %15.8f T %15.8f V %15.8f \n", i,j,rho(i,j),KE(i,j),Vij(i,j));
+	 //}
       }
    }
+   //printf("%i %i %f %f\n", i,j,rho(i,j),KE(i,j));
+   //
    EHF = e1hf + e2hf + e3hf;
 }
 

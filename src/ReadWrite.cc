@@ -4320,10 +4320,11 @@ void ReadWrite::ReadTokyo(std::string filename, Operator& op)
   }
   ModelSpace * modelspace = op.GetModelSpace();
   std::unordered_map<int,int> orbits_remap;
-
+  //printf("\n Read Tokyo 1 \n");
   skip_comments(infile);
   int prtorb, ntnorb, pcore, ncore;
   infile >> prtorb >> ntnorb >> pcore >> ncore;
+  //printf("%5i %5i %5i %5i \n",prtorb,ntnorb,pcore,ncore);
   int num=prtorb+ntnorb;
   int norb = modelspace->GetNumberOrbits();
   for(int i=0; i<num; i++)
@@ -4333,18 +4334,21 @@ void ReadWrite::ReadTokyo(std::string filename, Operator& op)
     int io = modelspace->GetOrbitIndex(n, l, j, tz);
     if(io >= norb) continue;
     orbits_remap[iorb] = io;
+    //printf("%5i <= %5i %5i %5i %5i %5i \n",io,iorb,n,l,j,tz);
     //cout << io << " " << iorb << " " << n << " " << l << " " << j << " " << tz << endl;
   }
   getline(infile, line);
 
-  skip_comments(infile);
-  double zerobody;
-  infile >> zerobody;
-  // op.ZeroBody = zerobody;
-  getline(infile, line);
-  skip_comments(infile);
-
+  //printf("\n Read Tokyo 2 \n");  
+  // skip_comments(infile);
+  // double zerobody;
+  // infile >> zerobody;
+  // // op.ZeroBody = zerobody;
+  // getline(infile, line);
+  // skip_comments(infile);
+  
   infile >> num;
+  //printf("\n Read Tokyo 3  num=%5i \n",num);
   getline(infile, line);
   skip_comments(infile);
   for(int n=0; n<num; n++)
@@ -4352,6 +4356,8 @@ void ReadWrite::ReadTokyo(std::string filename, Operator& op)
     int i, j;
     double h1;
     infile >> i >> j >> h1;
+    //printf("%3i %3i %15.8f \n",i,j,h1);
+
     if( orbits_remap.find(i) == orbits_remap.end() ) continue;
     if( orbits_remap.find(j) == orbits_remap.end() ) continue;
     //int io = orbits_remap.at(i);
@@ -4363,17 +4369,20 @@ void ReadWrite::ReadTokyo(std::string filename, Operator& op)
     //  op.OneBody(jo,io) = -h1;
     //cout << io << " " << jo << " " << h1 << endl;
   }
-  getline(infile, line);
-
+  getline(infile, line);  
   skip_comments(infile);
-  infile >> num;
-  getline(infile, line);
-  skip_comments(infile);
+  int mode;
+  double hw;
+  infile >> num >> mode >> hw;
+  //printf("num=%5i mode=%5i hw=%10.3f \n",num,mode,hw);
+  //getline(infile, line);
+  //skip_comments(infile);
   for(int n=0; n<num; n++)
   {
     int i, j, k, l, jj;
-    double tbme;
-    infile >> i >> j >> k >> l >> jj >> tbme;
+    double tbme,vpp;
+    infile >> i >> j >> k >> l >> jj >> tbme >> vpp;
+    //printf("%5i %3i %3i %3i %3i %5i %15.8f \n",n,i,j,k,l,jj,tbme);
     if( orbits_remap.find(i) == orbits_remap.end() ) continue;
     if( orbits_remap.find(j) == orbits_remap.end() ) continue;
     if( orbits_remap.find(k) == orbits_remap.end() ) continue;

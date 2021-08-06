@@ -236,10 +236,7 @@ int main(int argc, char** argv)
 //    Hbare.SetUseGooseTank(true);
     Commutator::SetUseGooseTank(true);
   }
-
   std::cout << "Reading interactions..." << std::endl;
-
-
   if (inputtbme != "none")
   {
     if (fmt2 == "me2j")
@@ -260,6 +257,8 @@ int main(int argc, char** argv)
       rw.ReadTwoBody_Takayuki( inputtbme, Hbare);
     else if (fmt2 == "nushellx" )
       rw.ReadNuShellX_int( Hbare, inputtbme );
+    else if (fmt2 == "tokyo" )
+      rw.ReadTokyo(inputtbme, Hbare);
 
     std::cout << "done reading 2N" << std::endl;
   }
@@ -313,13 +312,10 @@ int main(int argc, char** argv)
     HNO = hf.GetNormalOrderedHNAT();
   }
 
-
   if ( spwf.size() > 0 )
   {
     imsrg_util::WriteSPWaveFunctions( spwf, hf, intfile);
   }
-
-
 
   HNO -= BetaCM * 1.5*hwBetaCM;
   std::cout << "Hbare 0b = " << HNO.ZeroBody << std::endl;
@@ -332,8 +328,11 @@ int main(int argc, char** argv)
   //exit(0);
   //
 
+  //
+  //exit(0); 
+  // for check
 
-
+  
   if (method != "HF")
   {
     std::cout << "Perturbative estimates of gs energy:" << std::endl;

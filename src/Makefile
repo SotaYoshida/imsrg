@@ -48,9 +48,10 @@ THEHOST = $(shell if [ `hostname|grep jrl` ]; then echo jureca; elif [ `hostname
 
 
 ifeq ($(OS),MACOS)
+#-L/usr/local/Cellar/gsl/2.6/lib  #
 #  FLAGS     = -Xpreprocessor -fopenmp -O3 -march=native -std=c++11 -fPIC
-#  FLAGS     = -Xpreprocessor -fopenmp -O3  -std=c++11 -fPIC
-  CC = g++-9
+#  FLAGS     = -Xpreprocessor -fopenmp -O3  -std=c++11 -fPIC -L/usr/local/lib
+  CC = g++-11
   INCLUDE   += -I/usr/local/include -L/usr/local/lib
 #  LIBS += -lomp
   PYTHONFLAGS = -I./pybind11/include $(shell python-config --cflags | sed -e 's/-arch i386//')

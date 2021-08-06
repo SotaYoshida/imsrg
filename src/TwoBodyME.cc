@@ -509,10 +509,15 @@ double TwoBodyME::GetTBMEmonopole(int a, int b, int c, int d) const
    
    for (int J=jmin;J<=jmax;++J)
    {
-
+     //if ( a==2 and b==2 and c==2 and d==2){
+     //   printf("2222 J %5i v %15.8f \n",J,GetTBME(J,parityab,Tzab,a,b,c,d));
+     //}
       mon += (2*J+1) * GetTBME(J,parityab,Tzab,a,b,c,d);
    }
    mon /= (oa.j2 +1)*(ob.j2+1);
+   //if (mon != 0.0){
+   //  printf("%3i %3i %3i %3i %15.8f vmono %15.8f \n",a,b,c,d, (oa.j2 +1)*(ob.j2+1)*mon, mon);
+   //    }
    return mon;
 }
 

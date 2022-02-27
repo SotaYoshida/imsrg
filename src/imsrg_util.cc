@@ -1169,7 +1169,8 @@ Operator RpSpinOrbitCorrection(ModelSpace& modelspace)
   for (int i=0;i<norb;i++)
   {
     Orbit& oi = modelspace.GetOrbit(i);
-    double mu_i = oi.tz2<0 ? 1.79 : -1.91;
+    //double mu_i = oi.tz2<0 ? 1.79 : -1.91;
+    double mu_i = oi.tz2<0 ? 2.793 : -1.913;
     int kappa = oi.j2 < 2*oi.l ? oi.l : -(oi.l+1);
     dr_so.OneBody(i,i) = -mu_i/M2*(kappa+1);
   }
